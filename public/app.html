@@ -33,6 +33,11 @@
   .tab:hover{color:var(--ink-soft)}
   .tab.on{color:var(--ink);border-color:var(--sun-deep)}
   main{max-width:940px;margin:0 auto;padding:24px 18px 80px}
+  @media(max-width:640px){
+    .top .in{padding:14px 15px}
+    .tabs{padding:0 15px}
+    main{padding:24px 15px 80px}
+  }
   .card{background:var(--panel);border:1px solid var(--line-strong);border-radius:16px;padding:20px;margin-bottom:16px;
     box-shadow:0 4px 16px rgba(60,46,12,.05)}
   h2{font-size:18px;margin:0 0 15px;font-weight:800;letter-spacing:-.01em}
