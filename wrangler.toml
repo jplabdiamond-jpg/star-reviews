@@ -7,7 +7,7 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "star-reviews-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "074f2bf2-091f-42bd-bba4-03459ffa0683"
 migrations_dir = "migrations"
 
 # --- R2 (画像・動画) ---
@@ -20,4 +20,4 @@ bucket_name = "star-reviews-media"
 # `npx wrangler kv namespace create SESSIONS` で作成し、出力された id を貼る
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "4148e40f2a5144ae8ce14a675a6cea14"
