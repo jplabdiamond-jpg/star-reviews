@@ -5,62 +5,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex" />
 <title>ダッシュボード｜star-reviews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#faf7f2;--ink:#272437;--muted:#726d80;--line:#ece2d4;--card:#fff;--accent:#e8604c;--accent-ink:#b8432f;--gold:#f3a712;--ok:#1d8a5f}
+  :root{
+    --paper:#fffdf5; --panel:#fff; --ink:#1c1a12; --ink-soft:#413d30; --muted:#7c7563;
+    --sun:#ffc62b; --sun-deep:#eaa400; --sun-soft:#ffe7a0; --mark:#ffd84d;
+    --line:#ece3cf; --line-strong:#e0d4b6; --ok:#1c7d52; --ok-bg:#e2f3e8;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.7}
-  .top{background:#fff;border-bottom:1px solid var(--line)}
-  .top .in{max-width:900px;margin:0 auto;padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
-  .logo{font-weight:800}.logo b{color:var(--accent)}
-  .biz{font-size:13px;color:var(--muted)}
-  .logout{font-size:12.5px;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline}
-  .tabs{max-width:900px;margin:0 auto;padding:0 18px;display:flex;gap:4px;overflow:auto}
-  .tab{border:0;background:none;padding:14px 12px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
-  .tab.on{color:var(--ink);border-color:var(--accent)}
-  main{max-width:900px;margin:0 auto;padding:22px 18px 70px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
-  h2{font-size:17px;margin:0 0 14px}
-  h3{font-size:14px;margin:0 0 8px}
-  label{font-size:13px;font-weight:700;display:block;margin:0 0 5px}
-  input[type=text],input[type=number],textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fffdf9;margin-bottom:11px}
-  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .row>*{flex:1;min-width:120px}
-  .btn{border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;padding:11px 16px;cursor:pointer;font-size:14px}
-  .btn.ghost{background:#fff;color:var(--accent-ink);border:1px solid var(--accent)}
-  .btn.ok{background:var(--ok)}
-  .btn.mut{background:#efe9e0;color:var(--muted)}
-  .btn.sm{padding:8px 13px;font-size:13px}
-  .chk{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;margin-right:14px;cursor:pointer}
-  .chk input{accent-color:var(--accent)}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.7}
+  .top{background:var(--ink);color:#fff}
+  .top .in{max-width:940px;margin:0 auto;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+  .logo{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:700;font-size:16px;color:#fff}
+  .logo .star{width:16px;height:16px;color:var(--sun)}
+  .logo em{font-style:normal;color:#938b78}
+  .biz{font-size:13px;color:#cfc8b6}
+  .logout{font-size:12.5px;color:#cfc8b6;background:none;border:0;cursor:pointer;text-decoration:underline;font-family:var(--jp)}
+  .logout:hover{color:#fff}
+  .tabbar{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  .tabs{max-width:940px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow:auto}
+  .tab{border:0;background:none;padding:15px 14px;font:inherit;font-weight:800;color:var(--muted);
+    cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.14s}
+  .tab:hover{color:var(--ink-soft)}
+  .tab.on{color:var(--ink);border-color:var(--sun-deep)}
+  main{max-width:940px;margin:0 auto;padding:24px 18px 80px}
+  .card{background:var(--panel);border:1px solid var(--line-strong);border-radius:16px;padding:20px;margin-bottom:16px;
+    box-shadow:0 4px 16px rgba(60,46,12,.05)}
+  h2{font-size:18px;margin:0 0 15px;font-weight:800;letter-spacing:-.01em}
+  h3{font-size:15px;margin:0 0 9px;font-weight:800}
+  label{font-size:13px;font-weight:700;display:block;margin:0 0 6px;color:var(--ink-soft)}
+  input[type=text],input[type=number],textarea,select{width:100%;border:1.5px solid var(--line-strong);
+    border-radius:11px;padding:11px 13px;font:inherit;background:#fffef9;margin-bottom:12px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--sun-deep);box-shadow:0 0 0 3px var(--sun-soft)}
+  .row{display:flex;gap:11px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:130px}
+  .btn{border:0;border-radius:11px;background:var(--ink);color:#fff;font-weight:800;padding:12px 17px;
+    cursor:pointer;font-size:14px;transition:.14s;font-family:var(--jp)}
+  .btn:hover{background:#000;transform:translateY(-1px)}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#fff}
+  .btn.ok{background:var(--ok)}.btn.ok:hover{background:#166543}
+  .btn.mut{background:#f0ead9;color:var(--muted)}.btn.mut:hover{background:#e7dfc9;transform:none}
+  .btn.sm{padding:8px 14px;font-size:13px}
+  .chk{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px;margin-right:14px;cursor:pointer}
+  .chk input{accent-color:var(--sun-deep);width:16px;height:16px}
   .muted{color:var(--muted);font-size:13px}
-  .pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px}
-  .pill.g{background:#e4f5ec;color:var(--ok)}.pill.o{background:#ffe9e2;color:var(--accent-ink)}.pill.n{background:#eee8de;color:var(--muted)}
-  .stars{color:var(--gold);font-size:15px;letter-spacing:1px}
-  .ti{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:11px;background:#fffdf9}
-  .ti .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
-  .ti .body{font-size:14.5px;margin:6px 0 10px;white-space:pre-wrap}
-  .ti .who{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-  .ti img{width:38px;height:38px;border-radius:50%;object-fit:cover}
-  .code{background:#1f1c2b;color:#fff;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;overflow:auto;white-space:pre}
+  .pill{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 10px}
+  .pill.g{background:var(--ok-bg);color:var(--ok)}
+  .pill.o{background:var(--sun);color:var(--ink)}
+  .pill.n{background:#efe8d7;color:var(--muted)}
+  .stars{color:var(--sun-deep);font-size:15px;letter-spacing:1.5px}
+  .ti{border:1.5px solid var(--line-strong);border-radius:13px;padding:15px;margin-bottom:12px;background:#fffef9}
+  .ti .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .ti .body{font-size:14.5px;margin:6px 0 11px;white-space:pre-wrap;color:var(--ink-soft)}
+  .ti .who{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .ti img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+  .code{background:var(--ink);color:#ffe9a8;border-radius:11px;padding:13px 15px;
+    font-family:ui-monospace,Menlo,monospace;font-size:12.5px;overflow:auto;white-space:pre}
   .copy{margin-top:8px}
-  .link{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f3ede3;border-radius:8px;padding:7px 10px;word-break:break-all}
-  .empty{color:#9b9488;text-align:center;padding:30px 10px;font-size:14px}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f1c2b;color:#fff;padding:10px 18px;border-radius:10px;font-size:13.5px;opacity:0;transition:.2s;pointer-events:none}
+  .link{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#fbf4e3;
+    border:1px solid var(--line);border-radius:9px;padding:8px 11px;word-break:break-all}
+  .empty{color:var(--muted);text-align:center;padding:34px 10px;font-size:14px;
+    background:var(--panel);border:1.5px dashed var(--line-strong);border-radius:16px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:11px 20px;border-radius:11px;font-size:13.5px;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:50}
   .toast.show{opacity:1}
 </style>
 </head>
 <body>
 <div class="top"><div class="in">
-  <span class="logo">star<b>·</b>reviews</span>
+  <span class="logo">
+    <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
+    star<em>·</em>reviews
+  </span>
   <span><span class="biz" id="bizName"></span> <button class="logout" id="logout">ログアウト</button></span>
 </div></div>
-<div class="tabs" id="tabs">
+<div class="tabbar"><div class="tabs" id="tabs">
   <button class="tab on" data-t="forms">フォーム</button>
   <button class="tab" data-t="inbox">受信トレイ</button>
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
-</div>
+</div></div>
 <main id="view"></main>
 <div class="toast" id="toast"></div>
 
@@ -109,7 +138,7 @@ function renderForms(){
       </div>
       <p class="muted" style="margin:8px 0 4px">投稿リンク（LINEやメールに貼る）</p>
       <div class="link">${STATE.origin}/f/${esc(f.slug)}</div>
-      <button class="btn ghost sm copy" onclick="copy('${STATE.origin}/f/${esc(f.slug)}')">リンクをコピー</button>
+      <button class="btn ghost sm copy" style="margin-top:9px" onclick="copy('${STATE.origin}/f/${esc(f.slug)}')">リンクをコピー</button>
     </div>`).join("") || `<div class="empty">まだフォームがありません。最初のフォームを作りましょう。</div>`;
 
   $("view").innerHTML = `
@@ -122,13 +151,13 @@ function renderForms(){
       <label>お礼メッセージ（投稿後に表示）</label>
       <input type="text" id="f_thanks" placeholder="ありがとうございました！">
       <label>集める出し方</label>
-      <div style="margin-bottom:11px">
+      <div style="margin-bottom:12px">
         <label class="chk"><input type="checkbox" id="lv1" checked disabled> 星＋ひとこと（匿名）</label>
         <label class="chk"><input type="checkbox" id="lv2" checked> 実名・写真</label>
         <label class="chk"><input type="checkbox" id="lv3"> 顔出し動画（Phase1）</label>
       </div>
       <label class="chk"><input type="checkbox" id="f_verified"> 検証済み（購入者リンク経由）のみ返礼する</label>
-      <div style="margin-top:14px"><button class="btn" id="createForm">作成する</button></div>
+      <div style="margin-top:16px"><button class="btn" id="createForm">作成する</button></div>
     </div>
     ${list}`;
 
@@ -198,7 +227,7 @@ async function renderRewards(){
   $("view").innerHTML = `
     <div class="card">
       <h2>返礼設定</h2>
-      <p class="muted" style="margin-top:-6px">出し方レベルごとに、お客様へのお礼を決めます。踏み込むほど手厚く。</p>
+      <p class="muted" style="margin-top:-8px">出し方レベルごとに、お客様へのお礼を決めます。踏み込むほど手厚く。</p>
       <label>フォーム</label><select id="rw_form">${opts}</select>
       <div id="rwLevels"></div>
     </div>
@@ -241,13 +270,13 @@ function renderEmbed(){
   $("view").innerHTML = `
     <div class="card">
       <h2>サイトに「声の壁」を貼る</h2>
-      <p class="muted" style="margin-top:-6px">掲載中の声が表示されます。HTMLの好きな場所にこの1行を貼るだけ。</p>
+      <p class="muted" style="margin-top:-8px">掲載中の声が表示されます。HTMLの好きな場所にこの1行を貼るだけ。</p>
       <div class="code" id="snip">${esc(snippet)}</div>
-      <button class="btn ghost sm copy" style="margin-top:10px" onclick='copy(${JSON.stringify(snippet)})'>コードをコピー</button>
+      <button class="btn ghost sm copy" style="margin-top:11px" onclick='copy(${JSON.stringify(snippet)})'>コードをコピー</button>
     </div>
     <div class="card">
       <h3>置き場所を指定したいとき</h3>
-      <p class="muted" style="margin-top:-4px">表示したい場所に下のタグを置くと、そこに描画されます。</p>
+      <p class="muted" style="margin-top:-6px">表示したい場所に下のタグを置くと、そこに描画されます。</p>
       <div class="code">${esc('<div data-star-reviews></div>')}</div>
     </div>`;
 }
