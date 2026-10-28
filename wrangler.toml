@@ -1,0 +1,23 @@
+name = "star-reviews"
+compatibility_date = "2026-09-23"
+pages_build_output_dir = "public"
+
+# --- D1 (データベース) ---
+# `npx wrangler d1 create star-reviews-db` で作成し、出力された database_id を貼る
+[[d1_databases]]
+binding = "DB"
+database_name = "star-reviews-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# --- R2 (画像・動画) ---
+# `npx wrangler r2 bucket create star-reviews-media` で作成
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "star-reviews-media"
+
+# --- KV (セッション) ---
+# `npx wrangler kv namespace create SESSIONS` で作成し、出力された id を貼る
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>ダッシュボード｜star-reviews</title>
+<style>
+  :root{--bg:#faf7f2;--ink:#272437;--muted:#726d80;--line:#ece2d4;--card:#fff;--accent:#e8604c;--accent-ink:#b8432f;--gold:#f3a712;--ok:#1d8a5f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.7}
+  .top{background:#fff;border-bottom:1px solid var(--line)}
+  .top .in{max-width:900px;margin:0 auto;padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
+  .logo{font-weight:800}.logo b{color:var(--accent)}
+  .biz{font-size:13px;color:var(--muted)}
+  .logout{font-size:12.5px;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline}
+  .tabs{max-width:900px;margin:0 auto;padding:0 18px;display:flex;gap:4px;overflow:auto}
+  .tab{border:0;background:none;padding:14px 12px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
+  .tab.on{color:var(--ink);border-color:var(--accent)}
+  main{max-width:900px;margin:0 auto;padding:22px 18px 70px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+  h2{font-size:17px;margin:0 0 14px}
+  h3{font-size:14px;margin:0 0 8px}
+  label{font-size:13px;font-weight:700;display:block;margin:0 0 5px}
+  input[type=text],input[type=number],textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fffdf9;margin-bottom:11px}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+  .btn{border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;padding:11px 16px;cursor:pointer;font-size:14px}
+  .btn.ghost{background:#fff;color:var(--accent-ink);border:1px solid var(--accent)}
+  .btn.ok{background:var(--ok)}
+  .btn.mut{background:#efe9e0;color:var(--muted)}
+  .btn.sm{padding:8px 13px;font-size:13px}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;margin-right:14px;cursor:pointer}
+  .chk input{accent-color:var(--accent)}
+  .muted{color:var(--muted);font-size:13px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px}
+  .pill.g{background:#e4f5ec;color:var(--ok)}.pill.o{background:#ffe9e2;color:var(--accent-ink)}.pill.n{background:#eee8de;color:var(--muted)}
+  .stars{color:var(--gold);font-size:15px;letter-spacing:1px}
+  .ti{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:11px;background:#fffdf9}
+  .ti .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+  .ti .body{font-size:14.5px;margin:6px 0 10px;white-space:pre-wrap}
+  .ti .who{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ti img{width:38px;height:38px;border-radius:50%;object-fit:cover}
+  .code{background:#1f1c2b;color:#fff;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;overflow:auto;white-space:pre}
+  .copy{margin-top:8px}
+  .link{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f3ede3;border-radius:8px;padding:7px 10px;word-break:break-all}
+  .empty{color:#9b9488;text-align:center;padding:30px 10px;font-size:14px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f1c2b;color:#fff;padding:10px 18px;border-radius:10px;font-size:13.5px;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <span class="logo">star<b>·</b>reviews</span>
+  <span><span class="biz" id="bizName"></span> <button class="logout" id="logout">ログアウト</button></span>
+</div></div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-t="forms">フォーム</button>
+  <button class="tab" data-t="inbox">受信トレイ</button>
+  <button class="tab" data-t="rewards">返礼設定</button>
+  <button class="tab" data-t="embed">埋め込み</button>
+</div>
+<main id="view"></main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const api = (u,o)=>fetch(u,o).then(async r=>({ok:r.ok,data:await r.json().catch(()=>({}))}));
+const esc = (s)=>{const d=document.createElement("div");d.textContent=s==null?"":s;return d.innerHTML;};
+const stars = (n)=>"★★★★★".slice(0,n|0)+"☆☆☆☆☆".slice(0,5-(n|0));
+let STATE = { forms: [], embedToken: null, origin: location.origin };
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+function copy(text){navigator.clipboard?.writeText(text);toast("コピーしました");}
+
+async function boot(){
+  const me = await api("/api/auth/me");
+  if(!me.data.authenticated){ location.href="/"; return; }
+  $("bizName").textContent = me.data.business?.name || "";
+  $("logout").onclick = async()=>{ await api("/api/auth/logout",{method:"POST"}); location.href="/"; };
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on"); render(t.dataset.t);
+  });
+  await loadForms();
+  render("forms");
+}
+
+async function loadForms(){
+  const r = await api("/api/forms");
+  STATE.forms = r.data.forms || [];
+  STATE.embedToken = STATE.forms.find(f=>f.embed_token)?.embed_token || null;
+}
+
+function render(tab){
+  if(tab==="forms") return renderForms();
+  if(tab==="inbox") return renderInbox();
+  if(tab==="rewards") return renderRewards();
+  if(tab==="embed") return renderEmbed();
+}
+
+/* ---------- フォーム ---------- */
+function renderForms(){
+  const list = STATE.forms.map(f=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <h3 style="margin:0">${esc(f.title)}</h3>
+        <span><span class="pill o">未対応 ${f.pending_count}</span> <span class="pill g">掲載 ${f.approved_count}</span></span>
+      </div>
+      <p class="muted" style="margin:8px 0 4px">投稿リンク（LINEやメールに貼る）</p>
+      <div class="link">${STATE.origin}/f/${esc(f.slug)}</div>
+      <button class="btn ghost sm copy" onclick="copy('${STATE.origin}/f/${esc(f.slug)}')">リンクをコピー</button>
+    </div>`).join("") || `<div class="empty">まだフォームがありません。最初のフォームを作りましょう。</div>`;
+
+  $("view").innerHTML = `
+    <div class="card">
+      <h2>新しいフォームを作成</h2>
+      <label>タイトル</label>
+      <input type="text" id="f_title" placeholder="例）カフェ・ソレイユ のお客様の声">
+      <label>案内文（任意）</label>
+      <textarea id="f_intro" rows="2" placeholder="ご来店ありがとうございました。感想をひとことお願いします！"></textarea>
+      <label>お礼メッセージ（投稿後に表示）</label>
+      <input type="text" id="f_thanks" placeholder="ありがとうございました！">
+      <label>集める出し方</label>
+      <div style="margin-bottom:11px">
+        <label class="chk"><input type="checkbox" id="lv1" checked disabled> 星＋ひとこと（匿名）</label>
+        <label class="chk"><input type="checkbox" id="lv2" checked> 実名・写真</label>
+        <label class="chk"><input type="checkbox" id="lv3"> 顔出し動画（Phase1）</label>
+      </div>
+      <label class="chk"><input type="checkbox" id="f_verified"> 検証済み（購入者リンク経由）のみ返礼する</label>
+      <div style="margin-top:14px"><button class="btn" id="createForm">作成する</button></div>
+    </div>
+    ${list}`;
+
+  $("createForm").onclick = async ()=>{
+    const title = $("f_title").value.trim();
+    if(!title){ toast("タイトルを入力してください"); return; }
+    const levels = ["1"]; if($("lv2").checked) levels.push("2"); if($("lv3").checked) levels.push("3");
+    const r = await api("/api/forms",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({title,intro:$("f_intro").value.trim(),thanks_message:$("f_thanks").value.trim(),
+        levels_enabled:levels.join(","),require_verified:$("f_verified").checked})});
+    if(!r.ok){ toast(r.data.error||"作成に失敗"); return; }
+    toast("作成しました"); await loadForms(); renderForms();
+  };
+}
+
+/* ---------- 受信トレイ ---------- */
+async function renderInbox(){
+  const opts = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
+  $("view").innerHTML = `
+    <div class="card">
+      <div class="row">
+        <div><label>フォーム</label><select id="in_form"><option value="">すべて</option>${opts}</select></div>
+        <div><label>状態</label><select id="in_status">
+          <option value="pending">未対応</option><option value="approved">掲載中</option><option value="rejected">非掲載</option>
+        </select></div>
+      </div>
+    </div>
+    <div id="inboxList"><div class="empty">読み込み中…</div></div>`;
+  const load = async ()=>{
+    const fid = $("in_form").value, st = $("in_status").value;
+    const r = await api(`/api/testimonials?status=${st}${fid?`&form_id=${fid}`:""}`);
+    const items = r.data.testimonials || [];
+    $("inboxList").innerHTML = items.length ? items.map(renderTi).join("") : `<div class="empty">該当する声はありません。</div>`;
+    bindTi();
+  };
+  $("in_form").onchange = load; $("in_status").onchange = load;
+  load();
+}
+function renderTi(t){
+  const lv = {1:"匿名",2:"実名・写真",3:"動画"}[t.level]||"";
+  const photo = t.photo_key ? `<img src="/api/media/${esc(t.photo_key)}" alt="">` : "";
+  const actions = t.status==="pending"
+    ? `<button class="btn ok sm act" data-id="${t.id}" data-a="approve">掲載する</button>
+       <button class="btn mut sm act" data-id="${t.id}" data-a="reject">非掲載</button>`
+    : (t.status==="approved" ? `<button class="btn mut sm act" data-id="${t.id}" data-a="reject">掲載を外す</button>` : "");
+  return `<div class="ti">
+    <div class="meta"><span class="stars">${stars(t.rating)}</span>
+      <span class="pill n">${lv}</span>${t.verified?'<span class="pill g">確認済み</span>':''}</div>
+    <div class="body">${esc(t.body)}</div>
+    <div class="who">${photo}<span class="muted">${esc(t.author_label)}</span></div>
+    <div>${actions}</div>
+  </div>`;
+}
+function bindTi(){
+  document.querySelectorAll(".act").forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const r = await api(`/api/testimonials/${b.dataset.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:b.dataset.a})});
+    if(r.ok){ toast(b.dataset.a==="approve"?"掲載しました":"外しました"); b.closest(".ti").style.opacity=.4; await loadForms(); }
+    else { toast("失敗しました"); b.disabled=false; }
+  });
+}
+
+/* ---------- 返礼設定 ---------- */
+async function renderRewards(){
+  if(!STATE.forms.length){ $("view").innerHTML=`<div class="empty">先にフォームを作成してください。</div>`; return; }
+  const opts = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
+  $("view").innerHTML = `
+    <div class="card">
+      <h2>返礼設定</h2>
+      <p class="muted" style="margin-top:-6px">出し方レベルごとに、お客様へのお礼を決めます。踏み込むほど手厚く。</p>
+      <label>フォーム</label><select id="rw_form">${opts}</select>
+      <div id="rwLevels"></div>
+    </div>
+    <p class="muted">⚠️ この特典は「自社サイト掲載用の声」専用です。特典と引き換えにGoogleクチコミを依頼するのはガイドライン違反なので繋げないでください。</p>`;
+  const draw = async ()=>{
+    const fid = $("rw_form").value;
+    const r = await api(`/api/rewards?form_id=${fid}`);
+    const rules = {}; (r.data.rules||[]).forEach(x=>rules[x.level]=x);
+    const levelName={1:"Lv1 星＋ひとこと（匿名）",2:"Lv2 実名・写真",3:"Lv3 顔出し動画"};
+    $("rwLevels").innerHTML = [1,2,3].map(lv=>{
+      const ru=rules[lv]||{};
+      return `<div class="ti">
+        <h3>${levelName[lv]}</h3>
+        <div class="row">
+          <div><label>お礼の種類</label><select id="rt_${lv}">
+            <option value="amount"${ru.reward_type==="amount"?" selected":""}>金額（円引き）</option>
+            <option value="percent"${ru.reward_type==="percent"?" selected":""}>割引（%OFF）</option>
+            <option value="code"${ru.reward_type==="code"?" selected":""}>特典コード</option>
+            <option value="content"${ru.reward_type==="content"?" selected":""}>限定コンテンツ等</option>
+          </select></div>
+          <div><label>内容</label><input type="text" id="rv_${lv}" value="${esc(ru.reward_value||"")}" placeholder="例）300 / 10 / 限定PDF"></div>
+        </div>
+        <button class="btn sm save" data-lv="${lv}">このレベルを保存</button>
+      </div>`;
+    }).join("");
+    document.querySelectorAll(".save").forEach(b=>b.onclick=async()=>{
+      const lv=b.dataset.lv;
+      const r2=await api("/api/rewards",{method:"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify({form_id:fid,level:+lv,reward_type:$("rt_"+lv).value,reward_value:$("rv_"+lv).value.trim()})});
+      toast(r2.ok?"保存しました":"保存に失敗");
+    });
+  };
+  $("rw_form").onchange = draw; draw();
+}
+
+/* ---------- 埋め込み ---------- */
+function renderEmbed(){
+  if(!STATE.embedToken){ $("view").innerHTML=`<div class="empty">先にフォームを作成すると、埋め込みコードが発行されます。</div>`; return; }
+  const snippet = `<script src="${STATE.origin}/widget.js" data-token="${STATE.embedToken}" async><\/script>`;
+  $("view").innerHTML = `
+    <div class="card">
+      <h2>サイトに「声の壁」を貼る</h2>
+      <p class="muted" style="margin-top:-6px">掲載中の声が表示されます。HTMLの好きな場所にこの1行を貼るだけ。</p>
+      <div class="code" id="snip">${esc(snippet)}</div>
+      <button class="btn ghost sm copy" style="margin-top:10px" onclick='copy(${JSON.stringify(snippet)})'>コードをコピー</button>
+    </div>
+    <div class="card">
+      <h3>置き場所を指定したいとき</h3>
+      <p class="muted" style="margin-top:-4px">表示したい場所に下のタグを置くと、そこに描画されます。</p>
+      <div class="code">${esc('<div data-star-reviews></div>')}</div>
+    </div>`;
+}
+
+boot();
+</script>
+</body>
+</html>

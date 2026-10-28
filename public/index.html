@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>star-reviews｜お客様の声を、集めて・貼るだけ</title>
+<meta name="description" content="匿名OK・特典で集まる。LINEやメールで依頼して集めた声を、サイトやLPにそのまま埋め込めるお客様の声ツール。" />
+<style>
+  :root{--bg:#faf7f2;--ink:#272437;--muted:#726d80;--line:#ece2d4;--card:#fff;--accent:#e8604c;--accent-ink:#b8432f;--gold:#f3a712}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  header{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+  .logo{font-weight:800;font-size:19px;letter-spacing:.02em}
+  .logo b{color:var(--accent)}
+  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding:36px 0 60px}
+  @media(max-width:820px){.hero{grid-template-columns:1fr;gap:28px;padding:16px 0 40px}}
+  h1{font-size:38px;line-height:1.3;margin:0 0 18px;font-weight:800;letter-spacing:-.01em}
+  @media(max-width:820px){h1{font-size:29px}}
+  .lead{font-size:17px;color:var(--muted);margin:0 0 24px}
+  .points{list-style:none;padding:0;margin:0 0 8px}
+  .points li{padding:7px 0 7px 30px;position:relative;font-size:15px}
+  .points li::before{content:"✓";position:absolute;left:0;color:var(--accent);font-weight:800}
+  .auth{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 24px;box-shadow:0 8px 30px rgba(60,40,25,.06)}
+  .auth h2{margin:0 0 4px;font-size:19px}
+  .auth p.sub{margin:0 0 18px;color:var(--muted);font-size:13.5px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+  .field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font:inherit;background:#fffdf9}
+  .field input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .btn{width:100%;border:0;border-radius:11px;background:var(--accent);color:#fff;font-weight:700;font-size:16px;padding:14px;cursor:pointer}
+  .btn:disabled{opacity:.6}
+  .toggle{text-align:center;margin-top:14px;font-size:13.5px;color:var(--muted)}
+  .toggle a{color:var(--accent-ink);font-weight:700;cursor:pointer;text-decoration:none}
+  .err{color:#b8432f;font-size:13.5px;margin:10px 0 0;display:none}
+  footer{border-top:1px solid var(--line);margin-top:30px;padding:24px 0;color:#a79f93;font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">star<b>·</b>reviews</div>
+    <a href="#auth" style="color:var(--accent-ink);font-weight:700;text-decoration:none;font-size:14px">ログイン</a>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1>お客様の声を、<br>集めて・貼るだけ。</h1>
+      <p class="lead">匿名でもOK。ひとこと書いてもらうお礼に特典を自動で。集まった声は、あなたのサイトやLPにそのまま埋め込めます。</p>
+      <ul class="points">
+        <li>顔出し不要・匿名でも書いてもらえる設計</li>
+        <li>出し方に応じてお礼（クーポン）を自動発行</li>
+        <li>LINE・メールのリンクから集める</li>
+        <li>良い声だけ選んで、タグ1行でサイトに掲載</li>
+      </ul>
+    </div>
+
+    <div class="auth" id="auth">
+      <h2 id="authTitle">無料ではじめる</h2>
+      <p class="sub" id="authSub">クレカ不要。まずはアカウントを作成。</p>
+      <form id="form">
+        <div class="field" id="nameField">
+          <label for="bname">ビジネス名</label>
+          <input type="text" id="bname" placeholder="例）カフェ・ソレイユ" />
+        </div>
+        <div class="field">
+          <label for="email">メールアドレス</label>
+          <input type="email" id="email" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="password">パスワード（8文字以上）</label>
+          <input type="password" id="password" autocomplete="current-password" />
+        </div>
+        <button class="btn" id="submit" type="submit">アカウントを作成</button>
+        <p class="err" id="err"></p>
+      </form>
+      <p class="toggle" id="toggle">すでにアカウントをお持ちですか？ <a id="toggleLink">ログイン</a></p>
+    </div>
+  </section>
+
+  <footer>© 2026 star-reviews</footer>
+</div>
+
+<script>
+let mode = "register";
+const $ = (id) => document.getElementById(id);
+
+function setMode(m){
+  mode = m;
+  const reg = m === "register";
+  $("authTitle").textContent = reg ? "無料ではじめる" : "おかえりなさい";
+  $("authSub").textContent = reg ? "クレカ不要。まずはアカウントを作成。" : "メールとパスワードでログイン。";
+  $("submit").textContent = reg ? "アカウントを作成" : "ログイン";
+  $("nameField").style.display = reg ? "block" : "none";
+  $("toggle").innerHTML = reg
+    ? 'すでにアカウントをお持ちですか？ <a id="toggleLink">ログイン</a>'
+    : 'アカウントがまだですか？ <a id="toggleLink">新規登録</a>';
+  $("toggleLink").addEventListener("click", () => setMode(reg ? "login" : "register"));
+}
+$("toggleLink").addEventListener("click", () => setMode("login"));
+
+$("form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  $("err").style.display = "none";
+  const btn = $("submit"); btn.disabled = true;
+  const payload = { email: $("email").value.trim(), password: $("password").value };
+  if(mode === "register") payload.business_name = $("bname").value.trim();
+  try{
+    const res = await fetch("/api/auth/" + mode, {
+      method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify(payload)
+    });
+    const j = await res.json();
+    if(!res.ok){ $("err").textContent = j.error || "エラーが発生しました"; $("err").style.display="block"; btn.disabled=false; return; }
+    location.href = "/app.html";
+  }catch(e){ $("err").textContent = "通信エラー"; $("err").style.display="block"; btn.disabled=false; }
+});
+
+// 既ログインならダッシュボードへ
+fetch("/api/auth/me").then(r=>r.json()).then(j=>{ if(j.authenticated) location.href="/app.html"; });
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "star-reviews",
+  "version": "0.1.0",
+  "private": true,
+  "description": "お客様の声（Testimonial）収集・掲載SaaS — Cloudflare Pages + Functions + D1 + R2 + KV",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy",
+    "db:create": "wrangler d1 create star-reviews-db",
+    "db:migrate": "wrangler d1 migrations apply star-reviews-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply star-reviews-db --local",
+    "kv:create": "wrangler kv namespace create SESSIONS",
+    "r2:create": "wrangler r2 bucket create star-reviews-media"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "wrangler": "^3.90.0"
+  }
+}
