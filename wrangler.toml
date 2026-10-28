@@ -3,11 +3,11 @@ compatibility_date = "2026-09-23"
 pages_build_output_dir = "public"
 
 # --- D1 (データベース) ---
-# `npx wrangler d1 create star-reviews-db` で作成し、出力された database_id を貼る
+# Cloudflareアカウント jp.lab.diamond (7969ecaa) 上の star-reviews-db
 [[d1_databases]]
 binding = "DB"
 database_name = "star-reviews-db"
-database_id = "074f2bf2-091f-42bd-bba4-03459ffa0683"
+database_id = "5cc50ee4-bf85-42bb-b183-03302aac8b3d"
 migrations_dir = "migrations"
 
 # --- R2 (画像・動画) ---
@@ -17,7 +17,7 @@ binding = "MEDIA"
 bucket_name = "star-reviews-media"
 
 # --- KV (セッション) ---
-# `npx wrangler kv namespace create SESSIONS` で作成し、出力された id を貼る
+# Cloudflareアカウント jp.lab.diamond (7969ecaa) 上の SESSIONS namespace
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "4148e40f2a5144ae8ce14a675a6cea14"
+id = "38a6d24676d8443da1e42e1c3767d600"
