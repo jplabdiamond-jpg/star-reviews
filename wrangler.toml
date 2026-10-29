@@ -21,3 +21,8 @@ bucket_name = "star-reviews-media"
 [[kv_namespaces]]
 binding = "SESSIONS"
 id = "38a6d24676d8443da1e42e1c3767d600"
+
+# --- Workers AI (動画の文字起こし・字幕生成) ---
+# ダッシュボードの Settings → Functions → Bindings でも AI バインディング(名前=AI)を追加可
+[ai]
+binding = "AI"

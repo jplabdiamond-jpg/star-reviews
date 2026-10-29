@@ -2,6 +2,7 @@
 // { slug, level, rating, body, author_name?, consent_display, photo_key?, token? }
 // 返礼ルールがあれば検証条件を満たした投稿にクーポンコードを自動発行する。
 import { json, badRequest, readJson, genId, genCode, nowSec } from "../../../shared/util";
+import { notifyNewTestimonial } from "../../../shared/notify";
 import type { Env } from "../../../shared/types";
 
 function rewardText(type: string, value: string): string {
@@ -11,7 +12,7 @@ function rewardText(type: string, value: string): string {
   return value;
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   const b = await readJson<{
     slug?: string;
     level?: number;
@@ -26,10 +27,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!b || !b.slug) return badRequest("invalid json");
 
   const form = await env.DB.prepare(
-    "SELECT id, business_id, levels_enabled, require_verified FROM forms WHERE slug = ?"
+    "SELECT id, business_id, title, levels_enabled, require_verified FROM forms WHERE slug = ?"
   )
     .bind(b.slug)
-    .first<{ id: string; business_id: string; levels_enabled: string; require_verified: number }>();
+    .first<{ id: string; business_id: string; title: string; levels_enabled: string; require_verified: number }>();
   if (!form) return badRequest("フォームが見つかりません", 404);
 
   const level = Number(b.level) || 1;
@@ -103,6 +104,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .run();
     reward = { code, text: rewardText(rule!.reward_type, rule!.reward_value) };
   }
+
+  // 新着通知（ベストエフォート・応答はブロックしない）
+  const baseUrl = (env.PUBLIC_BASE_URL || new URL(request.url).origin).replace(/\/+$/, "");
+  waitUntil(
+    notifyNewTestimonial(env, {
+      businessId: form.business_id,
+      formTitle: form.title,
+      rating,
+      body: text,
+      authorLabel,
+      level,
+      baseUrl,
+    })
+  );
 
   return json({ ok: true, reward });
 };

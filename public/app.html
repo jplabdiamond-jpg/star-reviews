@@ -112,6 +112,7 @@
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
   <button class="tab" data-t="plan">プラン</button>
+  <button class="tab" data-t="notify">通知</button>
 </div></div>
 <main id="view"></main>
 <div class="toast" id="toast"></div>
@@ -269,6 +270,7 @@ function render(tab){
   if(tab==="rewards") return renderRewards();
   if(tab==="embed") return renderEmbed();
   if(tab==="plan") return renderPlan();
+  if(tab==="notify") return renderNotify();
 }
 
 /* ---------- ホスト型・声の壁ページ(SEO) + プラン ---------- */
@@ -394,6 +396,123 @@ async function openPortal(){
 }
 
 /* ---------- フォーム ---------- */
+/* ---------- CSV パース & テンプレDL ---------- */
+function parseCsvText(text){
+  // BOM除去
+  text = text.replace(/^﻿/, "");
+  const rows=[]; let row=[]; let cur=""; let q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else { q=false; } }
+      else cur+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===","){ row.push(cur); cur=""; }
+      else if(c==="\n"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(c==="\r"){ /* skip */ }
+      else cur+=c;
+    }
+  }
+  if(cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=> r.some(x=> (x||"").trim()!==""));
+}
+function parseTestimonialCsv(text){
+  const rows = parseCsvText(text);
+  if(!rows.length) return [];
+  // 見出し行判定: 2列目(評価)が数値でなければ見出しとみなしスキップ
+  let start=0;
+  const r0=rows[0]||[];
+  const ratingLooksNum = /^[1-5]$/.test((r0[1]||"").trim());
+  if(!ratingLooksNum) start=1;
+  const out=[];
+  for(let i=start;i<rows.length;i++){
+    const r=rows[i];
+    const author_name=(r[0]||"").trim();
+    const rating=parseInt((r[1]||"").trim(),10);
+    const body=(r[2]||"").trim();
+    const date=(r[3]||"").trim();
+    if(!(rating>=1&&rating<=5) || !body) continue;
+    out.push({author_name, rating, body, date});
+  }
+  return out;
+}
+function downloadCsvTemplate(){
+  const sample =
+    "名前,評価,コメント,日付\n" +
+    "田中 太郎,5,接客がとても丁寧で安心して任せられました。,2026-10-01\n" +
+    "匿名,4,価格以上の仕上がりでした。また利用します。,\n";
+  const blob = new Blob(["﻿"+sample], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="star-reviews-import-template.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- 新着通知（メール/LINE） ---------- */
+async function renderNotify(){
+  $("view").innerHTML = `<div class="card"><div class="empty">読み込み中…</div></div>`;
+  const r = await api("/api/settings/notify");
+  if(!r.ok){ $("view").innerHTML = `<div class="card"><div class="empty">読み込みに失敗しました</div></div>`; return; }
+  const d = r.data;
+  const emailState = d.email_configured
+    ? `<span class="pill g" style="font-size:12px">送信可能</span>`
+    : `<span class="pill o" style="font-size:12px">未設定</span>`;
+  const emailNote = d.email_configured ? ""
+    : `<p class="muted" style="margin:6px 0 0;font-size:12px">※ メール送信を有効にするには、管理者がResendのAPIキーを取得し、Cloudflare Pagesの環境変数 <code>RESEND_API_KEY</code> と <code>RESEND_FROM</code> を登録してください。</p>`;
+
+  let lineBlock = "";
+  if(d.line_linked){
+    lineBlock = `<span class="pill g" style="font-size:12px">連携済み</span>
+      <p class="muted" style="margin:6px 0 0;font-size:13px">このLINEアカウントに新着通知が届きます。</p>`;
+  } else if(d.line_configured && d.line_link_code){
+    lineBlock = `<span class="pill o" style="font-size:12px">未連携</span>
+      <ol style="margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.9">
+        <li>star-reviews の公式LINEアカウントを<b>友だち追加</b></li>
+        <li>トークで下記の<b>連携コード</b>をそのまま送信</li>
+      </ol>
+      <div style="margin:10px 0;padding:12px;border:2px dashed var(--sun-deep);border-radius:10px;text-align:center">
+        <span style="font-size:22px;font-weight:800;letter-spacing:2px">${esc(d.line_link_code)}</span>
+      </div>`;
+  } else {
+    lineBlock = `<span class="pill o" style="font-size:12px">未設定</span>
+      <p class="muted" style="margin:6px 0 0;font-size:12px">※ LINE通知を有効にするには、管理者がLINE公式アカウント(Messaging API)を作成し、環境変数 <code>LINE_CHANNEL_ACCESS_TOKEN</code> と <code>LINE_CHANNEL_SECRET</code> を登録してください。Webフックは <code>/api/public/line-webhook</code> です。</p>`;
+  }
+
+  $("view").innerHTML = `
+    <div class="card">
+      <h2>新着通知</h2>
+      <p class="muted" style="margin-top:-8px">新しいお客様の声が届いたら、メールとLINEでお知らせします。</p>
+      <label style="display:flex;align-items:center;gap:10px;margin:8px 0 2px;cursor:pointer">
+        <input type="checkbox" id="nt_enabled" ${d.notify_enabled?"checked":""} style="width:18px;height:18px">
+        <span>新着通知を受け取る</span>
+      </label>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">メール通知</h2>${emailState}</div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1"><label>通知先メール（空ならログイン用メール ${esc(d.owner_email||"")} へ）</label>
+          <input type="email" id="nt_email" placeholder="${esc(d.owner_email||"you@example.com")}" value="${esc(d.notify_email||"")}"></div>
+      </div>
+      ${emailNote}
+      <div style="margin-top:12px"><button class="btn sm" id="nt_save">保存</button></div>
+    </div>
+    <div class="card">
+      <h2>LINE通知</h2>
+      ${lineBlock}
+    </div>`;
+
+  $("nt_save").onclick = async ()=>{
+    const btn=$("nt_save"); btn.disabled=true; btn.textContent="保存中…";
+    const r2 = await api("/api/settings/notify",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({notify_enabled: $("nt_enabled").checked, notify_email: $("nt_email").value.trim()})});
+    btn.disabled=false; btn.textContent="保存";
+    toast(r2.ok ? "保存しました" : (r2.data.error||"保存に失敗しました"));
+  };
+  $("nt_enabled").onchange = ()=>{ $("nt_save").click(); };
+}
+
 function renderForms(){
   const list = STATE.forms.map(f=>`
     <div class="card">
@@ -472,7 +591,7 @@ async function renderInbox(){
 function renderTi(t){
   const lv = {1:"匿名",2:"実名・写真",3:"動画"}[t.level]||"";
   const photo = t.photo_key ? `<img src="/api/media/${esc(t.photo_key)}" alt="">` : "";
-  const video = t.video_key ? `<video controls playsinline preload="metadata" src="/api/media/${esc(t.video_key)}" style="width:100%;max-width:320px;border-radius:10px;margin:4px 0 8px;background:#000"></video>` : "";
+  const video = t.video_key ? `<video controls playsinline preload="metadata" src="/api/media/${esc(t.video_key)}" crossorigin="anonymous" style="width:100%;max-width:320px;border-radius:10px;margin:4px 0 8px;background:#000"><track kind="captions" srclang="ja" label="日本語" default src="/api/media/${esc(t.video_key)}.vtt"></video>` : "";
   const actions = t.status==="pending"
     ? `<button class="btn ok sm act" data-id="${t.id}" data-a="approve">掲載する</button>
        <button class="btn mut sm act" data-id="${t.id}" data-a="reject">非掲載</button>`
@@ -510,7 +629,21 @@ async function renderImport(){
       <button class="btn sm" id="g_import">取り込む</button>
       <p class="muted" id="g_note" style="margin-top:8px">※ Google Places APIの仕様で取り込めるのは最も関連する最大5件です。全件取り込みは今後のGoogleビジネスプロフィール連携で対応予定。</p>
     </div>` : "";
-  $("view").innerHTML = googleCard + `
+  const csvCard = STATE.forms.length ? `
+    <div class="card">
+      <h2>CSVで一括インポート</h2>
+      <p class="muted" style="margin-top:-8px">他サービスや手集計の声を <b>CSV</b> でまとめて取り込みます。列は <code>名前, 評価(1〜5), コメント, 日付(任意)</code> の順。取り込んだ声はそのまま掲載されます。</p>
+      <div class="row">
+        <div><label>取り込み先フォーム</label><select id="csv_form">${gForms}</select></div>
+        <div><label>CSVファイル</label><input type="file" id="csv_file" accept=".csv,text/csv"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+        <button class="btn sm" id="csv_import">取り込む</button>
+        <a href="#" id="csv_tmpl" style="color:var(--sun-deep);font-size:13px;text-decoration:underline">テンプレートCSVをダウンロード</a>
+      </div>
+      <p class="muted" id="csv_note" style="margin-top:8px">※ 1行目が見出し（名前,評価,…）の場合は自動でスキップします。最大1000件。</p>
+    </div>` : "";
+  $("view").innerHTML = googleCard + csvCard + `
     <div class="card">
       <h2>レビューを選んで掲載</h2>
       <p class="muted" style="margin-top:-8px">集まったお客様の声を並び替えて、サイトに載せたいものを選びます。<b>本文は編集できません</b>（いただいた声をそのまま掲載します）。</p>
@@ -537,6 +670,30 @@ async function renderImport(){
     bindPick();
   };
   $("im_sort").onchange = load; $("im_form").onchange = load; load();
+  if($("csv_tmpl")){
+    $("csv_tmpl").onclick = (e)=>{ e.preventDefault(); downloadCsvTemplate(); };
+  }
+  if($("csv_import")){
+    $("csv_import").onclick = async ()=>{
+      const f = $("csv_file").files && $("csv_file").files[0];
+      if(!f){ toast("CSVファイルを選んでください"); return; }
+      const fid = $("csv_form").value;
+      if(!fid){ toast("取り込み先フォームを選んでください"); return; }
+      $("csv_import").disabled = true; $("csv_note").textContent = "読み込み中…";
+      try{
+        const textRaw = await f.text();
+        const rows = parseTestimonialCsv(textRaw);
+        if(!rows.length){ $("csv_note").textContent = "取り込める行がありませんでした（評価とコメントが必要です）。"; $("csv_import").disabled=false; return; }
+        const r = await api("/api/testimonials/import",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({form_id:fid, rows})});
+        if(!r.ok){ $("csv_note").textContent = r.data.error || "取り込みに失敗しました"; $("csv_import").disabled=false; return; }
+        toast(`${r.data.imported||0}件を取り込みました`);
+        $("csv_note").textContent = `${r.data.imported||0}件を掲載しました${r.data.skipped?`（${r.data.skipped}件スキップ）`:""}。`;
+        $("csv_file").value = "";
+        await loadForms(); load();
+      }catch(err){ $("csv_note").textContent = "CSVの読み込みに失敗しました。"; }
+      $("csv_import").disabled = false;
+    };
+  }
   if($("g_import")){
     $("g_import").onclick = async ()=>{
       const place = $("g_place").value.trim();
@@ -562,7 +719,7 @@ function renderPick(t){
   const on = t.status==="approved";
   const lv = {1:"匿名",2:"実名・写真",3:"動画"}[t.level]||"";
   const photo = t.photo_key ? `<img src="/api/media/${esc(t.photo_key)}" alt="">` : "";
-  const video = t.video_key ? `<video controls playsinline preload="metadata" src="/api/media/${esc(t.video_key)}" style="width:100%;max-width:320px;border-radius:10px;margin:4px 0 8px;background:#000"></video>` : "";
+  const video = t.video_key ? `<video controls playsinline preload="metadata" src="/api/media/${esc(t.video_key)}" crossorigin="anonymous" style="width:100%;max-width:320px;border-radius:10px;margin:4px 0 8px;background:#000"><track kind="captions" srclang="ja" label="日本語" default src="/api/media/${esc(t.video_key)}.vtt"></video>` : "";
   const src = t.source ? `<span class="pill n">${esc(t.source)}</span>` : "";
   return `<div class="ti">
     <div class="meta"><span class="stars">${stars(t.rating)}</span>

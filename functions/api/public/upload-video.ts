@@ -2,6 +2,7 @@
 // body = 動画バイナリそのもの, content-type = video/*
 // Workerのリクエスト本文上限(100MB)内。メモリを使わないよう request.body をそのままR2へ流す。
 import { json, badRequest, genId } from "../../../shared/util";
+import { transcribeAndStore } from "../../../shared/transcribe";
 import type { Env } from "../../../shared/types";
 
 const MAX_BYTES = 60 * 1024 * 1024; // 60MB（無料枠を意識した上限）
@@ -12,7 +13,7 @@ const EXT: Record<string, string> = {
   "video/x-m4v": "m4v",
 };
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   const ct = (request.headers.get("content-type") || "").split(";")[0].trim();
   const ext = EXT[ct];
   if (!ct.startsWith("video/") || !ext) return badRequest("対応していない動画形式です（MP4推奨）");
@@ -23,5 +24,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const key = `videos/${genId()}.${ext}`;
   await env.MEDIA.put(key, request.body, { httpMetadata: { contentType: ct } });
+
+  // 文字起こし→字幕(VTT)生成はバックグラウンドで（応答はブロックしない）
+  waitUntil(transcribeAndStore(env, key));
+
   return json({ ok: true, key });
 };

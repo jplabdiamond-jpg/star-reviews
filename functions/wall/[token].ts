@@ -118,7 +118,7 @@ function renderPage(d: {
     return (
       `<article class="card">` +
       `<div class="ctop">${stars(it.rating)}${it.source ? `<span class="src">via ${escapeHtml(it.source)}</span>` : ""}</div>` +
-      (it.video_url ? `<video class="vid" controls playsinline preload="metadata" src="${escapeHtml(it.video_url)}"></video>` : "") +
+      (it.video_url ? `<video class="vid" controls playsinline preload="metadata" crossorigin="anonymous" src="${escapeHtml(it.video_url)}"><track kind="captions" srclang="ja" label="日本語" default src="${escapeHtml(it.video_url)}.vtt"></video>` : "") +
       `<p class="body">${escapeHtml(it.body)}</p>` +
       `<footer class="cfoot">${avatar}<span class="who">${escapeHtml(it.author)}</span>${it.verified ? `<span class="badge">確認済み</span>` : ""}${it.date ? `<time class="dt">${escapeHtml(it.date)}</time>` : ""}</footer>` +
       `</article>`

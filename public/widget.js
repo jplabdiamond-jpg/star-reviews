@@ -148,7 +148,7 @@
           "<div class='sr-top'>" + starHTML(it.rating) +
           (it.source ? "<span class='sr-src'>via " + esc(it.source) + "</span>" : "") +
           "</div>" +
-          (it.video_url ? "<video class='sr-video' controls playsinline preload='metadata' src='" + esc(it.video_url) + "'></video>" : "") +
+          (it.video_url ? "<video class='sr-video' controls playsinline preload='metadata' crossorigin='anonymous' src='" + esc(it.video_url) + "'><track kind='captions' srclang='ja' label='\u65e5\u672c\u8a9e' default src='" + esc(it.video_url) + ".vtt'></video>" : "") +
           "<div class='sr-body'>" + esc(it.body) + "</div>" +
           "<div class='sr-foot'>" + avatar +
           "<span class='sr-who'>" + esc(it.author) + "</span>" +
