@@ -371,7 +371,7 @@ function renderPick(t){
       <span class="pill n">${lv}</span>${src}${on?'<span class="pill g">掲載中</span>':''}${t.verified?'<span class="pill g">確認済み</span>':''}</div>
     <div class="body">${esc(t.body)}</div>
     <div class="who">${photo}<span class="muted">${esc(t.author_label)}</span></div>
-    <div><button class="btn ${on?'mut':'ok'} sm pick" data-id="${t.id}" data-a="${on?'reject':'approve'}">${on?'掲載を外す':'声の壁に掲載する'}</button></div>
+    <div><button class="btn ${on?'mut':'ok'} sm pick" data-id="${t.id}" data-a="${on?'reject':'approve'}">${on?'掲載を外す':'レビューを掲載する'}</button></div>
   </div>`;
 }
 function bindPick(){
