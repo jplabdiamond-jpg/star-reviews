@@ -155,7 +155,7 @@ function coach(){
     {sel:null, title:"ようこそ 👋", body:"star-reviews の使い方を30秒でご案内します。いつでもスキップできます。"},
     {sel:'.tab[data-t="forms"]', title:"① フォームを作る", body:"投稿フォームを作り、LINEやメールにリンクを貼ってお客様に声を書いてもらいます。匿名でもOKです。"},
     {sel:'.tab[data-t="inbox"]', title:"② 届いた声を選ぶ", body:"受信トレイで内容を確認し、掲載したい良い声だけ「掲載する」で承認します。"},
-    {sel:'.tab[data-t="import"]', title:"③ 既存の声も登録", body:"Googleやアンケートで既にもらった声は、ここから登録してすぐ掲載できます。"},
+    {sel:'.tab[data-t="import"]', title:"③ 掲載を選ぶ", body:"集まったレビューを並び替えて、サイトに載せたいものを選べます。本文は編集できないので、いただいた声をそのまま安心して掲載できます。"},
     {sel:'.tab[data-t="embed"]', title:"④ サイトに貼る", body:"タグを1行コピーして貼るだけ。★の種類・レイアウト・テーマも選べます。"},
   ];
   let i=0;
@@ -330,47 +330,57 @@ function bindTi(){
   });
 }
 
-/* ---------- 手動インポート ---------- */
-function renderImport(){
-  if(!STATE.forms.length){ $("view").innerHTML=`<div class="empty">先にフォームを作成してください。</div>`; return; }
-  const opts = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
+/* ---------- レビューを選んで掲載（旧:手動インポート） ---------- */
+async function renderImport(){
+  const formOpts = `<option value="">すべてのフォーム</option>` + STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
   $("view").innerHTML = `
     <div class="card">
-      <h2>既存の声をインポート</h2>
-      <p class="muted" style="margin-top:-8px">Googleクチコミ・アンケート用紙・SNSなど、すでにもらった声をここに登録できます。登録した声は<b>すぐに「声の壁」に掲載</b>されます。</p>
+      <h2>レビューを選んで掲載</h2>
+      <p class="muted" style="margin-top:-8px">集まったお客様の声を並び替えて、サイトに載せたいものを選びます。<b>本文は編集できません</b>（いただいた声をそのまま掲載します）。</p>
       <div class="row">
-        <div><label>星</label><select id="im_rating">
-          <option value="5">★★★★★ (5)</option><option value="4">★★★★☆ (4)</option>
-          <option value="3">★★★☆☆ (3)</option><option value="2">★★☆☆☆ (2)</option><option value="1">★☆☆☆☆ (1)</option>
+        <div><label>並び替え</label><select id="im_sort">
+          <option value="new">新着順</option>
+          <option value="rating_desc">星が高い順</option>
+          <option value="rating_asc">星が低い順</option>
         </select></div>
-        <div><label>出所（任意）</label><input type="text" id="im_source" placeholder="例）Google / Instagram / 手書き"></div>
+        <div><label>フォーム</label><select id="im_form">${formOpts}</select></div>
       </div>
-      <label>声の本文</label>
-      <textarea id="im_body" rows="3" placeholder="いただいた感想をそのまま貼り付け"></textarea>
-      <div class="row">
-        <div><label>お名前・表示名（任意）</label><input type="text" id="im_name" placeholder="例）M.T様 / 匿名"></div>
-        <div><label>元の日付（任意）</label><input type="text" id="im_date" placeholder="2026-05-01"></div>
-      </div>
-      <label>登録先フォーム</label><select id="im_form">${opts}</select>
-      <div style="margin-top:14px"><button class="btn" id="im_add">インポートして掲載</button></div>
     </div>
-    <p class="muted">⚠️ 実際にお客様からいただいた声のみを登録してください。創作・自作の声の掲載は景品表示法などに触れる恐れがあります。</p>`;
-  $("im_add").onclick = async ()=>{
-    const body = $("im_body").value.trim();
-    if(!body){ toast("声の本文を入力してください"); return; }
-    const payload = {
-      form_id: $("im_form").value,
-      rating: +$("im_rating").value,
-      body,
-      author_name: $("im_name").value.trim(),
-      source: $("im_source").value.trim(),
-      date: $("im_date").value.trim()
-    };
-    const r = await api("/api/testimonials",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
-    if(!r.ok){ toast(r.data.error||"登録に失敗"); return; }
-    toast("掲載しました"); $("im_body").value=""; $("im_name").value=""; $("im_date").value="";
-    await loadForms();
+    <div id="imList"><div class="empty">読み込み中…</div></div>`;
+  const load = async ()=>{
+    const fid = $("im_form").value;
+    const r = await api(`/api/testimonials?status=all${fid?`&form_id=${fid}`:""}`);
+    let items = r.data.testimonials || [];
+    const sort = $("im_sort").value;
+    items.sort((a,b)=> sort==="rating_desc" ? (b.rating-a.rating)||(b.submitted_at-a.submitted_at)
+                     : sort==="rating_asc"  ? (a.rating-b.rating)||(b.submitted_at-a.submitted_at)
+                     : (b.submitted_at-a.submitted_at));
+    $("imList").innerHTML = items.length ? items.map(renderPick).join("")
+      : `<div class="empty">まだレビューがありません。フォームのリンクを配って声を集めましょう。</div>`;
+    bindPick();
   };
+  $("im_sort").onchange = load; $("im_form").onchange = load; load();
+}
+function renderPick(t){
+  const on = t.status==="approved";
+  const lv = {1:"匿名",2:"実名・写真",3:"動画"}[t.level]||"";
+  const photo = t.photo_key ? `<img src="/api/media/${esc(t.photo_key)}" alt="">` : "";
+  const src = t.source ? `<span class="pill n">${esc(t.source)}</span>` : "";
+  return `<div class="ti">
+    <div class="meta"><span class="stars">${stars(t.rating)}</span>
+      <span class="pill n">${lv}</span>${src}${on?'<span class="pill g">掲載中</span>':''}${t.verified?'<span class="pill g">確認済み</span>':''}</div>
+    <div class="body">${esc(t.body)}</div>
+    <div class="who">${photo}<span class="muted">${esc(t.author_label)}</span></div>
+    <div><button class="btn ${on?'mut':'ok'} sm pick" data-id="${t.id}" data-a="${on?'reject':'approve'}">${on?'掲載を外す':'声の壁に掲載する'}</button></div>
+  </div>`;
+}
+function bindPick(){
+  document.querySelectorAll(".pick").forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const r=await api(`/api/testimonials/${b.dataset.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:b.dataset.a})});
+    if(r.ok){ toast(b.dataset.a==="approve"?"掲載しました":"外しました"); await loadForms(); renderImport(); }
+    else { toast("失敗しました"); b.disabled=false; }
+  });
 }
 
 /* ---------- 返礼設定 ---------- */
