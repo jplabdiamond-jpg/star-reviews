@@ -1,15 +1,26 @@
 // POST /api/billing/checkout  Stripe Checkout セッションを作成（事業者・要ログイン）
 // 返却: { url } … そのURLへリダイレクトすると決済画面。未設定なら setup_required。
 import { json } from "../../../shared/util";
-import { stripeFetch } from "../../../shared/stripe";
+import { stripeFetch, priceIdForPlan } from "../../../shared/stripe";
 import type { Env, AppData } from "../../../shared/types";
 
 export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ request, env, data }) => {
   const { businessId, email } = data.session!;
 
-  if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) {
+  if (!env.STRIPE_SECRET_KEY) {
     return json(
       { error: "課金はまだ設定されていません。管理者がStripeを登録すると有効になります。", setup_required: true },
+      400
+    );
+  }
+
+  // 購入プランを決定（body.plan: "starter" | "pro"）。既定は pro（旧UI互換）。
+  const body0 = await (async () => { try { return (await request.json()) as { plan?: string }; } catch { return null; } })();
+  const plan = ((body0?.plan || "pro").toLowerCase() === "starter") ? "starter" : "pro";
+  const priceId = priceIdForPlan(env, plan);
+  if (!priceId) {
+    return json(
+      { error: "このプランはまだ設定されていません。管理者がStripeを登録すると有効になります。", setup_required: true },
       400
     );
   }
@@ -22,13 +33,15 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
 
   const body: Record<string, string | number | undefined> = {
     mode: "subscription",
-    "line_items[0][price]": env.STRIPE_PRICE_ID,
+    "line_items[0][price]": priceId,
     "line_items[0][quantity]": 1,
     success_url: `${base}/app?billing=success`,
     cancel_url: `${base}/app?billing=cancel`,
     client_reference_id: businessId,
     "metadata[business_id]": businessId,
+    "metadata[plan]": plan,
     "subscription_data[metadata][business_id]": businessId,
+    "subscription_data[metadata][plan]": plan,
     allow_promotion_codes: "true",
   };
   // 既存のStripe顧客があれば再利用。なければメールで作成。

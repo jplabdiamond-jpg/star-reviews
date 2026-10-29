@@ -7,7 +7,9 @@ export interface Env {
   GOOGLE_MAPS_API_KEY?: string;
   // 任意: Stripe課金（未設定なら課金は無効 = setup_required）
   STRIPE_SECRET_KEY?: string;      // sk_live_... / sk_test_...
-  STRIPE_PRICE_ID?: string;        // 月額プランの price_...
+  STRIPE_PRICE_STARTER?: string;   // Starterプランの price_...（¥1,980/月）
+  STRIPE_PRICE_PRO?: string;       // Proプランの price_...（¥3,980/月）
+  STRIPE_PRICE_ID?: string;        // 旧: 単一プラン用（互換のためProのフォールバックとして参照）
   STRIPE_WEBHOOK_SECRET?: string;  // whsec_...（Webhook署名検証）
   PUBLIC_BASE_URL?: string;        // 任意: 本番URL(未設定ならリクエストoriginを使用)
 }

@@ -132,7 +132,7 @@ async function boot(){
   STATE.paid = STATE.plan !== "free";
   STATE.billingEnabled = !!me.data.billing_enabled;
   STATE.hasSub = !!me.data.business?.has_subscription;
-  $("bizName").textContent = (me.data.business?.name || "") + (STATE.paid ? "  ·  Pro" : "");
+  $("bizName").textContent = (me.data.business?.name || "") + (STATE.paid ? ("  ·  " + (STATE.plan==="pro"?"Pro":"Starter")) : "");
   // Stripe決済からの戻り
   try{
     const q=new URLSearchParams(location.search).get("billing");
@@ -316,47 +316,76 @@ function bindHostedCard(){
 }
 
 function renderPlan(){
-  const paid = STATE.paid;
-  const benefits = [
-    ["声の壁の「star-reviews」クレジット非表示（ホワイトラベル）", true],
-    ["声の壁ページの独自URL（/wall/あなたの店名）", true],
-    ["フォーム・収集・掲載・動画レビュー・インポート", false],
-    ["Google検索向けの構造化データ(JSON-LD)", false],
-  ];
+  const plan=(STATE.plan||"free").toLowerCase();
+  const isStarter=plan==="starter", isPro=plan==="pro", paid=isStarter||isPro;
+  const label=isPro?"Pro":isStarter?"Starter":"Free";
   const planBadge = paid
-    ? `<span class="pill g" style="font-size:13px">現在のプラン：Pro</span>`
+    ? `<span class="pill g" style="font-size:13px">現在のプラン：${label}</span>`
     : `<span class="pill o" style="font-size:13px">現在のプラン：Free</span>`;
   const setupNote = STATE.billingEnabled ? "" :
     `<p class="muted" style="margin:10px 0 0;font-size:12px">※ 現在オンライン決済は準備中です（管理者がStripeを設定すると有効になります）。</p>`;
-  const action = paid
-    ? `<button class="btn ghost" id="pl_portal">プラン・お支払いを管理</button>`
-    : `<button class="btn" id="pl_upgrade">Proにアップグレード</button>`;
+  const starterFeat=[
+    "ホワイトラベル（声の壁の「star-reviews」表記を非表示）",
+    "独自URL（/wall/あなたの店名）",
+    "フォーム・収集・掲載・動画レビュー・インポート 無制限",
+    "Google検索向けの構造化データ(JSON-LD)",
+  ];
+  const proFeat=[
+    "Starterのすべて",
+    "Google口コミの取り込み",
+    "複数店舗の管理",
+  ];
+  const starterBtn = isPro
+    ? `<span class="pill g" style="font-size:12px">Starter相当は含まれています</span>`
+    : (isStarter
+        ? `<span class="pill g" style="font-size:12px">ご利用中</span>`
+        : `<button class="btn" data-plan="starter">このプランにする</button>`);
+  const proBtn = isPro
+    ? `<span class="pill g" style="font-size:12px">ご利用中</span>`
+    : `<button class="btn" data-plan="pro">${isStarter?"Proにアップグレード":"このプランにする"}</button>`;
+  const manage = paid
+    ? `<div style="margin-top:14px"><button class="btn ghost" id="pl_portal">プラン・お支払いを管理</button></div>` : "";
+  const li=(ic,col,b)=>`<li style="display:flex;align-items:flex-start;gap:8px;margin:7px 0;font-size:13px"><span style="flex:none;font-weight:800;color:${col}">${ic}</span><span>${esc(b)}</span></li>`;
   $("view").innerHTML = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <h2 style="margin:0">プラン</h2>${planBadge}
       </div>
-      <p class="muted" style="margin:8px 0 0">${paid ? "Proをご利用中です。ありがとうございます！" : "Freeプランでも主要機能はすべてお使いいただけます。Proにすると下記が解放されます。"}</p>
-      <ul style="margin:14px 0 0;padding-left:0;list-style:none">
-        ${benefits.map(([b,pro])=>`<li style="display:flex;align-items:flex-start;gap:9px;margin:8px 0">
-          <span style="flex:none;font-weight:800;color:${pro?'var(--sun-deep)':'#8a8166'}">${pro?'Pro':'✓'}</span>
-          <span style="font-size:14px">${esc(b)}</span></li>`).join("")}
-      </ul>
-      <div style="margin-top:16px">${action}</div>
+      <p class="muted" style="margin:8px 0 0">Freeでも主要機能はすべてお使いいただけます。有料プランにすると下記が解放されます。</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
+        <div style="border:2px solid var(--line-strong);border-radius:14px;padding:16px;display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+            <strong style="font-size:17px">Starter</strong>
+            <span style="font-weight:800">¥1,980<span style="font-size:12px;font-weight:600;color:var(--muted)">/月</span></span>
+          </div>
+          <ul style="margin:12px 0 0;padding-left:0;list-style:none;flex:1">${starterFeat.map(b=>li("✓","var(--sun-deep)",b)).join("")}</ul>
+          <div style="margin-top:14px">${starterBtn}</div>
+        </div>
+        <div style="border:2px solid var(--sun-deep);border-radius:14px;padding:16px;display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+            <strong style="font-size:17px">Pro</strong>
+            <span style="font-weight:800">¥3,980<span style="font-size:12px;font-weight:600;color:var(--muted)">/月</span></span>
+          </div>
+          <ul style="margin:12px 0 0;padding-left:0;list-style:none;flex:1">${proFeat.map(b=>li("★","var(--sun-deep)",b)).join("")}</ul>
+          <div style="margin-top:14px">${proBtn}</div>
+        </div>
+      </div>
+      ${manage}
       ${setupNote}
     </div>
     ${renderHostedCard()}`;
   bindHostedCard();
-  if($("pl_upgrade")) $("pl_upgrade").onclick = startCheckout;
+  document.querySelectorAll('[data-plan]').forEach(b=>{ b.onclick=()=>startCheckout(b.getAttribute('data-plan'), b); });
   if($("pl_portal")) $("pl_portal").onclick = openPortal;
 }
-async function startCheckout(){
-  const btn=$("pl_upgrade"); if(btn){btn.disabled=true;btn.textContent="準備中…";}
-  const r = await api("/api/billing/checkout",{method:"POST"});
+async function startCheckout(plan, btn){
+  const prev = btn ? btn.textContent : "";
+  if(btn){btn.disabled=true;btn.textContent="準備中…";}
+  const r = await api("/api/billing/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({plan})});
   if(r.ok && r.data.url){ location.href = r.data.url; return; }
   if(r.data.setup_required){ toast("オンライン決済は準備中です"); }
   else { toast(r.data.error || "エラーが発生しました"); }
-  if(btn){btn.disabled=false;btn.textContent="Proにアップグレード";}
+  if(btn){btn.disabled=false;btn.textContent=prev;}
 }
 async function openPortal(){
   const r = await api("/api/billing/portal",{method:"POST"});

@@ -1,6 +1,6 @@
 // POST /api/public/stripe-webhook  Stripe Webフック受信（署名検証）
 // プラン状態を businesses に反映。公開パス(/api/public/)なので認証なしで受ける。
-import { verifyStripeEvent } from "../../../shared/stripe";
+import { verifyStripeEvent, planForPriceId, type PaidPlan } from "../../../shared/stripe";
 import type { Env } from "../../../shared/types";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -39,14 +39,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return null;
     }
 
+    // サブスクのprice_...またはmetadata.planから購入プラン(starter/pro)を判定。不明ならpro扱い。
+    function resolvePlan(): PaidPlan {
+      const priceId: string | null =
+        obj?.items?.data?.[0]?.price?.id || obj?.plan?.id || null;
+      const fromPrice = planForPriceId(env, priceId);
+      if (fromPrice) return fromPrice;
+      const metaPlan = (obj?.metadata?.plan || "").toLowerCase();
+      if (metaPlan === "starter" || metaPlan === "pro") return metaPlan as PaidPlan;
+      return "pro";
+    }
+
     if (type === "checkout.session.completed") {
       const bizId = await findBusinessId();
       if (bizId) {
         const customer = typeof obj.customer === "string" ? obj.customer : null;
         const sub = typeof obj.subscription === "string" ? obj.subscription : null;
         await env.DB.prepare(
-          "UPDATE businesses SET plan = 'pro', stripe_customer_id = COALESCE(?, stripe_customer_id), stripe_subscription_id = COALESCE(?, stripe_subscription_id) WHERE id = ?"
-        ).bind(customer, sub, bizId).run();
+          "UPDATE businesses SET plan = ?, stripe_customer_id = COALESCE(?, stripe_customer_id), stripe_subscription_id = COALESCE(?, stripe_subscription_id) WHERE id = ?"
+        ).bind(resolvePlan(), customer, sub, bizId).run();
       }
     } else if (type === "customer.subscription.updated" || type === "customer.subscription.created") {
       const bizId = await findBusinessId();
@@ -56,7 +67,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         const active = status === "active" || status === "trialing" || status === "past_due";
         await env.DB.prepare(
           "UPDATE businesses SET plan = ?, stripe_subscription_id = COALESCE(?, stripe_subscription_id), plan_until = ? WHERE id = ?"
-        ).bind(active ? "pro" : "free", typeof obj.id === "string" ? obj.id : null, periodEnd, bizId).run();
+        ).bind(active ? resolvePlan() : "free", typeof obj.id === "string" ? obj.id : null, periodEnd, bizId).run();
       }
     } else if (type === "customer.subscription.deleted") {
       const bizId = await findBusinessId();

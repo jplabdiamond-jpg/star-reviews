@@ -72,3 +72,37 @@ export async function verifyStripeEvent(
 
   try { return JSON.parse(rawBody); } catch { return null; }
 }
+
+// ===== プラン ⇔ Stripe Price ID の対応 =====
+// 2段階プラン(Starter/Pro)を扱う。環境変数:
+//   STRIPE_PRICE_STARTER  Starter(¥1,980/月)の price_...
+//   STRIPE_PRICE_PRO      Pro(¥3,980/月)の price_...
+//   STRIPE_PRICE_ID       旧・単一プラン用。Proのフォールバックとして参照（互換）。
+export type PaidPlan = "starter" | "pro";
+
+interface PriceEnv {
+  STRIPE_PRICE_STARTER?: string;
+  STRIPE_PRICE_PRO?: string;
+  STRIPE_PRICE_ID?: string;
+}
+
+// プラン名 → Checkoutで使う price_...（未設定なら null）
+export function priceIdForPlan(env: PriceEnv, plan: string | null | undefined): string | null {
+  switch ((plan || "").toLowerCase()) {
+    case "starter":
+      return env.STRIPE_PRICE_STARTER || null;
+    case "pro":
+      return env.STRIPE_PRICE_PRO || env.STRIPE_PRICE_ID || null;
+    default:
+      return null;
+  }
+}
+
+// price_... → プラン名（Webフックで購入プランを判定。未知なら null）
+export function planForPriceId(env: PriceEnv, priceId: string | null | undefined): PaidPlan | null {
+  if (!priceId) return null;
+  if (env.STRIPE_PRICE_STARTER && priceId === env.STRIPE_PRICE_STARTER) return "starter";
+  if (env.STRIPE_PRICE_PRO && priceId === env.STRIPE_PRICE_PRO) return "pro";
+  if (env.STRIPE_PRICE_ID && priceId === env.STRIPE_PRICE_ID) return "pro";
+  return null;
+}
