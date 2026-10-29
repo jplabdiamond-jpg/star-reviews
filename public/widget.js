@@ -80,7 +80,17 @@
     ".sr-theme-dark .sr-body{color:#e7e1d0}.sr-theme-dark .sr-who{color:#fff}" +
     ".sr-theme-dark .sr-s-mono .sr-f{color:#fff}.sr-theme-dark .sr-s-mono .sr-e{color:#4a4636}" +
     ".sr-theme-dark .sr-avatar{background:#3a3626;color:#ffca45}" +
-    ".sr-theme-dark.sr-root .sr-sum-avg{color:#1c1a12}";
+    ".sr-theme-dark.sr-root .sr-sum-avg{color:#1c1a12}" +
+    /* 追加★スタイル（サイズ・質感・アニメ） */
+    ".sr-s-big{font-size:26px;letter-spacing:3px}.sr-s-big .sr-f{color:#eaa400}.sr-s-big .sr-e{color:#e8dcc0}" +
+    ".sr-s-glow .sr-f{color:#ffbe00;animation:srGlow 1.8s ease-in-out infinite}.sr-s-glow .sr-e{color:#eadfbf}" +
+    "@keyframes srGlow{0%,100%{text-shadow:0 0 2px rgba(255,190,0,.25)}50%{text-shadow:0 0 10px rgba(255,185,0,.95),0 0 20px rgba(255,185,0,.55)}}" +
+    ".sr-s-shine .sr-f{background:linear-gradient(100deg,#c57f00 0%,#ffd34d 22%,#fff7d6 34%,#ffd34d 48%,#c57f00 72%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:srShine 2.6s linear infinite}.sr-s-shine .sr-e{color:#e6d9b6}" +
+    "@keyframes srShine{0%{background-position:180% 0}100%{background-position:-70% 0}}" +
+    ".sr-s-metal .sr-f{background:linear-gradient(180deg,#ffe9a3 0%,#f3b808 46%,#a86f09 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(255,255,255,.45))}.sr-s-metal .sr-e{color:#e2d4b0}" +
+    ".sr-s-mini{font-size:12px;letter-spacing:1px}.sr-s-mini .sr-f{color:#eaa400}.sr-s-mini .sr-e{color:#e4dcc8}" +
+    ".sr-chips{display:flex;flex-wrap:wrap;gap:14px}.sr-chips .sr-card{flex:0 1 260px;padding:13px 15px}" +
+    "@media(prefers-reduced-motion:reduce){.sr-s-glow .sr-f,.sr-s-shine .sr-f{animation:none}}";
 
   function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
   function rep(ch, n) { var o = ""; for (var i = 0; i < n; i++) o += ch; return o; }
@@ -96,11 +106,13 @@
       return "<span class='sr-stars sr-s-emoji'>" + rep("⭐", n) + "</span>";
     }
     var g = { gold: ["★", "☆"], mono: ["★", "☆"], heart: ["❤", "♡"] }[starStyle] || ["★", "☆"];
-    return "<span class='sr-stars sr-s-" + (["gold", "mono", "heart"].indexOf(starStyle) >= 0 ? starStyle : "gold") + "'>" +
+    var KNOWN = { gold: 1, mono: 1, heart: 1, big: 1, glow: 1, shine: 1, metal: 1, mini: 1 };
+    var cls = KNOWN[starStyle] ? starStyle : "gold";
+    return "<span class='sr-stars sr-s-" + cls + "'>" +
       "<span class='sr-f'>" + rep(g[0], n) + "</span><span class='sr-e'>" + rep(g[1], 5 - n) + "</span></span>";
   }
 
-  function layoutClass(l) { return l === "carousel" ? "sr-carousel" : l === "list" ? "sr-list" : "sr-grid"; }
+  function layoutClass(l) { return l === "carousel" ? "sr-carousel" : l === "list" ? "sr-list" : l === "chips" ? "sr-chips" : "sr-grid"; }
   var THEMES = { light: 1, minimal: 1, quote: 1, dark: 1 };
 
   function render(data) {

@@ -79,6 +79,21 @@
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
     padding:11px 20px;border-radius:11px;font-size:13.5px;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:50}
   .toast.show{opacity:1}
+  /* overlay / modal */
+  .ov{position:fixed;inset:0;background:rgba(28,26,18,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+  .ov-card{background:#fff;border-radius:18px;max-width:640px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin:auto}
+  .ov-x{float:right;border:0;background:#f0ead9;border-radius:9px;width:32px;height:32px;cursor:pointer;font-size:15px;font-weight:800;color:var(--ink-soft)}
+  .ov-x:hover{background:#e7dfc9}
+  /* coachmark（チュートリアル） */
+  .coach-spot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(28,26,18,.60);z-index:9991;pointer-events:none;transition:all .22s ease;outline:3px solid var(--sun);outline-offset:2px}
+  .coach-tip{position:fixed;z-index:9993;background:#fff;border-radius:14px;padding:16px 18px;max-width:300px;width:calc(100vw - 32px);box-shadow:0 16px 44px rgba(0,0,0,.3)}
+  .coach-tip h4{margin:0 0 6px;font-size:15.5px;font-weight:800}
+  .coach-tip p{margin:0 0 13px;font-size:13px;color:var(--ink-soft);line-height:1.65}
+  .coach-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .coach-dots{font-size:11px;color:var(--muted);font-weight:800;font-family:var(--disp)}
+  .coach-skip{background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;font-family:var(--jp)}
+  .coach-next{background:var(--ink);color:#fff;border:0;border-radius:9px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:13px;font-family:var(--jp)}
+  .coach-next:hover{background:#000}
 </style>
 </head>
 <body>
@@ -87,7 +102,7 @@
     <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
     star<em>·</em>reviews
   </span>
-  <span><span class="biz" id="bizName"></span> <button class="logout" id="logout">ログアウト</button></span>
+  <span><span class="biz" id="bizName"></span> <button class="logout" id="help">使い方</button> <button class="logout" id="logout">ログアウト</button></span>
 </div></div>
 <div class="tabbar"><div class="tabs" id="tabs">
   <button class="tab on" data-t="forms">フォーム</button>
@@ -113,12 +128,95 @@ async function boot(){
   if(!me.data.authenticated){ location.href="/"; return; }
   $("bizName").textContent = me.data.business?.name || "";
   $("logout").onclick = async()=>{ await api("/api/auth/logout",{method:"POST"}); location.href="/"; };
+  $("help").onclick = ()=>coach();
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on"); render(t.dataset.t);
   });
   await loadForms();
   render("forms");
+  // 初回のみチュートリアル
+  let seen=false; try{ seen=!!localStorage.getItem("sr_tut_v1"); }catch(e){}
+  if(!seen) setTimeout(()=>coach(), 450);
+}
+
+/* ---------- 選択肢の定義 ---------- */
+const STAR_STYLES = [
+  ["gold","ゴールド ★"],["mono","モノクロ ★"],["emoji","絵文字 ⭐"],["heart","ハート ❤"],["number","数値 4.8/5"],
+  ["big","ビッグ ★（特大）"],["glow","グロー（発光）"],["shine","シャイン（きらめき）"],["metal","メタリック金"],["mini","ミニ ★（極小）"]
+];
+const LAYOUTS = [
+  ["grid","グリッド（タイル状）"],["carousel","カルーセル（横スクロール）"],["list","リスト（縦1列）"],["chips","チップス（小カードを敷き詰め）"]
+];
+
+/* ---------- 初回チュートリアル（スポットライト式・スキップ可） ---------- */
+function coach(){
+  const steps=[
+    {sel:null, title:"ようこそ 👋", body:"star-reviews の使い方を30秒でご案内します。いつでもスキップできます。"},
+    {sel:'.tab[data-t="forms"]', title:"① フォームを作る", body:"投稿フォームを作り、LINEやメールにリンクを貼ってお客様に声を書いてもらいます。匿名でもOKです。"},
+    {sel:'.tab[data-t="inbox"]', title:"② 届いた声を選ぶ", body:"受信トレイで内容を確認し、掲載したい良い声だけ「掲載する」で承認します。"},
+    {sel:'.tab[data-t="import"]', title:"③ 既存の声も登録", body:"Googleやアンケートで既にもらった声は、ここから登録してすぐ掲載できます。"},
+    {sel:'.tab[data-t="embed"]', title:"④ サイトに貼る", body:"タグを1行コピーして貼るだけ。★の種類・レイアウト・テーマも選べます。"},
+  ];
+  let i=0;
+  const spot=document.createElement("div"); spot.className="coach-spot";
+  const tip=document.createElement("div"); tip.className="coach-tip";
+  const center=document.createElement("div"); center.className="ov"; center.style.zIndex=9992; center.style.alignItems="center";
+  function done(){ try{localStorage.setItem("sr_tut_v1","1");}catch(e){} [spot,tip,center].forEach(e=>e.remove()); }
+  function show(){
+    const s=steps[i];
+    if(!s.sel){
+      spot.remove();
+      center.innerHTML=`<div class="coach-tip" style="position:static;max-width:360px;text-align:center;width:auto">
+        <h4>${s.title}</h4><p>${s.body}</p>
+        <div class="coach-row" style="justify-content:center">
+          <button class="coach-skip" id="c_skip">スキップ</button>
+          <button class="coach-next" id="c_next">はじめる</button></div></div>`;
+      document.body.appendChild(center);
+      center.querySelector("#c_skip").onclick=done;
+      center.querySelector("#c_next").onclick=()=>{ i++; show(); };
+      return;
+    }
+    center.remove();
+    const el=document.querySelector(s.sel);
+    if(!el){ i++; return i<steps.length?show():done(); }
+    el.scrollIntoView({block:"nearest",inline:"center"});
+    const r=el.getBoundingClientRect(), pad=6;
+    Object.assign(spot.style,{left:(r.left-pad)+"px",top:(r.top-pad)+"px",width:(r.width+pad*2)+"px",height:(r.height+pad*2)+"px"});
+    if(!spot.parentNode) document.body.appendChild(spot);
+    if(!tip.parentNode) document.body.appendChild(tip);
+    tip.innerHTML=`<h4>${s.title}</h4><p>${s.body}</p>
+      <div class="coach-row"><span class="coach-dots">${i} / ${steps.length-1}</span>
+      <span style="display:flex;gap:10px;align-items:center"><button class="coach-skip" id="c_skip">スキップ</button>
+      <button class="coach-next" id="c_next">${i===steps.length-1?"完了":"次へ"}</button></span></div>`;
+    tip.style.top=(r.bottom+12)+"px";
+    tip.style.left=Math.max(12,Math.min(r.left, window.innerWidth-312))+"px";
+    tip.querySelector("#c_skip").onclick=done;
+    tip.querySelector("#c_next").onclick=()=>{ i++; i<steps.length?show():done(); };
+  }
+  show();
+}
+
+/* ---------- ★の種類 見本モーダル ---------- */
+function openStarSamples(){
+  const cards = STAR_STYLES.map(([s,label])=>`
+    <div style="border:1px solid var(--line-strong);border-radius:13px;padding:13px;background:#fffdf5">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px">
+        <span style="font-weight:800;font-size:13px">${label}</span>
+        <code style="font-size:10.5px;color:var(--muted)">data-star="${s}"</code>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">${pvStars(5,s)} ${pvStars(4,s)}</div>
+    </div>`).join("");
+  const ov=document.createElement("div"); ov.className="ov";
+  ov.innerHTML=`<div class="ov-card"><style>${PV_CSS}</style>
+    <button class="ov-x" id="ov_x">✕</button>
+    <h2 style="margin:0 0 4px">★の種類 見本</h2>
+    <p class="muted" style="margin:0 0 16px">埋め込みで選べる★スタイルの一覧です。グロー／シャインは実際に動きます。</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">${cards}</div></div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.querySelector("#ov_x").onclick=close;
+  ov.onclick=(e)=>{ if(e.target===ov) close(); };
 }
 
 async function loadForms(){
@@ -334,7 +432,7 @@ function pvStars(v, star){
   const n=Math.round(v);
   if(star==="emoji") return `<span class="pv-st">${"⭐".repeat(n)}</span>`;
   const g={gold:["★","☆"],mono:["★","☆"],heart:["❤","♡"]}[star]||["★","☆"];
-  const cls={mono:"pv-mono",heart:"pv-heart"}[star]||"pv-gold";
+  const cls={mono:"pv-mono",heart:"pv-heart",big:"pv-big",glow:"pv-glow",shine:"pv-shine",metal:"pv-metal",mini:"pv-mini"}[star]||"pv-gold";
   return `<span class="pv-st ${cls}"><span class="f">${g[0].repeat(n)}</span><span class="e">${g[1].repeat(5-n)}</span></span>`;
 }
 const PV_CSS = `
@@ -370,14 +468,23 @@ const PV_CSS = `
   .pv-theme-dark .pv-card{background:#1c1a12;border-color:#3a3626;box-shadow:none}
   .pv-theme-dark .pv-body{color:#e7e1d0}.pv-theme-dark .pv-who{color:#fff}
   .pv-theme-dark .pv-mono .f{color:#fff}.pv-theme-dark .pv-mono .e{color:#4a4636}
-  .pv-theme-dark .pv-av{background:#3a3626;color:#ffca45}`;
+  .pv-theme-dark .pv-av{background:#3a3626;color:#ffca45}
+  .pv-big{font-size:24px;letter-spacing:3px}.pv-big .f{color:#eaa400}.pv-big .e{color:#e8dcc0}
+  .pv-glow .f{color:#ffbe00;animation:srGlow 1.8s ease-in-out infinite}.pv-glow .e{color:#eadfbf}
+  @keyframes srGlow{0%,100%{text-shadow:0 0 2px rgba(255,190,0,.25)}50%{text-shadow:0 0 10px rgba(255,185,0,.95),0 0 20px rgba(255,185,0,.55)}}
+  .pv-shine .f{background:linear-gradient(100deg,#c57f00 0%,#ffd34d 22%,#fff7d6 34%,#ffd34d 48%,#c57f00 72%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:srShine 2.6s linear infinite}.pv-shine .e{color:#e6d9b6}
+  @keyframes srShine{0%{background-position:180% 0}100%{background-position:-70% 0}}
+  .pv-metal .f{background:linear-gradient(180deg,#ffe9a3 0%,#f3b808 46%,#a86f09 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(255,255,255,.45))}.pv-metal .e{color:#e2d4b0}
+  .pv-mini{font-size:11px;letter-spacing:1px}.pv-mini .f{color:#eaa400}.pv-mini .e{color:#e4dcc8}
+  .pv-chips{display:flex;flex-wrap:wrap;gap:10px}.pv-chips .pv-card{flex:0 1 220px}
+  @media(prefers-reduced-motion:reduce){.pv-glow .f,.pv-shine .f{animation:none}}`;
 const PV_ITEMS = [
   {rating:5, body:"スタッフの対応がとても丁寧で、初めてでも安心して任せられました。", author:"M.T様", verified:true, source:"Google"},
   {rating:4, body:"予約が取りやすく、居心地がよかったです。また来ます！", author:"匿名希望", verified:false, source:""}
 ];
 function pvRender(o){
   const th = o.theme||"light";
-  const lay = o.layout==="carousel"?"pv-carousel":o.layout==="list"?"pv-list":"pv-grid";
+  const lay = o.layout==="carousel"?"pv-carousel":o.layout==="list"?"pv-list":o.layout==="chips"?"pv-chips":"pv-grid";
   let h = `<style>${PV_CSS}</style><div class="pv-root pv-theme-${th}">`;
   if(o.summary){
     h += `<div class="pv-sum">${o.star!=="number"?`<span class="pv-sum-avg">4.8</span>`:""}<span>${pvStars(4.8,o.star)}<br><span class="pv-sum-c">128件のお客様の声</span></span></div>`;
@@ -401,18 +508,8 @@ function renderEmbed(){
       <h2>サイトに「声の壁」を貼る</h2>
       <p class="muted" style="margin-top:-8px">見せ方を選ぶと下にプレビューが出ます。気に入ったらコードをコピーして貼るだけ。</p>
       <div class="row">
-        <div><label>レイアウト</label><select id="em_layout">
-          <option value="grid">グリッド（タイル状）</option>
-          <option value="carousel">カルーセル（横スクロール）</option>
-          <option value="list">リスト（縦1列）</option>
-        </select></div>
-        <div><label>★マークの種類</label><select id="em_star">
-          <option value="gold">ゴールド ★</option>
-          <option value="mono">モノクロ ★</option>
-          <option value="emoji">絵文字 ⭐</option>
-          <option value="heart">ハート ❤</option>
-          <option value="number">数値 4.8/5</option>
-        </select></div>
+        <div><label>レイアウト</label><select id="em_layout">${LAYOUTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
+        <div><label>★マークの種類 <a id="em_samples" style="font-weight:800;color:var(--sun-deep);cursor:pointer;text-decoration:underline;font-size:12px">見本を見る</a></label><select id="em_star">${STAR_STYLES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
       </div>
       <div class="row">
         <div><label>テーマ（カードの見せ方）</label><select id="em_theme">
@@ -449,6 +546,7 @@ function renderEmbed(){
     $("em_copy").onclick = ()=>copy(snip);
   };
   ["em_layout","em_star","em_theme","em_summary"].forEach(id=>$(id).onchange=update);
+  $("em_samples").onclick = openStarSamples;
   update();
 }
 
