@@ -1,9 +1,11 @@
 /* star-reviews 埋め込みウィジェット
    使い方: <script src="https://<your-domain>/widget.js" data-token="pub_xxxxx" async></script>
    任意属性:
-     data-layout="grid|carousel|list"  表示レイアウト（未指定なら管理画面の設定を使用）
-     data-summary="off"                 平均★サマリーを隠す
-     data-schema="off"                  Google構造化データ(JSON-LD)の出力を止める
+     data-layout="grid|carousel|list"        表示レイアウト（未指定なら管理画面の設定）
+     data-star="gold|mono|emoji|heart|number" ★マークの種類
+     data-theme="light|minimal|quote|dark"    カードの見せ方
+     data-summary="off"                        平均★サマリーを隠す
+     data-schema="off"                         Google構造化データ(JSON-LD)を止める
    任意で <div data-star-reviews></div> を置くとそこに描画。なければスクリプト直後に描画。 */
 (function () {
   var me =
@@ -15,9 +17,12 @@
   if (!me) return;
   var token = me.getAttribute("data-token");
   if (!token) return;
-  var layoutAttr = (me.getAttribute("data-layout") || "").toLowerCase();
-  var summaryOff = (me.getAttribute("data-summary") || "").toLowerCase() === "off";
-  var schemaOff = (me.getAttribute("data-schema") || "").toLowerCase() === "off";
+  var A = function (k, d) { return (me.getAttribute(k) || d || "").toLowerCase(); };
+  var layoutAttr = A("data-layout");
+  var starStyle = A("data-star", "gold");
+  var theme = A("data-theme", "light");
+  var summaryOff = A("data-summary") === "off";
+  var schemaOff = A("data-schema") === "off";
   var base;
   try { base = new URL(me.src).origin; } catch (e) { base = ""; }
 
@@ -26,62 +31,91 @@
     mount = document.createElement("div");
     me.parentNode.insertBefore(mount, me.nextSibling);
   }
-
   var shadow = mount.attachShadow ? mount.attachShadow({ mode: "open" }) : mount;
 
   var css =
     ":host{all:initial;display:block}" +
     "*{box-sizing:border-box}" +
     ".sr-root{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;color:#1c1a12}" +
+    /* stars */
+    ".sr-stars{font-size:16px;letter-spacing:1.5px;line-height:1;white-space:nowrap}" +
+    ".sr-s-gold .sr-f{color:#eaa400}.sr-s-gold .sr-e{color:#e4dcc8}" +
+    ".sr-s-mono .sr-f{color:#1c1a12}.sr-s-mono .sr-e{color:#d8cfbb}" +
+    ".sr-s-heart .sr-f{color:#e5484d}.sr-s-heart .sr-e{color:#f0cfd0}" +
+    ".sr-s-emoji{letter-spacing:1px}" +
+    ".sr-num{display:inline-flex;align-items:center;gap:5px;font-weight:800}" +
+    ".sr-num b{font-size:1.05em}.sr-num .sr-f{color:#eaa400}" +
     /* summary */
     ".sr-sum{display:flex;align-items:center;gap:12px;margin:0 0 16px;flex-wrap:wrap}" +
     ".sr-sum-avg{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em}" +
-    ".sr-sum-stars{color:#eaa400;font-size:18px;letter-spacing:2px;line-height:1}" +
+    ".sr-sum .sr-stars{font-size:18px}" +
     ".sr-sum-count{font-size:13px;color:#7c7563;font-weight:700}" +
     /* layouts */
     ".sr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}" +
     ".sr-list{display:flex;flex-direction:column;gap:14px}" +
     ".sr-carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;-webkit-overflow-scrolling:touch}" +
-    ".sr-carousel::-webkit-scrollbar{height:7px}" +
-    ".sr-carousel::-webkit-scrollbar-thumb{background:#e0d4b6;border-radius:999px}" +
+    ".sr-carousel::-webkit-scrollbar{height:7px}.sr-carousel::-webkit-scrollbar-thumb{background:#e0d4b6;border-radius:999px}" +
     ".sr-carousel .sr-card{flex:0 0 clamp(240px,80%,320px);scroll-snap-align:start}" +
-    /* card */
-    ".sr-card{background:#fff;border:1px solid #ece3cf;border-radius:15px;padding:17px 17px 15px;" +
-    "box-shadow:0 2px 10px rgba(60,46,12,.06)}" +
+    /* base card */
+    ".sr-card{background:#fff;border:1px solid #ece3cf;border-radius:15px;padding:17px 17px 15px;box-shadow:0 2px 10px rgba(60,46,12,.06)}" +
     ".sr-top{display:flex;align-items:center;justify-content:space-between;gap:8px}" +
-    ".sr-stars{color:#eaa400;font-size:16px;letter-spacing:1.5px;line-height:1}" +
     ".sr-src{font-size:10px;color:#9a917c;font-weight:700;letter-spacing:.04em}" +
     ".sr-body{color:#413d30;font-size:14px;line-height:1.72;margin:10px 0 13px;white-space:pre-wrap}" +
     ".sr-foot{display:flex;align-items:center;gap:9px}" +
     ".sr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto}" +
-    ".sr-avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:#ffe7a0;" +
-    "display:flex;align-items:center;justify-content:center;color:#eaa400;font-weight:800;font-size:14px}" +
+    ".sr-avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:#eaa400;font-weight:800;font-size:14px}" +
     ".sr-who{font-size:13px;color:#1c1a12;font-weight:700}" +
     ".sr-badge{font-size:10.5px;color:#1c7d52;background:#e2f3e8;border-radius:999px;padding:1px 8px;font-weight:700;margin-left:auto}" +
     ".sr-empty{color:#7c7563;font-size:13px;padding:10px}" +
-    ".sr-credit{margin-top:13px;font-size:10px;color:#b3a99c;text-align:right;letter-spacing:.08em;text-transform:uppercase}";
+    ".sr-credit{margin-top:13px;font-size:10px;color:#b3a99c;text-align:right;letter-spacing:.08em;text-transform:uppercase}" +
+    /* theme: minimal */
+    ".sr-theme-minimal .sr-card{background:transparent;border:0;border-bottom:1px solid #ece3cf;border-radius:0;box-shadow:none;padding:16px 2px}" +
+    ".sr-theme-minimal .sr-grid{gap:0}.sr-theme-minimal .sr-list{gap:0}" +
+    /* theme: quote */
+    ".sr-theme-quote .sr-card{background:#fff;border:0;box-shadow:0 2px 14px rgba(60,46,12,.07);position:relative;padding:30px 20px 18px}" +
+    ".sr-theme-quote .sr-card::before{content:'\\201C';position:absolute;top:2px;left:14px;font-family:Georgia,serif;font-size:52px;color:#ffcf4a;line-height:1}" +
+    ".sr-theme-quote .sr-body{font-size:15px;font-style:italic;color:#2a2720}" +
+    /* theme: dark */
+    ".sr-theme-dark .sr-card{background:#1c1a12;border-color:#3a3626;box-shadow:none}" +
+    ".sr-theme-dark .sr-body{color:#e7e1d0}.sr-theme-dark .sr-who{color:#fff}" +
+    ".sr-theme-dark .sr-s-mono .sr-f{color:#fff}.sr-theme-dark .sr-s-mono .sr-e{color:#4a4636}" +
+    ".sr-theme-dark .sr-avatar{background:#3a3626;color:#ffca45}" +
+    ".sr-theme-dark.sr-root .sr-sum-avg{color:#1c1a12}";
 
   function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
-  function stars(n) { n = Math.max(0, Math.min(5, Math.round(n || 0))); return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n); }
+  function rep(ch, n) { var o = ""; for (var i = 0; i < n; i++) o += ch; return o; }
 
-  function layoutClass(layout) {
-    if (layout === "carousel") return "sr-carousel";
-    if (layout === "list") return "sr-list";
-    return "sr-grid";
+  // ★マーク描画（style別）。value は数値（整数または平均）。
+  function starHTML(value) {
+    var v = Math.max(0, Math.min(5, value || 0));
+    if (starStyle === "number") {
+      return "<span class='sr-stars sr-num'><span class='sr-f'>★</span><b>" + v.toFixed(1) + "</b><span style='color:#9a917c;font-weight:700'>/5</span></span>";
+    }
+    var n = Math.round(v);
+    if (starStyle === "emoji") {
+      return "<span class='sr-stars sr-s-emoji'>" + rep("⭐", n) + "</span>";
+    }
+    var g = { gold: ["★", "☆"], mono: ["★", "☆"], heart: ["❤", "♡"] }[starStyle] || ["★", "☆"];
+    return "<span class='sr-stars sr-s-" + (["gold", "mono", "heart"].indexOf(starStyle) >= 0 ? starStyle : "gold") + "'>" +
+      "<span class='sr-f'>" + rep(g[0], n) + "</span><span class='sr-e'>" + rep(g[1], 5 - n) + "</span></span>";
   }
+
+  function layoutClass(l) { return l === "carousel" ? "sr-carousel" : l === "list" ? "sr-list" : "sr-grid"; }
+  var THEMES = { light: 1, minimal: 1, quote: 1, dark: 1 };
 
   function render(data) {
     var items = (data && data.items) || [];
     var layout = layoutClass(layoutAttr || (data && data.layout) || "grid");
     var summary = (data && data.summary) || { count: 0, avg: 0 };
+    var th = THEMES[theme] ? theme : "light";
 
-    var html = "<style>" + css + "</style><div class='sr-root'>";
+    var html = "<style>" + css + "</style><div class='sr-root sr-theme-" + th + "'>";
 
     if (!summaryOff && summary.count > 0) {
       html +=
         "<div class='sr-sum'>" +
-        "<span class='sr-sum-avg'>" + (summary.avg || 0).toFixed(1) + "</span>" +
-        "<span><span class='sr-sum-stars'>" + stars(summary.avg) + "</span><br>" +
+        (starStyle === "number" ? "" : "<span class='sr-sum-avg'>" + (summary.avg || 0).toFixed(1) + "</span>") +
+        "<span>" + starHTML(summary.avg) + "<br>" +
         "<span class='sr-sum-count'>" + summary.count + "件のお客様の声</span></span>" +
         "</div>";
     }
@@ -98,17 +132,14 @@
           : "<span class='sr-avatar'>" + esc(initial) + "</span>";
         html +=
           "<div class='sr-card'>" +
-          "<div class='sr-top'>" +
-          "<span class='sr-stars' aria-label='星" + (it.rating || 0) + "'>" + stars(it.rating) + "</span>" +
+          "<div class='sr-top'>" + starHTML(it.rating) +
           (it.source ? "<span class='sr-src'>via " + esc(it.source) + "</span>" : "") +
           "</div>" +
           "<div class='sr-body'>" + esc(it.body) + "</div>" +
-          "<div class='sr-foot'>" +
-          avatar +
+          "<div class='sr-foot'>" + avatar +
           "<span class='sr-who'>" + esc(it.author) + "</span>" +
           (it.verified ? "<span class='sr-badge'>確認済み</span>" : "") +
-          "</div>" +
-          "</div>";
+          "</div></div>";
       });
       html += "</div>";
     }
@@ -125,22 +156,14 @@
       var summary = (data && data.summary) || { count: 0, avg: 0 };
       var name = (data && data.business_name) || "";
       if (!name || !summary.count) return;
-
       var id = "sr-jsonld-" + token;
       var old = document.getElementById(id);
       if (old) old.parentNode.removeChild(old);
-
       var ld = {
         "@context": "https://schema.org",
         "@type": "Organization",
         name: name,
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: summary.avg,
-          reviewCount: summary.count,
-          bestRating: 5,
-          worstRating: 1,
-        },
+        aggregateRating: { "@type": "AggregateRating", ratingValue: summary.avg, reviewCount: summary.count, bestRating: 5, worstRating: 1 },
         review: items.slice(0, 50).map(function (it) {
           var r = {
             "@type": "Review",
@@ -152,15 +175,12 @@
           return r;
         }),
       };
-
       var s = document.createElement("script");
       s.type = "application/ld+json";
       s.id = id;
       s.textContent = JSON.stringify(ld);
       document.head.appendChild(s);
-    } catch (e) {
-      /* 構造化データは本体描画に影響させない */
-    }
+    } catch (e) { /* 構造化データは本体描画に影響させない */ }
   }
 
   fetch(base + "/api/wall/" + encodeURIComponent(token))

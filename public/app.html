@@ -319,11 +319,76 @@ async function renderRewards(){
 }
 
 /* ---------- 埋め込み ---------- */
-function buildSnippet(layout, summary){
+function buildSnippet(o){
   const attrs = [`data-token="${STATE.embedToken}"`];
-  if(layout && layout!=="grid") attrs.push(`data-layout="${layout}"`);
-  if(!summary) attrs.push(`data-summary="off"`);
+  if(o.layout && o.layout!=="grid") attrs.push(`data-layout="${o.layout}"`);
+  if(o.star && o.star!=="gold") attrs.push(`data-star="${o.star}"`);
+  if(o.theme && o.theme!=="light") attrs.push(`data-theme="${o.theme}"`);
+  if(!o.summary) attrs.push(`data-summary="off"`);
   return `<script src="${STATE.origin}/widget.js" ${attrs.join(" ")} async><\/script>`;
+}
+// プレビュー用の★描画
+function pvStars(v, star){
+  v=Math.max(0,Math.min(5,v||0));
+  if(star==="number") return `<span class="pv-st pv-num">★ ${v.toFixed(1)}<span style="color:#9a917c">/5</span></span>`;
+  const n=Math.round(v);
+  if(star==="emoji") return `<span class="pv-st">${"⭐".repeat(n)}</span>`;
+  const g={gold:["★","☆"],mono:["★","☆"],heart:["❤","♡"]}[star]||["★","☆"];
+  const cls={mono:"pv-mono",heart:"pv-heart"}[star]||"pv-gold";
+  return `<span class="pv-st ${cls}"><span class="f">${g[0].repeat(n)}</span><span class="e">${g[1].repeat(5-n)}</span></span>`;
+}
+const PV_CSS = `
+  .pv-wrap{background:#fffdf5;border:1px solid var(--line);border-radius:14px;padding:16px}
+  .pv-root{font-family:var(--jp);color:#1c1a12}
+  .pv-st{font-size:15px;letter-spacing:1.5px;line-height:1;white-space:nowrap}
+  .pv-gold .f{color:#eaa400}.pv-gold .e{color:#e4dcc8}
+  .pv-mono .f{color:#1c1a12}.pv-mono .e{color:#d8cfbb}
+  .pv-heart .f{color:#e5484d}.pv-heart .e{color:#f0cfd0}
+  .pv-num{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:#eaa400}
+  .pv-sum{display:flex;align-items:center;gap:10px;margin:0 0 13px;flex-wrap:wrap}
+  .pv-sum-avg{font-size:26px;font-weight:800;line-height:1}
+  .pv-sum .pv-st{font-size:17px}.pv-sum-c{font-size:12px;color:#7c7563;font-weight:700}
+  .pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pv-list{display:flex;flex-direction:column;gap:12px}
+  .pv-carousel{display:flex;gap:12px;overflow-x:auto}
+  .pv-carousel .pv-card{flex:0 0 70%}
+  @media(max-width:560px){.pv-grid{grid-template-columns:1fr}}
+  .pv-card{background:#fff;border:1px solid #ece3cf;border-radius:13px;padding:14px;box-shadow:0 2px 10px rgba(60,46,12,.06)}
+  .pv-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+  .pv-src{font-size:9.5px;color:#9a917c;font-weight:700}
+  .pv-body{color:#413d30;font-size:13px;line-height:1.65;margin:8px 0 10px}
+  .pv-foot{display:flex;align-items:center;gap:8px}
+  .pv-av{width:30px;height:30px;border-radius:50%;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:#eaa400;font-weight:800;font-size:12px}
+  .pv-who{font-size:12px;font-weight:700}
+  .pv-bd{font-size:10px;color:#1c7d52;background:#e2f3e8;border-radius:999px;padding:1px 7px;font-weight:700;margin-left:auto}
+  /* themes */
+  .pv-theme-minimal .pv-card{background:transparent;border:0;border-bottom:1px solid #ece3cf;border-radius:0;box-shadow:none;padding:13px 2px}
+  .pv-theme-minimal .pv-grid,.pv-theme-minimal .pv-list{gap:0}
+  .pv-theme-quote .pv-card{border:0;box-shadow:0 2px 14px rgba(60,46,12,.07);position:relative;padding:26px 16px 14px}
+  .pv-theme-quote .pv-card::before{content:'\\201C';position:absolute;top:0;left:12px;font-family:Georgia,serif;font-size:44px;color:#ffcf4a}
+  .pv-theme-quote .pv-body{font-style:italic;color:#2a2720}
+  .pv-theme-dark .pv-card{background:#1c1a12;border-color:#3a3626;box-shadow:none}
+  .pv-theme-dark .pv-body{color:#e7e1d0}.pv-theme-dark .pv-who{color:#fff}
+  .pv-theme-dark .pv-mono .f{color:#fff}.pv-theme-dark .pv-mono .e{color:#4a4636}
+  .pv-theme-dark .pv-av{background:#3a3626;color:#ffca45}`;
+const PV_ITEMS = [
+  {rating:5, body:"スタッフの対応がとても丁寧で、初めてでも安心して任せられました。", author:"M.T様", verified:true, source:"Google"},
+  {rating:4, body:"予約が取りやすく、居心地がよかったです。また来ます！", author:"匿名希望", verified:false, source:""}
+];
+function pvRender(o){
+  const th = o.theme||"light";
+  const lay = o.layout==="carousel"?"pv-carousel":o.layout==="list"?"pv-list":"pv-grid";
+  let h = `<style>${PV_CSS}</style><div class="pv-root pv-theme-${th}">`;
+  if(o.summary){
+    h += `<div class="pv-sum">${o.star!=="number"?`<span class="pv-sum-avg">4.8</span>`:""}<span>${pvStars(4.8,o.star)}<br><span class="pv-sum-c">128件のお客様の声</span></span></div>`;
+  }
+  h += `<div class="${lay}">` + PV_ITEMS.map(it=>{
+    const ini = it.author && it.author!=="匿名希望" ? it.author.charAt(0) : "★";
+    return `<div class="pv-card"><div class="pv-top">${pvStars(it.rating,o.star)}${it.source?`<span class="pv-src">via ${esc(it.source)}</span>`:""}</div>`+
+      `<div class="pv-body">${esc(it.body)}</div>`+
+      `<div class="pv-foot"><span class="pv-av">${esc(ini)}</span><span class="pv-who">${esc(it.author)}</span>${it.verified?`<span class="pv-bd">確認済み</span>`:""}</div></div>`;
+  }).join("") + `</div></div>`;
+  return h;
 }
 function renderEmbed(){
   if(!STATE.embedToken){ $("view").innerHTML=`<div class="empty">先にフォームを作成すると、埋め込みコードが発行されます。</div>`; return; }
@@ -334,17 +399,35 @@ function renderEmbed(){
     </div>
     <div class="card">
       <h2>サイトに「声の壁」を貼る</h2>
-      <p class="muted" style="margin-top:-8px">掲載中の声が表示されます。見せ方を選んで、コードをコピーして貼るだけ。</p>
+      <p class="muted" style="margin-top:-8px">見せ方を選ぶと下にプレビューが出ます。気に入ったらコードをコピーして貼るだけ。</p>
       <div class="row">
         <div><label>レイアウト</label><select id="em_layout">
           <option value="grid">グリッド（タイル状）</option>
           <option value="carousel">カルーセル（横スクロール）</option>
           <option value="list">リスト（縦1列）</option>
         </select></div>
+        <div><label>★マークの種類</label><select id="em_star">
+          <option value="gold">ゴールド ★</option>
+          <option value="mono">モノクロ ★</option>
+          <option value="emoji">絵文字 ⭐</option>
+          <option value="heart">ハート ❤</option>
+          <option value="number">数値 4.8/5</option>
+        </select></div>
+      </div>
+      <div class="row">
+        <div><label>テーマ（カードの見せ方）</label><select id="em_theme">
+          <option value="light">ライト（白カード）</option>
+          <option value="minimal">ミニマル（罫線のみ）</option>
+          <option value="quote">引用（大きな “）</option>
+          <option value="dark">ダーク</option>
+        </select></div>
         <div><label>星サマリー（平均★と件数）</label><select id="em_summary">
           <option value="1">表示する</option><option value="0">表示しない</option>
         </select></div>
       </div>
+      <label style="margin-top:4px">プレビュー</label>
+      <div class="pv-wrap" id="em_prev"></div>
+      <label style="margin-top:14px">埋め込みコード</label>
       <div class="code" id="snip"></div>
       <button class="btn ghost sm copy" id="em_copy" style="margin-top:11px">コードをコピー</button>
     </div>
@@ -357,12 +440,16 @@ function renderEmbed(){
       <h3>Google検索に★を表示（SEO）</h3>
       <p class="muted" style="margin-top:-6px">このタグを貼ると、レビューの構造化データ(JSON-LD)も自動で出力され、Google検索で★リッチスニペットの対象になります（反映はGoogleの判断・数日〜）。不要なら <code>data-schema="off"</code> を足してください。</p>
     </div>`;
+  const opts=()=>({layout:$("em_layout").value,star:$("em_star").value,theme:$("em_theme").value,summary:$("em_summary").value==="1"});
   const update=()=>{
-    const snip = buildSnippet($("em_layout").value, $("em_summary").value==="1");
+    const o=opts();
+    $("em_prev").innerHTML = pvRender(o);
+    const snip = buildSnippet(o);
     $("snip").textContent = snip;
     $("em_copy").onclick = ()=>copy(snip);
   };
-  $("em_layout").onchange=update; $("em_summary").onchange=update; update();
+  ["em_layout","em_star","em_theme","em_summary"].forEach(id=>$(id).onchange=update);
+  update();
 }
 
 boot();
