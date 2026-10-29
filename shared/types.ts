@@ -13,6 +13,8 @@ export interface Session {
 }
 
 // _middleware が context.data に載せる型
+// PagesFunction の data 型は Record<string, unknown> 制約を満たす必要があるため index signature を付ける
 export interface AppData {
   session?: Session;
+  [key: string]: unknown;
 }

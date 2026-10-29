@@ -1,5 +1,5 @@
 // GET /api/public/form/:slug   投稿ページ用の公開フォーム設定（認証不要）
-import { json, badRequest } from "../../../../shared/util";
+import { json, badRequest, bumpMetric } from "../../../../shared/util";
 import type { Env } from "../../../../shared/types";
 
 const LEVEL_LABEL: Record<number, string> = {
@@ -23,6 +23,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
     .bind(slug)
     .first<{ id: string; business_id: string; title: string; intro: string; thanks_message: string; levels_enabled: string }>();
   if (!form) return badRequest("フォームが見つかりません", 404);
+
+  // フォーム閲覧数カウント（ベストエフォート）
+  await bumpMetric(env.DB, `form_view:${form.id}`);
 
   const biz = await env.DB.prepare("SELECT name FROM businesses WHERE id = ?")
     .bind(form.business_id)

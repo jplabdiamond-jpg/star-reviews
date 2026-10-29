@@ -92,6 +92,7 @@
 <div class="tabbar"><div class="tabs" id="tabs">
   <button class="tab on" data-t="forms">フォーム</button>
   <button class="tab" data-t="inbox">受信トレイ</button>
+  <button class="tab" data-t="import">インポート</button>
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
 </div></div>
@@ -124,11 +125,13 @@ async function loadForms(){
   const r = await api("/api/forms");
   STATE.forms = r.data.forms || [];
   STATE.embedToken = STATE.forms.find(f=>f.embed_token)?.embed_token || null;
+  STATE.wallViews = STATE.forms[0]?.wall_views || 0;
 }
 
 function render(tab){
   if(tab==="forms") return renderForms();
   if(tab==="inbox") return renderInbox();
+  if(tab==="import") return renderImport();
   if(tab==="rewards") return renderRewards();
   if(tab==="embed") return renderEmbed();
 }
@@ -141,6 +144,10 @@ function renderForms(){
         <h3 style="margin:0">${esc(f.title)}</h3>
         <span><span class="pill o">未対応 ${f.pending_count}</span> <span class="pill g">掲載 ${f.approved_count}</span></span>
       </div>
+      <p class="muted" style="margin:7px 0 10px;display:flex;gap:14px">
+        <span>👁 フォーム閲覧 <b style="color:var(--ink)">${f.views||0}</b></span>
+        <span>★ 掲載中 ${f.approved_count}件</span>
+      </p>
       <p class="muted" style="margin:8px 0 4px">投稿リンク（LINEやメールに貼る）</p>
       <div class="link">${STATE.origin}/f/${esc(f.slug)}</div>
       <button class="btn ghost sm copy" style="margin-top:9px" onclick="copy('${STATE.origin}/f/${esc(f.slug)}')">リンクをコピー</button>
@@ -225,6 +232,49 @@ function bindTi(){
   });
 }
 
+/* ---------- 手動インポート ---------- */
+function renderImport(){
+  if(!STATE.forms.length){ $("view").innerHTML=`<div class="empty">先にフォームを作成してください。</div>`; return; }
+  const opts = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
+  $("view").innerHTML = `
+    <div class="card">
+      <h2>既存の声をインポート</h2>
+      <p class="muted" style="margin-top:-8px">Googleクチコミ・アンケート用紙・SNSなど、すでにもらった声をここに登録できます。登録した声は<b>すぐに「声の壁」に掲載</b>されます。</p>
+      <div class="row">
+        <div><label>星</label><select id="im_rating">
+          <option value="5">★★★★★ (5)</option><option value="4">★★★★☆ (4)</option>
+          <option value="3">★★★☆☆ (3)</option><option value="2">★★☆☆☆ (2)</option><option value="1">★☆☆☆☆ (1)</option>
+        </select></div>
+        <div><label>出所（任意）</label><input type="text" id="im_source" placeholder="例）Google / Instagram / 手書き"></div>
+      </div>
+      <label>声の本文</label>
+      <textarea id="im_body" rows="3" placeholder="いただいた感想をそのまま貼り付け"></textarea>
+      <div class="row">
+        <div><label>お名前・表示名（任意）</label><input type="text" id="im_name" placeholder="例）M.T様 / 匿名"></div>
+        <div><label>元の日付（任意）</label><input type="text" id="im_date" placeholder="2026-05-01"></div>
+      </div>
+      <label>登録先フォーム</label><select id="im_form">${opts}</select>
+      <div style="margin-top:14px"><button class="btn" id="im_add">インポートして掲載</button></div>
+    </div>
+    <p class="muted">⚠️ 実際にお客様からいただいた声のみを登録してください。創作・自作の声の掲載は景品表示法などに触れる恐れがあります。</p>`;
+  $("im_add").onclick = async ()=>{
+    const body = $("im_body").value.trim();
+    if(!body){ toast("声の本文を入力してください"); return; }
+    const payload = {
+      form_id: $("im_form").value,
+      rating: +$("im_rating").value,
+      body,
+      author_name: $("im_name").value.trim(),
+      source: $("im_source").value.trim(),
+      date: $("im_date").value.trim()
+    };
+    const r = await api("/api/testimonials",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+    if(!r.ok){ toast(r.data.error||"登録に失敗"); return; }
+    toast("掲載しました"); $("im_body").value=""; $("im_name").value=""; $("im_date").value="";
+    await loadForms();
+  };
+}
+
 /* ---------- 返礼設定 ---------- */
 async function renderRewards(){
   if(!STATE.forms.length){ $("view").innerHTML=`<div class="empty">先にフォームを作成してください。</div>`; return; }
@@ -269,21 +319,50 @@ async function renderRewards(){
 }
 
 /* ---------- 埋め込み ---------- */
+function buildSnippet(layout, summary){
+  const attrs = [`data-token="${STATE.embedToken}"`];
+  if(layout && layout!=="grid") attrs.push(`data-layout="${layout}"`);
+  if(!summary) attrs.push(`data-summary="off"`);
+  return `<script src="${STATE.origin}/widget.js" ${attrs.join(" ")} async><\/script>`;
+}
 function renderEmbed(){
   if(!STATE.embedToken){ $("view").innerHTML=`<div class="empty">先にフォームを作成すると、埋め込みコードが発行されます。</div>`; return; }
-  const snippet = `<script src="${STATE.origin}/widget.js" data-token="${STATE.embedToken}" async><\/script>`;
   $("view").innerHTML = `
+    <div class="card" style="background:var(--ink);color:#fff;border:0">
+      <p style="margin:0;font-size:12.5px;color:#cfc8b6;font-weight:700;letter-spacing:.04em">声の壁の表示回数</p>
+      <p style="margin:4px 0 0;font-size:34px;font-weight:800;font-family:var(--disp)">${(STATE.wallViews||0).toLocaleString()}<span style="font-size:15px;color:#cfc8b6;font-weight:700;font-family:var(--jp)"> 回</span></p>
+    </div>
     <div class="card">
       <h2>サイトに「声の壁」を貼る</h2>
-      <p class="muted" style="margin-top:-8px">掲載中の声が表示されます。HTMLの好きな場所にこの1行を貼るだけ。</p>
-      <div class="code" id="snip">${esc(snippet)}</div>
-      <button class="btn ghost sm copy" style="margin-top:11px" onclick='copy(${JSON.stringify(snippet)})'>コードをコピー</button>
+      <p class="muted" style="margin-top:-8px">掲載中の声が表示されます。見せ方を選んで、コードをコピーして貼るだけ。</p>
+      <div class="row">
+        <div><label>レイアウト</label><select id="em_layout">
+          <option value="grid">グリッド（タイル状）</option>
+          <option value="carousel">カルーセル（横スクロール）</option>
+          <option value="list">リスト（縦1列）</option>
+        </select></div>
+        <div><label>星サマリー（平均★と件数）</label><select id="em_summary">
+          <option value="1">表示する</option><option value="0">表示しない</option>
+        </select></div>
+      </div>
+      <div class="code" id="snip"></div>
+      <button class="btn ghost sm copy" id="em_copy" style="margin-top:11px">コードをコピー</button>
     </div>
     <div class="card">
       <h3>置き場所を指定したいとき</h3>
       <p class="muted" style="margin-top:-6px">表示したい場所に下のタグを置くと、そこに描画されます。</p>
       <div class="code">${esc('<div data-star-reviews></div>')}</div>
+    </div>
+    <div class="card">
+      <h3>Google検索に★を表示（SEO）</h3>
+      <p class="muted" style="margin-top:-6px">このタグを貼ると、レビューの構造化データ(JSON-LD)も自動で出力され、Google検索で★リッチスニペットの対象になります（反映はGoogleの判断・数日〜）。不要なら <code>data-schema="off"</code> を足してください。</p>
     </div>`;
+  const update=()=>{
+    const snip = buildSnippet($("em_layout").value, $("em_summary").value==="1");
+    $("snip").textContent = snip;
+    $("em_copy").onclick = ()=>copy(snip);
+  };
+  $("em_layout").onchange=update; $("em_summary").onchange=update; update();
 }
 
 boot();

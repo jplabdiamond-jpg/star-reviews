@@ -9,7 +9,9 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, d
     `SELECT f.*,
        (SELECT embed_token FROM walls w WHERE w.business_id = f.business_id ORDER BY w.created_at LIMIT 1) AS embed_token,
        (SELECT COUNT(*) FROM testimonials t WHERE t.form_id = f.id AND t.status='pending') AS pending_count,
-       (SELECT COUNT(*) FROM testimonials t WHERE t.form_id = f.id AND t.status='approved') AS approved_count
+       (SELECT COUNT(*) FROM testimonials t WHERE t.form_id = f.id AND t.status='approved') AS approved_count,
+       COALESCE((SELECT count FROM metrics WHERE key = 'form_view:' || f.id), 0) AS views,
+       COALESCE((SELECT count FROM metrics WHERE key = 'wall_view:' || (SELECT id FROM walls w WHERE w.business_id = f.business_id ORDER BY w.created_at LIMIT 1)), 0) AS wall_views
      FROM forms f WHERE f.business_id = ? ORDER BY f.created_at DESC`
   )
     .bind(businessId)

@@ -48,6 +48,21 @@ export function slugify(input: string): string {
   return base ? `${base}-${suffix}` : suffix;
 }
 
+// 簡易メトリクス加算（ベストエフォート。失敗しても本処理は止めない）
+export async function bumpMetric(db: D1Database, key: string): Promise<void> {
+  try {
+    const t = nowSec();
+    await db
+      .prepare(
+        "INSERT INTO metrics (key, count, updated_at) VALUES (?, 1, ?) ON CONFLICT(key) DO UPDATE SET count = count + 1, updated_at = ?"
+      )
+      .bind(key, t, t)
+      .run();
+  } catch {
+    /* metrics は本処理に影響させない */
+  }
+}
+
 export function escapeHtml(s: string): string {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
