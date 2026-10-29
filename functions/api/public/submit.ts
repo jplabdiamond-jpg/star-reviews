@@ -20,6 +20,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     author_name?: string;
     consent_display?: boolean;
     photo_key?: string;
+    video_key?: string;
     token?: string;
   }>(request);
   if (!b || !b.slug) return badRequest("invalid json");
@@ -40,6 +41,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const text = (b.body || "").trim();
   if (!text) return badRequest("ひとことコメントを入力してください");
   if (level >= 2 && !b.consent_display) return badRequest("掲載の同意にチェックしてください");
+  if (level >= 3 && !b.video_key) return badRequest("動画をアップロードしてください");
 
   // 検証トークン（購入者リンク経由か）
   let verified = 0;
@@ -62,8 +64,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   await env.DB.prepare(
     `INSERT INTO testimonials
-       (id, business_id, form_id, level, rating, body, author_name, author_label, photo_key, verified, consent_display, status, submitted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+       (id, business_id, form_id, level, rating, body, author_name, author_label, photo_key, video_key, verified, consent_display, status, submitted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
   )
     .bind(
       id,
@@ -75,6 +77,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       authorName,
       authorLabel,
       level >= 2 ? b.photo_key || null : null,
+      level >= 3 ? b.video_key || null : null,
       verified,
       b.consent_display ? 1 : 0,
       now

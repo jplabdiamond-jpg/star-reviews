@@ -64,6 +64,7 @@
   .btn:disabled{opacity:.55;cursor:default;transform:none}
   .err{color:#b4341f;font-size:14px;margin:12px 0 0;display:none;background:#fdecea;border-radius:9px;padding:9px 12px}
   .photo-prev{max-width:120px;border-radius:10px;margin-top:10px;display:none;border:1px solid var(--line)}
+  .video-prev{max-width:100%;border-radius:10px;margin-top:10px;display:none;background:#000}
   /* thanks */
   .thanks{text-align:center;padding:16px 4px}
   .thanks .mark-emoji{font-size:44px;line-height:1}
@@ -119,9 +120,15 @@
           <input type="file" id="photo" accept="image/*" />
           <img class="photo-prev" id="photoPrev" alt="" />
         </div>
+        <div class="field" id="videoField" style="display:none">
+          <label for="video">動画（60秒以内・60MBまで / MP4推奨）</label>
+          <input type="file" id="video" accept="video/*" />
+          <video class="video-prev" id="videoPrev" controls playsinline></video>
+          <p class="hint" id="videoHint"></p>
+        </div>
         <label class="consent">
           <input type="checkbox" id="consent" />
-          <span>お名前・お写真をサイトに掲載することに同意します。</span>
+          <span>お名前・お写真・動画をサイトに掲載することに同意します。</span>
         </label>
       </div>
     </div>
@@ -150,7 +157,8 @@
 const qs = new URLSearchParams(location.search);
 const slug = qs.get("f");
 const token = qs.get("t");
-let rating = 0, level = 1, photoKey = null;
+let rating = 0, level = 1, photoKey = null, videoKey = null, videoFile = null, videoOk = false;
+const MAX_VIDEO = 60 * 1024 * 1024;
 
 const $ = (id) => document.getElementById(id);
 
@@ -189,7 +197,28 @@ function selectLevel(v, el){
   el.classList.add("sel");
   toggleExtra();
 }
-function toggleExtra(){ $("extra").classList.toggle("show", level >= 2); }
+function toggleExtra(){
+  $("extra").classList.toggle("show", level >= 2);
+  $("videoField").style.display = level >= 3 ? "block" : "none";
+}
+
+// 動画プレビュー＋検証（60秒・60MB）
+$("video").addEventListener("change", () => {
+  videoKey = null; videoOk = false; videoFile = null;
+  const f = $("video").files[0];
+  $("videoHint").textContent = "";
+  $("videoPrev").style.display = "none";
+  if(!f) return;
+  if(f.size > MAX_VIDEO){ $("videoHint").textContent = "⚠️ 60MBを超えています。短く撮り直してください。"; return; }
+  const url = URL.createObjectURL(f);
+  const v = $("videoPrev");
+  v.src = url; v.style.display = "block";
+  v.onloadedmetadata = () => {
+    if(v.duration && v.duration > 62){ $("videoHint").textContent = "⚠️ 60秒以内にしてください。"; videoOk = false; return; }
+    videoFile = f; videoOk = true;
+    $("videoHint").textContent = "✓ この動画で送信できます";
+  };
+});
 
 // stars
 $("stars").querySelectorAll("span").forEach(s => {
@@ -213,6 +242,7 @@ $("form").addEventListener("submit", async (ev) => {
   if(!rating){ showErr("星で評価を選んでください"); return; }
   if(!$("body").value.trim()){ showErr("ひとことコメントを入力してください"); return; }
   if(level >= 2 && !$("consent").checked){ showErr("掲載の同意にチェックしてください"); return; }
+  if(level >= 3 && !videoOk){ showErr("動画をアップロードしてください（60秒・60MBまで）"); return; }
 
   const btn = $("submit"); btn.disabled = true; btn.textContent = "送信中…";
   try{
@@ -223,6 +253,14 @@ $("form").addEventListener("submit", async (ev) => {
       const uj = await up.json();
       if(up.ok) photoKey = uj.key;
     }
+    // 動画アップロード（Lv3）
+    if(level >= 3 && videoFile){
+      btn.textContent = "動画を送信中…";
+      const uv = await fetch("/api/public/upload-video", { method:"POST", headers:{ "content-type": videoFile.type }, body: videoFile });
+      const vj = await uv.json();
+      if(!uv.ok){ showErr(vj.error || "動画の送信に失敗しました"); btn.disabled=false; btn.textContent="この内容で送る"; return; }
+      videoKey = vj.key;
+    }
     const res = await fetch("/api/public/submit", {
       method:"POST", headers:{ "content-type":"application/json" },
       body: JSON.stringify({
@@ -230,7 +268,7 @@ $("form").addEventListener("submit", async (ev) => {
         body: $("body").value.trim(),
         author_name: $("name").value.trim(),
         consent_display: level >= 2 ? $("consent").checked : true,
-        photo_key: photoKey, token
+        photo_key: photoKey, video_key: videoKey, token
       })
     });
     const j = await res.json();

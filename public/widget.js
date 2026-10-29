@@ -61,6 +61,7 @@
     ".sr-top{display:flex;align-items:center;justify-content:space-between;gap:8px}" +
     ".sr-src{font-size:10px;color:#9a917c;font-weight:700;letter-spacing:.04em}" +
     ".sr-body{color:#413d30;font-size:14px;line-height:1.72;margin:10px 0 13px;white-space:pre-wrap}" +
+    ".sr-video{width:100%;border-radius:10px;margin:10px 0;background:#000;display:block}" +
     ".sr-foot{display:flex;align-items:center;gap:9px}" +
     ".sr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto}" +
     ".sr-avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:#eaa400;font-weight:800;font-size:14px}" +
@@ -147,6 +148,7 @@
           "<div class='sr-top'>" + starHTML(it.rating) +
           (it.source ? "<span class='sr-src'>via " + esc(it.source) + "</span>" : "") +
           "</div>" +
+          (it.video_url ? "<video class='sr-video' controls playsinline preload='metadata' src='" + esc(it.video_url) + "'></video>" : "") +
           "<div class='sr-body'>" + esc(it.body) + "</div>" +
           "<div class='sr-foot'>" + avatar +
           "<span class='sr-who'>" + esc(it.author) + "</span>" +

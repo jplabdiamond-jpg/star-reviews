@@ -23,7 +23,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     .first<{ name: string }>();
 
   const { results } = await env.DB.prepare(
-    `SELECT t.rating, t.body, t.author_label, t.photo_key, t.level, t.verified, t.source,
+    `SELECT t.rating, t.body, t.author_label, t.photo_key, t.video_key, t.level, t.verified, t.source,
             COALESCE(t.approved_at, t.submitted_at) AS at
      FROM wall_testimonials wt
      JOIN testimonials t ON t.id = wt.testimonial_id
@@ -37,6 +37,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
       body: string;
       author_label: string;
       photo_key: string | null;
+      video_key: string | null;
       level: number;
       verified: number;
       source: string | null;
@@ -51,6 +52,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     source: r.source || null,
     date: r.at ? new Date(r.at * 1000).toISOString().slice(0, 10) : null,
     photo_url: r.photo_key ? `${origin}/api/media/${r.photo_key}` : null,
+    video_url: r.video_key ? `${origin}/api/media/${r.video_key}` : null,
   }));
 
   // 星サマリー（平均・件数）

@@ -9,7 +9,7 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ reques
   const formId = url.searchParams.get("form_id");
 
   let sql =
-    "SELECT id, form_id, level, rating, body, author_name, author_label, photo_key, verified, consent_display, status, submitted_at, source " +
+    "SELECT id, form_id, level, rating, body, author_name, author_label, photo_key, video_key, verified, consent_display, status, submitted_at, source " +
     "FROM testimonials WHERE business_id = ?";
   const binds: unknown[] = [businessId];
   if (status !== "all") {

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   :root{
     --paper:#fffdf5; --panel:#fff; --ink:#1c1a12; --ink-soft:#413d30; --muted:#7c7563;
@@ -197,6 +198,29 @@ function coach(){
   show();
 }
 
+/* ---------- LINE共有 / QRコード ---------- */
+function lineShare(url){
+  const msg = "お客様の声をぜひお聞かせください：\n" + url;
+  window.open("https://line.me/R/msg/text/?" + encodeURIComponent(msg), "_blank", "noopener");
+}
+function showQR(url){
+  let qrHtml = `<p class="muted">QRの生成に失敗しました</p>`;
+  try{
+    const qr = qrcode(0, "M"); qr.addData(url); qr.make();
+    qrHtml = `<img alt="QRコード" src="${qr.createDataURL(7,10)}" style="width:220px;height:220px;image-rendering:pixelated;border:1px solid var(--line);border-radius:10px">`;
+  }catch(e){}
+  const ov=document.createElement("div"); ov.className="ov";
+  ov.innerHTML=`<div class="ov-card" style="max-width:340px;text-align:center">
+    <button class="ov-x" id="qx">✕</button>
+    <h2 style="margin:0 0 4px">QRコード</h2>
+    <p class="muted" style="margin:0 0 14px">店頭やチラシ・レシートに印刷して、お客様に読み取ってもらえます。</p>
+    ${qrHtml}
+    <div class="link" style="margin-top:12px">${esc(url)}</div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelector("#qx").onclick=()=>ov.remove();
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+}
+
 /* ---------- ★の種類 見本モーダル ---------- */
 function openStarSamples(){
   const cards = STAR_STYLES.map(([s,label])=>`
@@ -248,7 +272,11 @@ function renderForms(){
       </p>
       <p class="muted" style="margin:8px 0 4px">投稿リンク（LINEやメールに貼る）</p>
       <div class="link">${STATE.origin}/f/${esc(f.slug)}</div>
-      <button class="btn ghost sm copy" style="margin-top:9px" onclick="copy('${STATE.origin}/f/${esc(f.slug)}')">リンクをコピー</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">
+        <button class="btn ghost sm copy" onclick="copy('${STATE.origin}/f/${esc(f.slug)}')">リンクをコピー</button>
+        <button class="btn ok sm" onclick="lineShare('${STATE.origin}/f/${esc(f.slug)}')">LINEで送る</button>
+        <button class="btn ghost sm" onclick="showQR('${STATE.origin}/f/${esc(f.slug)}')">QRコード</button>
+      </div>
     </div>`).join("") || `<div class="empty">まだフォームがありません。最初のフォームを作りましょう。</div>`;
 
   $("view").innerHTML = `
@@ -264,7 +292,7 @@ function renderForms(){
       <div style="margin-bottom:12px">
         <label class="chk"><input type="checkbox" id="lv1" checked disabled> 星＋ひとこと（匿名）</label>
         <label class="chk"><input type="checkbox" id="lv2" checked> 実名・写真</label>
-        <label class="chk"><input type="checkbox" id="lv3"> 顔出し動画（Phase1）</label>
+        <label class="chk"><input type="checkbox" id="lv3"> 顔出し動画（60秒まで）</label>
       </div>
       <label class="chk"><input type="checkbox" id="f_verified"> 検証済み（購入者リンク経由）のみ返礼する</label>
       <div style="margin-top:16px"><button class="btn" id="createForm">作成する</button></div>
@@ -309,6 +337,7 @@ async function renderInbox(){
 function renderTi(t){
   const lv = {1:"匿名",2:"実名・写真",3:"動画"}[t.level]||"";
   const photo = t.photo_key ? `<img src="/api/media/${esc(t.photo_key)}" alt="">` : "";
+  const video = t.video_key ? `<video controls playsinline preload="metadata" src="/api/media/${esc(t.video_key)}" style="width:100%;max-width:320px;border-radius:10px;margin:4px 0 8px;background:#000"></video>` : "";
   const actions = t.status==="pending"
     ? `<button class="btn ok sm act" data-id="${t.id}" data-a="approve">掲載する</button>
        <button class="btn mut sm act" data-id="${t.id}" data-a="reject">非掲載</button>`
@@ -317,6 +346,7 @@ function renderTi(t){
     <div class="meta"><span class="stars">${stars(t.rating)}</span>
       <span class="pill n">${lv}</span>${t.verified?'<span class="pill g">確認済み</span>':''}</div>
     <div class="body">${esc(t.body)}</div>
+    ${video}
     <div class="who">${photo}<span class="muted">${esc(t.author_label)}</span></div>
     <div>${actions}</div>
   </div>`;
@@ -333,7 +363,19 @@ function bindTi(){
 /* ---------- レビューを選んで掲載（旧:手動インポート） ---------- */
 async function renderImport(){
   const formOpts = `<option value="">すべてのフォーム</option>` + STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
-  $("view").innerHTML = `
+  const gForms = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
+  const googleCard = STATE.forms.length ? `
+    <div class="card">
+      <h2>Googleの口コミを取り込む</h2>
+      <p class="muted" style="margin-top:-8px">Googleマップのお店の <b>Place ID</b>（または <code>place_id=</code> を含むURL）を貼ると、口コミを取り込んで掲載できます。</p>
+      <div class="row">
+        <div><label>Place ID / URL</label><input type="text" id="g_place" placeholder="ChIJ... または place_id=... を含むURL"></div>
+        <div><label>取り込み先フォーム</label><select id="g_form">${gForms}</select></div>
+      </div>
+      <button class="btn sm" id="g_import">取り込む</button>
+      <p class="muted" id="g_note" style="margin-top:8px">※ Google Places APIの仕様で取り込めるのは最も関連する最大5件です。全件取り込みは今後のGoogleビジネスプロフィール連携で対応予定。</p>
+    </div>` : "";
+  $("view").innerHTML = googleCard + `
     <div class="card">
       <h2>レビューを選んで掲載</h2>
       <p class="muted" style="margin-top:-8px">集まったお客様の声を並び替えて、サイトに載せたいものを選びます。<b>本文は編集できません</b>（いただいた声をそのまま掲載します）。</p>
@@ -360,16 +402,38 @@ async function renderImport(){
     bindPick();
   };
   $("im_sort").onchange = load; $("im_form").onchange = load; load();
+  if($("g_import")){
+    $("g_import").onclick = async ()=>{
+      const place = $("g_place").value.trim();
+      if(!place){ toast("Place ID か URL を入力してください"); return; }
+      $("g_import").disabled = true; $("g_note").textContent = "取り込み中…";
+      const r = await api("/api/google/import",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({place,form_id:$("g_form").value})});
+      $("g_import").disabled = false;
+      if(!r.ok){
+        if(r.data.setup_required){
+          $("g_note").innerHTML = "⚙️ Google連携は未設定です。有効化するには、Google Maps PlatformでAPIキーを作成し（Places API有効化）、Cloudflare Pagesの環境変数 <code>GOOGLE_MAPS_API_KEY</code> に登録してください。";
+        } else {
+          $("g_note").textContent = r.data.error || "取り込みに失敗しました";
+        }
+        return;
+      }
+      toast(`${r.data.imported||0}件を取り込みました`);
+      $("g_note").textContent = `${r.data.imported||0}件を掲載しました。`;
+      await loadForms(); load();
+    };
+  }
 }
 function renderPick(t){
   const on = t.status==="approved";
   const lv = {1:"匿名",2:"実名・写真",3:"動画"}[t.level]||"";
   const photo = t.photo_key ? `<img src="/api/media/${esc(t.photo_key)}" alt="">` : "";
+  const video = t.video_key ? `<video controls playsinline preload="metadata" src="/api/media/${esc(t.video_key)}" style="width:100%;max-width:320px;border-radius:10px;margin:4px 0 8px;background:#000"></video>` : "";
   const src = t.source ? `<span class="pill n">${esc(t.source)}</span>` : "";
   return `<div class="ti">
     <div class="meta"><span class="stars">${stars(t.rating)}</span>
       <span class="pill n">${lv}</span>${src}${on?'<span class="pill g">掲載中</span>':''}${t.verified?'<span class="pill g">確認済み</span>':''}</div>
     <div class="body">${esc(t.body)}</div>
+    ${video}
     <div class="who">${photo}<span class="muted">${esc(t.author_label)}</span></div>
     <div><button class="btn ${on?'mut':'ok'} sm pick" data-id="${t.id}" data-a="${on?'reject':'approve'}">${on?'掲載を外す':'レビューを掲載する'}</button></div>
   </div>`;

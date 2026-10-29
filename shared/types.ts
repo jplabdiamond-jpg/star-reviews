@@ -3,6 +3,8 @@ export interface Env {
   DB: D1Database;
   MEDIA: R2Bucket;
   SESSIONS: KVNamespace;
+  // 任意: Google Places APIキー（未設定ならGoogle連携は無効）
+  GOOGLE_MAPS_API_KEY?: string;
 }
 
 // セッション（KVに保存する中身）
