@@ -157,7 +157,10 @@
       });
       html += "</div>";
     }
-    html += "<div class='sr-credit'>お客様の声 by star-reviews</div></div>";
+    if (!data || data.branding !== false) {
+      html += "<div class='sr-credit'>お客様の声 by star-reviews</div>";
+    }
+    html += "</div>";
     shadow.innerHTML = html;
 
     if (!schemaOff) injectSchema(data);

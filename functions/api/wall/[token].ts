@@ -1,6 +1,7 @@
 // GET /api/wall/:token   承認済みの声を返す（埋め込みウィジェット用・CORS許可）
 // 返却: layout, name, business_name, summary{count,avg}, items[]（JSON-LD用に date も含む）
 import { bumpMetric } from "../../../shared/util";
+import { isPaid } from "../../../shared/plan";
 import type { Env } from "../../../shared/types";
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, params }) => {
@@ -18,9 +19,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   // 表示回数カウント（ベストエフォート）
   await bumpMetric(env.DB, `wall_view:${wall.id}`);
 
-  const biz = await env.DB.prepare("SELECT name FROM businesses WHERE id = ?")
+  const biz = await env.DB.prepare("SELECT name, plan, plan_until FROM businesses WHERE id = ?")
     .bind(wall.business_id)
-    .first<{ name: string }>();
+    .first<{ name: string; plan: string; plan_until: number | null }>();
+  // 有料プランはホワイトラベル（クレジット非表示）
+  const branding = !isPaid(biz);
 
   const { results } = await env.DB.prepare(
     `SELECT t.rating, t.body, t.author_label, t.photo_key, t.video_key, t.level, t.verified, t.source,
@@ -65,6 +68,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
       name: wall.name,
       business_name: biz?.name || "",
       summary: { count, avg },
+      branding,
       items,
     }),
     { headers: cors }

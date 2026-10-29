@@ -111,6 +111,7 @@
   <button class="tab" data-t="import">インポート</button>
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
+  <button class="tab" data-t="plan">プラン</button>
 </div></div>
 <main id="view"></main>
 <div class="toast" id="toast"></div>
@@ -120,14 +121,24 @@ const $ = (id)=>document.getElementById(id);
 const api = (u,o)=>fetch(u,o).then(async r=>({ok:r.ok,data:await r.json().catch(()=>({}))}));
 const esc = (s)=>{const d=document.createElement("div");d.textContent=s==null?"":s;return d.innerHTML;};
 const stars = (n)=>"★★★★★".slice(0,n|0)+"☆☆☆☆☆".slice(0,5-(n|0));
-let STATE = { forms: [], embedToken: null, origin: location.origin };
+let STATE = { forms: [], embedToken: null, origin: location.origin, plan: "free", paid: false, billingEnabled: false, hasSub: false, wallSlug: null };
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
 function copy(text){navigator.clipboard?.writeText(text);toast("コピーしました");}
 
 async function boot(){
   const me = await api("/api/auth/me");
   if(!me.data.authenticated){ location.href="/"; return; }
-  $("bizName").textContent = me.data.business?.name || "";
+  STATE.plan = me.data.business?.plan || "free";
+  STATE.paid = STATE.plan !== "free";
+  STATE.billingEnabled = !!me.data.billing_enabled;
+  STATE.hasSub = !!me.data.business?.has_subscription;
+  $("bizName").textContent = (me.data.business?.name || "") + (STATE.paid ? "  ·  Pro" : "");
+  // Stripe決済からの戻り
+  try{
+    const q=new URLSearchParams(location.search).get("billing");
+    if(q==="success"){ toast("アップグレードが完了しました 🎉"); history.replaceState(null,"","/app"); }
+    else if(q==="cancel"){ toast("お手続きはキャンセルされました"); history.replaceState(null,"","/app"); }
+  }catch(e){}
   $("logout").onclick = async()=>{ await api("/api/auth/logout",{method:"POST"}); location.href="/"; };
   $("help").onclick = ()=>coach();
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
@@ -247,6 +258,7 @@ async function loadForms(){
   const r = await api("/api/forms");
   STATE.forms = r.data.forms || [];
   STATE.embedToken = STATE.forms.find(f=>f.embed_token)?.embed_token || null;
+  STATE.wallSlug = STATE.forms.find(f=>f.wall_slug)?.wall_slug || null;
   STATE.wallViews = STATE.forms[0]?.wall_views || 0;
 }
 
@@ -256,6 +268,100 @@ function render(tab){
   if(tab==="import") return renderImport();
   if(tab==="rewards") return renderRewards();
   if(tab==="embed") return renderEmbed();
+  if(tab==="plan") return renderPlan();
+}
+
+/* ---------- ホスト型・声の壁ページ(SEO) + プラン ---------- */
+function wallPageUrl(){
+  const id = STATE.wallSlug || STATE.embedToken;
+  return id ? STATE.origin + "/wall/" + id : null;
+}
+function renderHostedCard(){
+  const url = wallPageUrl();
+  if(!url) return "";
+  const slugUI = STATE.paid
+    ? `<div class="row" style="margin-top:10px"><div style="flex:1">
+         <label>独自URL（Pro特典）</label>
+         <div style="display:flex;gap:8px">
+           <span style="align-self:center;color:var(--muted);font-size:13px">${esc(STATE.origin)}/wall/</span>
+           <input id="wp_slug" placeholder="my-shop" value="${esc(STATE.wallSlug||"")}" style="flex:1">
+           <button class="btn ghost sm" id="wp_save">保存</button>
+         </div>
+         <p class="muted" style="margin:6px 0 0;font-size:11.5px">半角英数字とハイフンで3〜40字。設定すると覚えやすいURLになります。</p>
+       </div></div>`
+    : `<p class="muted" style="margin:10px 0 0;font-size:12px">覚えやすい独自URL（例: /wall/my-shop）は <a style="color:var(--sun-deep);cursor:pointer;text-decoration:underline" id="wp_toplan">Pro</a> で設定できます。</p>`;
+  return `<div class="card">
+      <h2>ホスト型・声の壁ページ</h2>
+      <p class="muted" style="margin-top:-8px">サイトを持っていなくてもOK。この公開URLをInstagram・LINE・名刺・Googleマップに貼るだけで「お客様の声ページ」になります。Google検索にも載る構造化データ入りです。</p>
+      <label>公開URL</label>
+      <div class="code" id="wp_url">${esc(url)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn ghost sm" id="wp_copy">URLをコピー</button>
+        <a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">ページを開く</a>
+      </div>
+      ${slugUI}
+    </div>`;
+}
+function bindHostedCard(){
+  const url = wallPageUrl();
+  if($("wp_copy")) $("wp_copy").onclick = ()=>copy(url);
+  if($("wp_toplan")) $("wp_toplan").onclick = ()=>{ document.querySelector('.tab[data-t="plan"]').click(); };
+  if($("wp_save")) $("wp_save").onclick = async()=>{
+    const slug = ($("wp_slug").value||"").trim().toLowerCase();
+    if(!slug){ toast("URLを入力してください"); return; }
+    const r = await api("/api/walls/slug",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({slug})});
+    if(r.ok){ STATE.wallSlug = r.data.slug; toast("独自URLを保存しました"); renderEmbed(); }
+    else { toast(r.data.error || "保存に失敗しました"); }
+  };
+}
+
+function renderPlan(){
+  const paid = STATE.paid;
+  const benefits = [
+    ["声の壁の「star-reviews」クレジット非表示（ホワイトラベル）", true],
+    ["声の壁ページの独自URL（/wall/あなたの店名）", true],
+    ["フォーム・収集・掲載・動画レビュー・インポート", false],
+    ["Google検索向けの構造化データ(JSON-LD)", false],
+  ];
+  const planBadge = paid
+    ? `<span class="pill g" style="font-size:13px">現在のプラン：Pro</span>`
+    : `<span class="pill o" style="font-size:13px">現在のプラン：Free</span>`;
+  const setupNote = STATE.billingEnabled ? "" :
+    `<p class="muted" style="margin:10px 0 0;font-size:12px">※ 現在オンライン決済は準備中です（管理者がStripeを設定すると有効になります）。</p>`;
+  const action = paid
+    ? `<button class="btn ghost" id="pl_portal">プラン・お支払いを管理</button>`
+    : `<button class="btn" id="pl_upgrade">Proにアップグレード</button>`;
+  $("view").innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2 style="margin:0">プラン</h2>${planBadge}
+      </div>
+      <p class="muted" style="margin:8px 0 0">${paid ? "Proをご利用中です。ありがとうございます！" : "Freeプランでも主要機能はすべてお使いいただけます。Proにすると下記が解放されます。"}</p>
+      <ul style="margin:14px 0 0;padding-left:0;list-style:none">
+        ${benefits.map(([b,pro])=>`<li style="display:flex;align-items:flex-start;gap:9px;margin:8px 0">
+          <span style="flex:none;font-weight:800;color:${pro?'var(--sun-deep)':'#8a8166'}">${pro?'Pro':'✓'}</span>
+          <span style="font-size:14px">${esc(b)}</span></li>`).join("")}
+      </ul>
+      <div style="margin-top:16px">${action}</div>
+      ${setupNote}
+    </div>
+    ${renderHostedCard()}`;
+  bindHostedCard();
+  if($("pl_upgrade")) $("pl_upgrade").onclick = startCheckout;
+  if($("pl_portal")) $("pl_portal").onclick = openPortal;
+}
+async function startCheckout(){
+  const btn=$("pl_upgrade"); if(btn){btn.disabled=true;btn.textContent="準備中…";}
+  const r = await api("/api/billing/checkout",{method:"POST"});
+  if(r.ok && r.data.url){ location.href = r.data.url; return; }
+  if(r.data.setup_required){ toast("オンライン決済は準備中です"); }
+  else { toast(r.data.error || "エラーが発生しました"); }
+  if(btn){btn.disabled=false;btn.textContent="Proにアップグレード";}
+}
+async function openPortal(){
+  const r = await api("/api/billing/portal",{method:"POST"});
+  if(r.ok && r.data.url){ location.href = r.data.url; return; }
+  toast(r.data.error || "エラーが発生しました");
 }
 
 /* ---------- フォーム ---------- */
@@ -578,6 +684,7 @@ function renderEmbed(){
       <p style="margin:0;font-size:12.5px;color:#cfc8b6;font-weight:700;letter-spacing:.04em">声の壁の表示回数</p>
       <p style="margin:4px 0 0;font-size:34px;font-weight:800;font-family:var(--disp)">${(STATE.wallViews||0).toLocaleString()}<span style="font-size:15px;color:#cfc8b6;font-weight:700;font-family:var(--jp)"> 回</span></p>
     </div>
+    ${renderHostedCard()}
     <div class="card">
       <h2>サイトに「声の壁」を貼る</h2>
       <p class="muted" style="margin-top:-8px">見せ方を選ぶと下にプレビューが出ます。気に入ったらコードをコピーして貼るだけ。</p>
@@ -621,6 +728,7 @@ function renderEmbed(){
   };
   ["em_layout","em_star","em_theme","em_summary"].forEach(id=>$(id).onchange=update);
   $("em_samples").onclick = openStarSamples;
+  bindHostedCard();
   update();
 }
 

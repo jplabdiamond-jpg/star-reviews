@@ -8,6 +8,7 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, d
   const { results } = await env.DB.prepare(
     `SELECT f.*,
        (SELECT embed_token FROM walls w WHERE w.business_id = f.business_id ORDER BY w.created_at LIMIT 1) AS embed_token,
+       (SELECT slug FROM walls w WHERE w.business_id = f.business_id ORDER BY w.created_at LIMIT 1) AS wall_slug,
        (SELECT COUNT(*) FROM testimonials t WHERE t.form_id = f.id AND t.status='pending') AS pending_count,
        (SELECT COUNT(*) FROM testimonials t WHERE t.form_id = f.id AND t.status='approved') AS approved_count,
        COALESCE((SELECT count FROM metrics WHERE key = 'form_view:' || f.id), 0) AS views,
