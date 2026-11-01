@@ -85,8 +85,14 @@
   .sect-head h2{font-size:clamp(23px,3.5vw,33px);font-weight:800;letter-spacing:-.02em;margin:0 0 10px;line-height:1.26}
   .sect-head .lede{color:var(--ink-soft);font-size:15.5px;margin:0;line-height:1.85}
   /* hero */
-  .hero{display:grid;grid-template-columns:1.08fr .92fr;gap:54px;align-items:start;padding-top:58px;padding-bottom:30px}
-  @media(max-width:860px){.hero{grid-template-columns:1fr;gap:34px;padding-top:34px;padding-bottom:8px}}
+  .hero{display:grid;grid-template-columns:1.08fr .92fr;column-gap:54px;row-gap:0;align-items:start;
+    grid-template-areas:"copy media" "points media" "notes media";padding-top:58px;padding-bottom:30px}
+  .hero-copy{grid-area:copy}
+  .hero .points{grid-area:points}
+  .hero .notes{grid-area:notes}
+  .hero-right{grid-area:media}
+  @media(max-width:860px){.hero{grid-template-columns:1fr;row-gap:26px;
+    grid-template-areas:"copy" "media" "points";padding-top:34px;padding-bottom:8px}}
   h1{font-size:clamp(33px,5.2vw,52px);line-height:1.18;margin:0 0 20px;font-weight:800;letter-spacing:-.02em}
   .lead{font-size:17.5px;color:var(--ink-soft);margin:0 0 26px;max-width:30em}
   .points{list-style:none;padding:0;margin:0}
@@ -297,11 +303,12 @@
 
 <main>
   <section class="wrap hero">
-    <div>
+    <div class="hero-copy">
       <p class="eyebrow">お客様の声 collection</p>
       <h1>お客様の声を、<br><span class="mark">集めて・貼るだけ。</span></h1>
       <p class="lead">匿名でもOK。ひとこと書いてもらうお礼に特典を自動で。集まった声は、あなたのサイトやLPにそのまま埋め込めます。</p>
-      <ul class="points">
+    </div>
+    <ul class="points">
         <li>顔出し不要・匿名でも書いてもらえる設計</li>
         <li>出し方に応じてお礼（クーポン）を自動発行</li>
         <li>LINE・メールのリンクから集める</li>
@@ -319,7 +326,6 @@
           <div class="w">匿名希望</div>
         </div>
       </div>
-    </div>
 
     <div class="hero-right">
       <div class="show" role="group" aria-label="star-reviews を使うと起きること">
