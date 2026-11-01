@@ -75,6 +75,38 @@
   .note .w{font-size:12px;color:var(--muted);font-weight:700}
   .note:nth-child(1){left:0;top:0;transform:rotate(-4deg)}
   .note:nth-child(2){right:0;top:34px;transform:rotate(3.5deg)}
+  /* hero slideshow */
+  .show{position:relative;border-radius:22px;overflow:hidden;border:2px solid var(--ink);
+    box-shadow:6px 6px 0 var(--ink);aspect-ratio:1/1;
+    background:radial-gradient(125% 120% at 50% 8%, var(--sun-soft), var(--paper) 68%)}
+  @media(max-width:860px){.show{width:100%;max-width:440px;justify-self:center;margin-top:6px;box-shadow:5px 5px 0 var(--ink)}}
+  .show .slides{position:absolute;inset:0}
+  .show .slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+  .show .slide.on{opacity:1}
+  .show .slide img{position:absolute;top:6%;left:7%;width:86%;height:74%;object-fit:contain;
+    filter:drop-shadow(0 10px 20px rgba(60,46,12,.16))}
+  .show .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 22px 24px;
+    background:linear-gradient(transparent, rgba(255,253,245,.0) 8%, rgba(255,253,245,.86) 46%, rgba(255,253,245,.97))}
+  .show .cap .txt{font-weight:800;font-size:clamp(17px,2.25vw,22px);line-height:1.55;letter-spacing:-.01em;color:var(--ink);
+    background:linear-gradient(transparent 58%, var(--mark) 58% 96%, transparent 96%);
+    -webkit-box-decoration-break:clone;box-decoration-break:clone;padding:1px .14em}
+  .show .dots{position:absolute;top:15px;left:15px;display:flex;gap:7px;z-index:3}
+  .show .dot{width:9px;height:9px;border-radius:999px;background:rgba(28,26,18,.2);border:0;padding:0;cursor:pointer;transition:.22s}
+  .show .dot.on{background:var(--ink);width:24px}
+  .show .step-no{position:absolute;top:12px;right:16px;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--sun-deep);z-index:3}
+  /* hero cta */
+  .hero-cta{display:inline-flex;align-items:center;gap:9px;margin-top:28px;background:var(--ink);color:#fff;text-decoration:none;
+    font-weight:800;font-size:16px;padding:14px 28px;border-radius:12px;transition:.15s;box-shadow:4px 4px 0 var(--sun)}
+  .hero-cta:hover{background:#000;transform:translateY(-1px)}
+  .hero-cta .ar{transition:.15s}
+  .hero-cta:hover .ar{transform:translateX(3px)}
+  .hero-sub{margin:11px 0 0;font-size:12.5px;color:var(--muted)}
+  /* signup section */
+  .signup{display:grid;grid-template-columns:1fr minmax(360px,420px);gap:48px;align-items:center;padding-top:60px}
+  @media(max-width:860px){.signup{grid-template-columns:1fr;gap:26px;padding-top:42px}}
+  .signup .copy .eyebrow{margin-bottom:12px}
+  .signup .copy h2{font-size:clamp(23px,3.3vw,31px);font-weight:800;letter-spacing:-.02em;margin:0 0 10px;line-height:1.3}
+  .signup .copy .lede{color:var(--ink-soft);font-size:15.5px;margin:0;line-height:1.85;max-width:28em}
   /* signup card */
   .auth{background:var(--panel);border:1px solid var(--line-strong);border-radius:22px;
     padding:30px 28px;box-shadow:var(--shadow);position:relative}
@@ -248,9 +280,52 @@
           <div class="w">匿名希望</div>
         </div>
       </div>
+      <a class="hero-cta" href="#auth">無料ではじめる <span class="ar" aria-hidden="true">→</span></a>
+      <p class="hero-sub">クレジットカードの登録は不要です</p>
     </div>
 
-    <div class="auth" id="auth">
+    <div class="show" role="group" aria-label="star-reviews を使うと起きること">
+      <div class="dots" role="tablist" aria-label="スライド切り替え">
+        <button class="dot on" type="button" aria-label="1枚目へ"></button>
+        <button class="dot" type="button" aria-label="2枚目へ"></button>
+        <button class="dot" type="button" aria-label="3枚目へ"></button>
+        <button class="dot" type="button" aria-label="4枚目へ"></button>
+        <button class="dot" type="button" aria-label="5枚目へ"></button>
+      </div>
+      <div class="step-no">1 / 5</div>
+      <div class="slides">
+        <div class="slide on">
+          <img src="/hero/hero-0.webp" alt="お店の前で、お客さんが来ずに悩むオーナー" width="900" height="900" fetchpriority="high">
+          <div class="cap"><span class="txt">なかなかお客さんが安定して来店しない…</span></div>
+        </div>
+        <div class="slide">
+          <img src="/hero/hero-1.webp" alt="star-reviews を思いついてひらめくオーナー" width="900" height="900" loading="lazy">
+          <div class="cap"><span class="txt">STAR REVIEWS？使ってみよう！</span></div>
+        </div>
+        <div class="slide">
+          <img src="/hero/hero-2.webp" alt="パソコンからお客さんへレビューを依頼するオーナー" width="900" height="900" loading="lazy">
+          <div class="cap"><span class="txt">お客さんにレビュー依頼してみよう！</span></div>
+        </div>
+        <div class="slide">
+          <img src="/hero/hero-3.webp" alt="星5つのレビューが次々と届く様子" width="900" height="900" loading="lazy">
+          <div class="cap"><span class="txt">お客さんからレビューがどんどん届く！</span></div>
+        </div>
+        <div class="slide">
+          <img src="/hero/hero-4.webp" alt="お客さんでにぎわう、うれしそうなオーナー" width="900" height="900" loading="lazy">
+          <div class="cap"><span class="txt">レビューが増えて、お客さんも増えた！</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 登録 -->
+  <section class="wrap signup" id="auth">
+    <div class="copy">
+      <p class="eyebrow">get started</p>
+      <h2>まずは無料で、<span class="mark">声を集めはじめる。</span></h2>
+      <p class="lede">クレジットカードの登録は不要です。アカウントを作ったら、最初のフォームは1分ほどで用意できます。匿名でもOKなので、今日から声が集まりはじめます。</p>
+    </div>
+    <div class="auth">
       <h2 id="authTitle">無料ではじめる</h2>
       <p class="sub" id="authSub">クレカ不要。まずはアカウントを作成。</p>
       <form id="form">
@@ -568,6 +643,32 @@ $("form").addEventListener("submit", async (ev) => {
 
 // 既ログインならダッシュボードへ
 fetch("/api/auth/me").then(r=>r.json()).then(j=>{ if(j.authenticated) location.href="/app.html"; });
+
+// ヒーローのスライドショー（自動切替・クロスフェード）
+(function(){
+  const root = document.querySelector(".show");
+  if(!root) return;
+  const slides = [...root.querySelectorAll(".slide")];
+  const dots   = [...root.querySelectorAll(".dot")];
+  const stepNo = root.querySelector(".step-no");
+  if(slides.length < 2) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let i = 0, timer = null;
+  const DELAY = 3200;
+  function go(n){
+    slides[i].classList.remove("on"); if(dots[i]) dots[i].classList.remove("on");
+    i = (n + slides.length) % slides.length;
+    slides[i].classList.add("on"); if(dots[i]) dots[i].classList.add("on");
+    if(stepNo) stepNo.textContent = (i+1) + " / " + slides.length;
+  }
+  function start(){ if(reduce) return; stop(); timer = setInterval(() => go(i+1), DELAY); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+  dots.forEach((d,n) => d.addEventListener("click", () => { go(n); start(); }));
+  root.addEventListener("mouseenter", stop);
+  root.addEventListener("mouseleave", start);
+  document.addEventListener("visibilitychange", () => { document.hidden ? stop() : start(); });
+  start();
+})();
 </script>
 </body>
 </html>
