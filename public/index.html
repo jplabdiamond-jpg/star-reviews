@@ -75,25 +75,19 @@
   .note .w{font-size:12px;color:var(--muted);font-weight:700}
   .note:nth-child(1){left:0;top:0;transform:rotate(-4deg)}
   .note:nth-child(2){right:0;top:34px;transform:rotate(3.5deg)}
-  /* hero slideshow */
-  .show{position:relative;border-radius:22px;overflow:hidden;border:2px solid var(--ink);
-    box-shadow:6px 6px 0 var(--ink);aspect-ratio:1/1;
-    background:radial-gradient(125% 120% at 50% 8%, var(--sun-soft), var(--paper) 68%)}
-  @media(max-width:860px){.show{width:100%;max-width:440px;justify-self:center;margin-top:6px;box-shadow:5px 5px 0 var(--ink)}}
+  /* hero slideshow (card-less: 透過画像＋テキストのみ) */
+  .show{position:relative;aspect-ratio:1/1}
+  @media(max-width:860px){.show{width:100%;max-width:420px;justify-self:center;margin-top:2px}}
   .show .slides{position:absolute;inset:0}
-  .show .slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+  .show .slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    opacity:0;transition:opacity .9s ease;pointer-events:none}
   .show .slide.on{opacity:1}
-  .show .slide img{position:absolute;top:6%;left:7%;width:86%;height:74%;object-fit:contain;
-    filter:drop-shadow(0 10px 20px rgba(60,46,12,.16))}
-  .show .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 22px 24px;
-    background:linear-gradient(transparent, rgba(255,253,245,.0) 8%, rgba(255,253,245,.86) 46%, rgba(255,253,245,.97))}
-  .show .cap .txt{font-weight:800;font-size:clamp(17px,2.25vw,22px);line-height:1.55;letter-spacing:-.01em;color:var(--ink);
-    background:linear-gradient(transparent 58%, var(--mark) 58% 96%, transparent 96%);
+  .show .slide img{flex:1;min-height:0;width:100%;object-fit:contain;
+    filter:drop-shadow(0 12px 22px rgba(60,46,12,.14))}
+  .show .cap{flex:none;text-align:center;padding:10px 6px 0}
+  .show .cap .txt{font-weight:800;font-size:clamp(17px,2.35vw,23px);line-height:1.5;letter-spacing:-.01em;color:var(--ink);
+    background:linear-gradient(transparent 56%, var(--mark) 56% 96%, transparent 96%);
     -webkit-box-decoration-break:clone;box-decoration-break:clone;padding:1px .14em}
-  .show .dots{position:absolute;top:15px;left:15px;display:flex;gap:7px;z-index:3}
-  .show .dot{width:9px;height:9px;border-radius:999px;background:rgba(28,26,18,.2);border:0;padding:0;cursor:pointer;transition:.22s}
-  .show .dot.on{background:var(--ink);width:24px}
-  .show .step-no{position:absolute;top:12px;right:16px;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--sun-deep);z-index:3}
   /* hero cta */
   .hero-cta{display:inline-flex;align-items:center;gap:9px;margin-top:28px;background:var(--ink);color:#fff;text-decoration:none;
     font-weight:800;font-size:16px;padding:14px 28px;border-radius:12px;transition:.15s;box-shadow:4px 4px 0 var(--sun)}
@@ -285,14 +279,6 @@
     </div>
 
     <div class="show" role="group" aria-label="star-reviews を使うと起きること">
-      <div class="dots" role="tablist" aria-label="スライド切り替え">
-        <button class="dot on" type="button" aria-label="1枚目へ"></button>
-        <button class="dot" type="button" aria-label="2枚目へ"></button>
-        <button class="dot" type="button" aria-label="3枚目へ"></button>
-        <button class="dot" type="button" aria-label="4枚目へ"></button>
-        <button class="dot" type="button" aria-label="5枚目へ"></button>
-      </div>
-      <div class="step-no">1 / 5</div>
       <div class="slides">
         <div class="slide on">
           <img src="/hero/hero-0.webp" alt="お店の前で、お客さんが来ずに悩むオーナー" width="900" height="900" fetchpriority="high">
