@@ -98,12 +98,22 @@
   .notes{position:relative;margin-top:30px;height:150px}
   @media(max-width:860px){.notes{display:none}}
   .note{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:13px 15px;width:230px;box-shadow:var(--shadow)}
+    padding:13px 15px;width:230px;box-shadow:var(--shadow);--rot:0deg;transform:rotate(var(--rot))}
   .note .s{color:var(--sun-deep);font-size:14px;letter-spacing:1px}
   .note .t{font-size:13.5px;margin:5px 0 7px;color:var(--ink-soft);line-height:1.6}
   .note .w{font-size:12px;color:var(--muted);font-weight:700}
-  .note:nth-child(1){left:0;top:0;transform:rotate(-4deg)}
-  .note:nth-child(2){right:0;top:34px;transform:rotate(3.5deg)}
+  .note:nth-child(1){left:0;top:0;--rot:-4deg}
+  .note:nth-child(2){right:0;top:34px;--rot:3.5deg}
+  /* ★5レビューカードを約0.5秒後に順番に跳ねて表示 */
+  @keyframes noteIn{
+    0%{opacity:0;transform:translateY(24px) scale(.82) rotate(var(--rot))}
+    55%{opacity:1;transform:translateY(-8px) scale(1.05) rotate(var(--rot))}
+    74%{transform:translateY(3px) scale(.99) rotate(var(--rot))}
+    100%{opacity:1;transform:translateY(0) scale(1) rotate(var(--rot))}}
+  .js .note{opacity:0;animation:noteIn .62s cubic-bezier(.2,.8,.2,1.4) both}
+  .js .note:nth-child(1){animation-delay:.5s}
+  .js .note:nth-child(2){animation-delay:.72s}
+  @media(prefers-reduced-motion:reduce){.js .note{animation:none;opacity:1;transform:rotate(var(--rot))}}
   /* hero slideshow (card-less: 透過画像＋テキストのみ) */
   .show{position:relative;aspect-ratio:1/1}
   @media(max-width:860px){.show{width:100%;max-width:420px;justify-self:center;margin-top:2px}}
