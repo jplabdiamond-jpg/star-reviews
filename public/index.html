@@ -59,9 +59,12 @@
   @keyframes ptIn{0%{opacity:0;transform:translateY(14px)}60%{opacity:1;transform:translateY(-4px)}100%{opacity:1;transform:translateY(0)}}
   @keyframes ptPop{0%{transform:rotate(-6deg) scale(0)}55%{transform:rotate(-6deg) scale(1.24)}100%{transform:rotate(-6deg) scale(1)}}
   @keyframes ptCheck{0%{opacity:0;transform:scale(0)}55%{opacity:1;transform:scale(1.3)}100%{opacity:1;transform:scale(1)}}
-  .js .points li{opacity:0;animation:ptIn .52s cubic-bezier(.2,.7,.2,1.25) both}
-  .js .points li::before{animation:ptPop .5s cubic-bezier(.2,.8,.2,1.5) both}
-  .js .points li::after{opacity:0;animation:ptCheck .5s cubic-bezier(.2,.8,.2,1.5) both}
+  .js .points li{opacity:0}
+  .js .points li::before{transform:rotate(-6deg) scale(0)}
+  .js .points li::after{opacity:0}
+  .js .points.inview li{animation:ptIn .52s cubic-bezier(.2,.7,.2,1.25) both}
+  .js .points.inview li::before{animation:ptPop .5s cubic-bezier(.2,.8,.2,1.5) both}
+  .js .points.inview li::after{animation:ptCheck .5s cubic-bezier(.2,.8,.2,1.5) both}
   .js .points li:nth-child(1){animation-delay:.12s}
   .js .points li:nth-child(2){animation-delay:.28s}
   .js .points li:nth-child(3){animation-delay:.44s}
@@ -116,7 +119,8 @@
     55%{opacity:1;transform:translateY(-8px) scale(1.05) rotate(var(--rot))}
     74%{transform:translateY(3px) scale(.99) rotate(var(--rot))}
     100%{opacity:1;transform:translateY(0) scale(1) rotate(var(--rot))}}
-  .js .note{opacity:0;animation:noteIn .62s cubic-bezier(.2,.8,.2,1.4) both}
+  .js .note{opacity:0}
+  .js .notes.inview .note{animation:noteIn .62s cubic-bezier(.2,.8,.2,1.4) both}
   .js .note:nth-child(1){animation-delay:.5s}
   .js .note:nth-child(2){animation-delay:.72s}
   @media(prefers-reduced-motion:reduce){.js .note{animation:none;opacity:1;transform:rotate(var(--rot))}}
@@ -710,6 +714,17 @@ fetch("/api/auth/me").then(r=>r.json()).then(j=>{ if(j.authenticated) location.h
   root.addEventListener("mouseleave", start);
   document.addEventListener("visibilitychange", () => { document.hidden ? stop() : start(); });
   start();
+})();
+
+// チェックリスト・レビューカードを、画面に入ったら再生
+(function(){
+  const groups = [...document.querySelectorAll(".points, .notes")];
+  if(!groups.length) return;
+  if(!("IntersectionObserver" in window)){ groups.forEach(g => g.classList.add("inview")); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add("inview"); io.unobserve(e.target); } });
+  }, { threshold: 0.25 });
+  groups.forEach(g => io.observe(g));
 })();
 
 // マーカーを、画面に入ったら右→左に引く
