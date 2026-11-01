@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>document.documentElement.classList.add('js')</script>
 <title>star-reviews｜お客様の声を、集めて・貼るだけ</title>
 <meta name="description" content="匿名OK・特典で集まる。LINEやメールで依頼して集めた声を、サイトやLPにそのまま埋め込めるお客様の声ツール。動画レビュー・声の壁ページ・返礼コードまで。" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,9 +43,37 @@
   .nav-login{font-weight:700;font-size:14px;text-decoration:none;padding:9px 16px;border-radius:999px;
     border:1.5px solid var(--ink);color:var(--ink);transition:.15s;white-space:nowrap}
   .nav-login:hover{background:var(--ink);color:#fff}
-  /* highlighter */
-  .mark{background:linear-gradient(transparent 56%, var(--mark) 56% 94%, transparent 94%);
+  /* highlighter — 右から左へ引かれるマーカー */
+  .mark{background-image:linear-gradient(transparent 56%, var(--mark) 56% 94%, transparent 94%);
+    background-repeat:no-repeat;background-position:100% 0;background-size:100% 100%;
     padding:0 .08em;font-weight:inherit}
+  .js .mark{background-size:0% 100%;transition:background-size .75s cubic-bezier(.22,.61,.36,1)}
+  .js .mark.draw{background-size:100% 100%}
+  /* キャプションのマーカーはスライド表示のたびに引かれる */
+  .js .show .cap .txt{background-repeat:no-repeat;background-position:100% 0;background-size:0% 100%;
+    transition:background-size .7s cubic-bezier(.22,.61,.36,1)}
+  .js .show .slide.on .cap .txt{background-size:100% 100%}
+  @media(prefers-reduced-motion:reduce){
+    .js .mark,.js .show .cap .txt,.js .show .slide.on .cap .txt{transition:none;background-size:100% 100%}}
+  /* チェックリストの弾けるポップイン */
+  @keyframes ptIn{0%{opacity:0;transform:translateY(14px)}60%{opacity:1;transform:translateY(-4px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes ptPop{0%{transform:rotate(-6deg) scale(0)}55%{transform:rotate(-6deg) scale(1.24)}100%{transform:rotate(-6deg) scale(1)}}
+  @keyframes ptCheck{0%{opacity:0;transform:scale(0)}55%{opacity:1;transform:scale(1.3)}100%{opacity:1;transform:scale(1)}}
+  .js .points li{opacity:0;animation:ptIn .52s cubic-bezier(.2,.7,.2,1.25) both}
+  .js .points li::before{animation:ptPop .5s cubic-bezier(.2,.8,.2,1.5) both}
+  .js .points li::after{opacity:0;animation:ptCheck .5s cubic-bezier(.2,.8,.2,1.5) both}
+  .js .points li:nth-child(1){animation-delay:.12s}
+  .js .points li:nth-child(2){animation-delay:.28s}
+  .js .points li:nth-child(3){animation-delay:.44s}
+  .js .points li:nth-child(4){animation-delay:.60s}
+  .js .points li:nth-child(1)::before,.js .points li:nth-child(1)::after{animation-delay:.26s}
+  .js .points li:nth-child(2)::before,.js .points li:nth-child(2)::after{animation-delay:.42s}
+  .js .points li:nth-child(3)::before,.js .points li:nth-child(3)::after{animation-delay:.58s}
+  .js .points li:nth-child(4)::before,.js .points li:nth-child(4)::after{animation-delay:.74s}
+  @media(prefers-reduced-motion:reduce){
+    .js .points li{animation:none;opacity:1;transform:none}
+    .js .points li::before{animation:none;transform:rotate(-6deg) scale(1)}
+    .js .points li::after{animation:none;opacity:1;transform:none}}
   .eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--sun-deep);margin:0 0 14px}
   .only-wide{display:inline}
@@ -654,6 +683,17 @@ fetch("/api/auth/me").then(r=>r.json()).then(j=>{ if(j.authenticated) location.h
   root.addEventListener("mouseleave", start);
   document.addEventListener("visibilitychange", () => { document.hidden ? stop() : start(); });
   start();
+})();
+
+// マーカーを、画面に入ったら右→左に引く
+(function(){
+  const marks = [...document.querySelectorAll(".mark")];
+  if(!marks.length) return;
+  if(!("IntersectionObserver" in window)){ marks.forEach(m => m.classList.add("draw")); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add("draw"); io.unobserve(e.target); } });
+  }, { threshold: 0.6 });
+  marks.forEach(m => io.observe(m));
 })();
 </script>
 </body>
