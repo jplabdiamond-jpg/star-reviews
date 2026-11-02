@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使い方ガイド｜star-reviews</title>
+<meta name="description" content="集めたお客様の声をサイトに貼る方法と、色・レイアウト・枚数・自動スライドなどの見た目カスタマイズの手順。コピー1行で埋め込み、サイトが無くても公開URLで共有できます。" />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#fffdf5;--panel:#fff;--ink:#1c1a12;--ink-soft:#413d30;--muted:#7c7563;
+    --sun:#ffc62b;--sun-deep:#eaa400;--sun-soft:#ffe7a0;--mark:#ffd84d;--line:#ece3cf;--line-strong:#e0d4b6;--ok:#1c7d52;--ok-bg:#e2f3e8;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.8;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:0 20px}
+  a{color:var(--ink)}
+  /* header */
+  header.top{border-bottom:1px solid var(--line);padding:16px 0;position:sticky;top:0;background:rgba(255,253,245,.9);backdrop-filter:blur(6px);z-index:9}
+  .top .in{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--ink);text-decoration:none}
+  .brand .star{width:17px;height:17px;color:var(--sun-deep)}
+  .top .cta{font-weight:800;font-size:13.5px;text-decoration:none;background:var(--ink);color:#fff;padding:9px 15px;border-radius:999px}
+  .top .cta:hover{background:#000}
+  /* hero */
+  .hero{padding:52px 0 10px;text-align:center}
+  .eyebrow{font-family:var(--disp);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted)}
+  h1{font-size:clamp(28px,6vw,44px);line-height:1.22;margin:.25em 0 .2em;letter-spacing:-.01em}
+  .mk{background:linear-gradient(transparent 60%,var(--mark) 60%);padding:0 .06em}
+  .lede{color:var(--ink-soft);font-size:16px;max-width:600px;margin:10px auto 0}
+  /* sections */
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:0}
+  h2{font-size:23px;letter-spacing:-.01em;margin:0 0 4px;display:flex;align-items:center;gap:11px}
+  h2 .no{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--ink);background:var(--sun);width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;border:1.5px solid var(--ink)}
+  h3{font-size:16.5px;margin:22px 0 6px}
+  p{margin:6px 0}
+  .muted{color:var(--muted);font-size:14px}
+  /* flow cards */
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 4px}
+  .fcard{background:var(--panel);border:1.5px solid var(--ink);border-radius:14px;padding:16px 15px;box-shadow:4px 4px 0 var(--ink)}
+  .fcard .n{font-family:var(--disp);font-weight:700;color:var(--sun-deep);font-size:13px}
+  .fcard b{display:block;margin:3px 0 4px;font-size:15px}
+  .fcard p{font-size:13px;color:var(--ink-soft);margin:0}
+  @media(max-width:620px){.flow{grid-template-columns:1fr}}
+  /* two ways */
+  .ways{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  .way{background:var(--panel);border:1.5px solid var(--line-strong);border-radius:14px;padding:18px}
+  .way .tag{display:inline-block;font-family:var(--disp);font-weight:700;font-size:12px;background:var(--ink);color:#fff;border-radius:6px;padding:2px 8px;letter-spacing:.04em}
+  .way h3{margin:10px 0 4px;font-size:17px}
+  .way ul{margin:8px 0 0;padding-left:18px}
+  .way li{font-size:13.5px;color:var(--ink-soft);margin:3px 0}
+  @media(max-width:620px){.ways{grid-template-columns:1fr}}
+  /* steps */
+  .step{display:flex;gap:14px;margin:14px 0}
+  .step .b{flex:none;width:28px;height:28px;border-radius:50%;background:var(--sun);border:1.5px solid var(--ink);font-family:var(--disp);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .step .t{flex:1}
+  .step .t b{font-size:15px}
+  .step .t p{font-size:14px;color:var(--ink-soft);margin:2px 0 0}
+  /* code */
+  .code{background:var(--ink);color:#ffe9a8;border-radius:11px;padding:14px 16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.65;overflow:auto;white-space:pre;position:relative}
+  .code .cp{position:absolute;top:8px;right:8px;background:#2a2617;color:#ffe9a8;border:1px solid #4b4431;border-radius:7px;font:inherit;font-size:11px;padding:4px 9px;cursor:pointer}
+  .code .cp:hover{background:#39341f}
+  .inline{background:#fff6d8;border:1px solid var(--line-strong);border-radius:6px;padding:1px 6px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+  /* options table */
+  .opt{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  .opt th,.opt td{border:1px solid var(--line-strong);padding:9px 11px;text-align:left;vertical-align:top}
+  .opt th{background:#fffef4;font-weight:700;white-space:nowrap}
+  .opt td code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--sun-deep)}
+  /* note */
+  .note{background:#fffef4;border:1px solid var(--line-strong);border-left:4px solid var(--sun);border-radius:10px;padding:13px 15px;margin:16px 0;font-size:13.5px;color:var(--ink-soft)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  .chip{font-size:12.5px;font-weight:700;background:#fff;border:1.5px solid var(--line-strong);border-radius:999px;padding:5px 12px}
+  /* faq */
+  details{border:1px solid var(--line-strong);border-radius:12px;padding:0 16px;margin:10px 0;background:var(--panel)}
+  summary{font-weight:700;padding:14px 0;cursor:pointer;list-style:none;font-size:14.5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--sun-deep);font-weight:800;font-size:18px}
+  details[open] summary::after{content:"–"}
+  details .a{padding:0 0 14px;font-size:14px;color:var(--ink-soft)}
+  /* cta band */
+  .band{background:var(--ink);color:#fff;border-radius:18px;padding:28px 24px;text-align:center;margin:10px 0 0}
+  .band h2{color:#fff;justify-content:center;font-size:22px}
+  .band p{color:#d9d2bf;font-size:14px;margin:6px 0 16px}
+  .band a{display:inline-block;background:var(--sun);color:var(--ink);font-weight:800;text-decoration:none;padding:12px 22px;border-radius:999px;border:1.5px solid var(--sun)}
+  .band a:hover{background:#ffd34d}
+  footer{border-top:1px solid var(--line);padding:24px 0 48px;color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  footer a{color:var(--muted);text-decoration:none;font-weight:700;margin-left:14px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap in">
+  <a class="brand" href="/">
+    <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
+    star<em style="font-style:normal;color:var(--sun-deep)">·</em>reviews
+  </a>
+  <a class="cta" href="/app">管理画面を開く</a>
+</div></header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="eyebrow">How to use</div>
+    <h1>集めた声を、<span class="mk">サイトに載せる。</span></h1>
+    <p class="lede">コピーして貼るだけ。色・レイアウト・枚数・自動スライドまで、管理画面から自由にカスタマイズできます。サイトが無くても公開URLで共有できます。</p>
+  </div>
+
+  <!-- 全体の流れ -->
+  <section>
+    <h2><span class="no">1</span>全体の流れ</h2>
+    <p class="muted">やることは3ステップだけです。</p>
+    <div class="flow">
+      <div class="fcard"><span class="n">STEP 1</span><b>声を集める</b><p>投稿フォームのリンクやQRを、LINE・メール・店頭で案内。匿名でも投稿できます。</p></div>
+      <div class="fcard"><span class="n">STEP 2</span><b>掲載する声を選ぶ</b><p>届いた声は「受信トレイ」に入ります。載せたい良い声だけ「掲載する」で承認。</p></div>
+      <div class="fcard"><span class="n">STEP 3</span><b>サイトに載せる</b><p>タグを1行貼る、または公開URLを共有。承認した声が自動で表示されます。</p></div>
+    </div>
+    <div class="note">本文は編集できない設計です。いただいた声はそのまま掲載されるので、やらせ感なく安心して使えます。どれを載せる・載せないかは、あなたが選べます。</div>
+  </section>
+
+  <!-- 2つの載せ方 -->
+  <section>
+    <h2><span class="no">2</span>載せ方は2つ</h2>
+    <p class="muted">サイトがあるかどうかで選べます。両方使ってもOKです。</p>
+    <div class="ways">
+      <div class="way">
+        <span class="tag">方法A</span>
+        <h3>自分のサイトに埋め込む</h3>
+        <p class="muted" style="margin:2px 0 0">タグを1行貼るだけ。サイトのデザインに溶け込みます。</p>
+        <ul>
+          <li>WordPress・STUDIO・ペライチ・Shopify・素のHTMLなどで動作</li>
+          <li>サイトのCSSと干渉しない安全な作り（Shadow DOM）</li>
+          <li>承認済みの声だけを自動表示</li>
+        </ul>
+      </div>
+      <div class="way">
+        <span class="tag">方法B</span>
+        <h3>公開ページを共有する</h3>
+        <p class="muted" style="margin:2px 0 0">サイトが無くてもOK。URLを配るだけ。</p>
+        <ul>
+          <li>Instagram・LINE・名刺・Googleマップに貼れる</li>
+          <li>検索に強い構造化データ入りの独立ページ</li>
+          <li>有料プランなら独自URL（/wall/好きな名前）も設定可</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 方法A 手順 -->
+  <section>
+    <h2><span class="no">3</span>方法A：サイトに埋め込む</h2>
+    <div class="step"><span class="b">1</span><div class="t"><b>管理画面の「埋め込み」タブを開く</b><p>見た目を調整して「この設定を保存」すると、貼り付けコードが発行されます。</p></div></div>
+    <div class="step"><span class="b">2</span><div class="t"><b>このタグをコピーして、サイトの載せたい場所に貼る</b><p>HTMLを貼れる場所ならどこでもOKです。</p></div></div>
+    <div class="code" id="c1">&lt;script src="https://star-reviews.net/widget.js" data-token="pub_xxxxx" async&gt;&lt;/script&gt;<button class="cp" data-copy="c1">コピー</button></div>
+    <p class="muted" style="margin-top:8px"><span class="inline">pub_xxxxx</span> の部分は、あなた専用のトークンに自動で入ります（管理画面でコピーしたタグをそのまま使えばOK）。</p>
+
+    <h3>表示する位置を指定したいとき</h3>
+    <p>表示したい場所に次のタグを置くと、そこに描画されます。置かない場合は、スクリプトを貼った直後に表示されます。</p>
+    <div class="code" id="c2">&lt;div data-star-reviews&gt;&lt;/div&gt;<button class="cp" data-copy="c2">コピー</button></div>
+
+    <div class="note"><b>どのサービスで使える？</b> HTMLタグを貼れるサービスならほぼ対応しています。
+      <div class="chips"><span class="chip">WordPress</span><span class="chip">STUDIO</span><span class="chip">ペライチ</span><span class="chip">Shopify</span><span class="chip">Wix</span><span class="chip">素のHTML</span><span class="chip">React / Next.js</span></div>
+    </div>
+  </section>
+
+  <!-- 方法B -->
+  <section>
+    <h2><span class="no">4</span>方法B：公開ページを共有する</h2>
+    <p>サイトを持っていなくても、「埋め込み」タブに表示される<b>公開URL</b>をそのまま使えます。</p>
+    <div class="code">https://star-reviews.net/wall/あなたの店名</div>
+    <p class="muted" style="margin-top:8px">このURLをInstagramのプロフィール・LINE・名刺・Googleマップのリンク欄などに貼るだけ。サーバー側で描画される独立ページなので、Google検索やSNSシェアでもきれいに表示されます。</p>
+    <div class="note">覚えやすい独自URL（例：<span class="inline">/wall/my-shop</span>）は、Starter以上のプランで設定できます。あわせて、ページ下部の「star-reviews」表記も消せます（ホワイトラベル）。</div>
+  </section>
+
+  <!-- カスタマイズ -->
+  <section>
+    <h2><span class="no">5</span>見た目をカスタマイズ</h2>
+    <p>管理画面の「埋め込み」タブで調整して<b>「この設定を保存」</b>すると、<b>サイト埋め込み（A）とホスト型ページ（B）の両方に反映</b>されます。貼り替えは不要です。</p>
+    <table class="opt">
+      <tr><th>テーマカラー</th><td>★・マーカー・アバターの色。見本8色＋好きな色を指定できます。</td></tr>
+      <tr><th>並べ方</th><td>グリッド / マソンリー（高さ自由）/ カルーセル（横スクロール）/ リスト / チップス</td></tr>
+      <tr><th>表示する枚数</th><td>すべて、または 3・6・9・12・20枚。多すぎる時に絞れます。</td></tr>
+      <tr><th>自動スライド</th><td>カルーセル選択時に、カードを自動で横送り（on/off）。</td></tr>
+      <tr><th>★マークの種類</th><td>ゴールド・ハート・絵文字・数値表示など全10種。</td></tr>
+      <tr><th>カードの見せ方</th><td>ライト（白カード）/ ミニマル（罫線）/ 引用 / ダーク。</td></tr>
+      <tr><th>星サマリー</th><td>上部の「平均★と件数」の表示・非表示。</td></tr>
+    </table>
+    <div class="note">ライブプレビューを見ながら調整できます。気に入ったら「この設定を保存」を押してください。</div>
+
+    <h3>個別に上書きしたいとき（上級者向け）</h3>
+    <p>特定の1か所だけ見た目を変えたい場合は、タグに属性を足すと、その埋め込みだけ保存設定より優先されます。</p>
+    <div class="code" id="c3">&lt;script src="https://star-reviews.net/widget.js" data-token="pub_xxxxx"
+        data-layout="carousel" data-star="heart" data-theme="dark" async&gt;&lt;/script&gt;<button class="cp" data-copy="c3">コピー</button></div>
+    <table class="opt">
+      <tr><th>属性</th><th>値</th></tr>
+      <tr><td><code>data-layout</code></td><td>grid / masonry / carousel / list / chips</td></tr>
+      <tr><td><code>data-star</code></td><td>gold / mono / emoji / heart / number / big / glow / shine / metal / mini</td></tr>
+      <tr><td><code>data-theme</code></td><td>light / minimal / quote / dark</td></tr>
+      <tr><td><code>data-summary</code></td><td><code>off</code> で平均★サマリーを隠す</td></tr>
+      <tr><td><code>data-schema</code></td><td><code>off</code> で構造化データ(JSON-LD)の出力を止める</td></tr>
+    </table>
+  </section>
+
+  <!-- SEO -->
+  <section>
+    <h2><span class="no">6</span>Google検索に★を表示（SEO）</h2>
+    <p>埋め込み・公開ページのどちらも、レビューの<b>構造化データ（JSON-LD）</b>を自動で出力します。これにより、Google検索の結果に★（リッチスニペット）が表示される対象になります。</p>
+    <p class="muted">※ 実際に表示されるかはGoogleの判断で、反映には数日かかることがあります。不要な場合は <span class="inline">data-schema="off"</span> を足してください。</p>
+  </section>
+
+  <!-- FAQ -->
+  <section>
+    <h2><span class="no">7</span>よくある質問</h2>
+    <details><summary>貼った後に新しい声が増えたら？</summary><div class="a">承認した声が自動で反映されます。タグの貼り直しは不要です。</div></details>
+    <details><summary>声の内容は編集できますか？</summary><div class="a">本文は編集できない設計です。いただいた声をそのまま掲載します。どれを「掲載する／しない」かは選べます。</div></details>
+    <details><summary>表示が崩れたりサイトのデザインに影響しませんか？</summary><div class="a">埋め込みはShadow DOMという仕組みで隔離されているため、サイト側のCSSと干渉しません。</div></details>
+    <details><summary>写真や動画の声も載りますか？</summary><div class="a">はい。写真付き・動画付きの声も、埋め込み・公開ページの両方で表示されます（動画には日本語字幕も自動付与。形式により付かない場合があります）。</div></details>
+    <details><summary>見た目を変えたら、貼り替えが必要？</summary><div class="a">不要です。保存した設定をA・B両方が読み込むので、管理画面で保存するだけで反映されます。</div></details>
+  </section>
+
+  <div class="band">
+    <h2>さっそく、声を載せてみる。</h2>
+    <p>管理画面の「埋め込み」タブから、数分で設置できます。</p>
+    <a href="/app">管理画面を開く →</a>
+  </div>
+</main>
+
+<footer class="wrap">
+  <span>© 2026 star-reviews</span>
+  <nav>
+    <a href="/">トップ</a>
+    <a href="/tokushoho">特定商取引法</a>
+    <a href="/privacy">プライバシー</a>
+    <a href="/terms">利用規約</a>
+  </nav>
+</footer>
+
+<script>
+  document.querySelectorAll(".cp").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var el = document.getElementById(btn.dataset.copy);
+      var text = el.childNodes[0].textContent; // ボタン前のテキストノード
+      try{ navigator.clipboard.writeText(text); btn.textContent="コピーしました"; setTimeout(function(){ btn.textContent="コピー"; },1500); }catch(e){}
+    });
+  });
+</script>
+</body>
+</html>
