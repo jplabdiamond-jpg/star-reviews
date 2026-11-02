@@ -75,6 +75,14 @@
     background:var(--paper);border-radius:50%;transform:translateY(-50%)}
   .reward::before{left:-11px}.reward::after{right:-11px}
   .reward .rt{font-size:14px;color:var(--ink);font-weight:800}
+  .shint{font-size:13px;color:var(--muted);font-weight:700;margin:0 0 10px}
+  .gbtn{display:inline-flex;align-items:center;gap:9px;background:#fff;color:#1c1a12;border:1.5px solid var(--line-strong);
+    border-radius:12px;padding:12px 18px;font-weight:800;font-size:14.5px;text-decoration:none}
+  .gbtn:hover{border-color:var(--ink)}
+  .sbtns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+  .sbtn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;
+    border:0;cursor:pointer;color:#fff;font-weight:800;text-decoration:none;font-size:15px}
+  .sbtn.x{background:#000}.sbtn.line{background:#06c755}.sbtn.fb{background:#1877f2}
   .code{font-family:var(--disp);font-size:28px;font-weight:700;letter-spacing:.08em;margin:10px 0 6px}
   .copy{border:2px solid var(--ink);background:#fff;color:var(--ink);
     border-radius:11px;padding:9px 18px;font-weight:800;cursor:pointer;font-size:14px;transition:.14s;font-family:var(--jp)}
@@ -151,6 +159,17 @@
         <button class="copy" id="copyBtn" type="button">コードをコピー</button>
         <p class="hint" style="margin-top:12px">次回ご利用時にこのコードをご提示ください。</p>
       </div>
+      <div id="googleBox" style="display:none;margin-top:20px">
+        <p class="shint">よろしければ、Googleのクチコミにもご協力ください 🙏</p>
+        <a class="gbtn" id="gbtn" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38z"/></svg>
+          Googleにクチコミを書く
+        </a>
+      </div>
+      <div id="shareBox" style="display:none;margin-top:20px">
+        <p class="shint">この体験をシェアして応援する</p>
+        <div class="sbtns" id="sbtns"></div>
+      </div>
     </div>
   </div>
 
@@ -162,6 +181,7 @@ const qs = new URLSearchParams(location.search);
 const slug = qs.get("f");
 const token = qs.get("t");
 let rating = 0, level = 1, photoKey = null, videoKey = null, videoFile = null, videoOk = false;
+let GOOGLE_URL = null, WALL_URL = null, BIZ_NAME = "";
 const MAX_VIDEO = 60 * 1024 * 1024;
 
 const $ = (id) => document.getElementById(id);
@@ -175,6 +195,9 @@ async function load(){
   $("title").textContent = f.title;
   $("intro").textContent = f.intro || "";
   $("thanksMsg").textContent = f.thanks_message || "ありがとうございました！";
+  GOOGLE_URL = f.google_url || null;
+  WALL_URL = f.wall_url || null;
+  BIZ_NAME = f.business_name || "";
   renderLevels(f.levels);
   $("form").style.display = "block";
 }
@@ -302,6 +325,24 @@ function done(reward){
       navigator.clipboard?.writeText(reward.code);
       $("copyBtn").textContent = "コピーしました";
     });
+  }
+  // Googleクチコミへの案内（設定があれば表示）
+  if(GOOGLE_URL){
+    $("gbtn").href = GOOGLE_URL;
+    $("googleBox").style.display = "block";
+  }
+  // SNSシェア（声の壁ページがあれば表示）
+  if(WALL_URL){
+    const text = (BIZ_NAME ? BIZ_NAME + "に" : "") + "口コミを投稿しました！";
+    const u = encodeURIComponent(WALL_URL), t = encodeURIComponent(text);
+    const links = [
+      ["x","X（Twitter）","https://twitter.com/intent/tweet?text="+t+"&url="+u,"𝕏"],
+      ["line","LINE","https://line.me/R/msg/text/?"+encodeURIComponent(text+" "+WALL_URL),"L"],
+      ["fb","Facebook","https://www.facebook.com/sharer/sharer.php?u="+u,"f"]
+    ];
+    $("sbtns").innerHTML = links.map(([c,label,href,ic])=>
+      `<a class="sbtn ${c}" href="${href}" target="_blank" rel="noopener" aria-label="${label}で共有">${ic}</a>`).join("");
+    $("shareBox").style.display = "block";
   }
   window.scrollTo({ top:0, behavior:"smooth" });
 }

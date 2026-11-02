@@ -718,7 +718,28 @@ function renderForms(){
       </div>
     </div>`).join("") || `<div class="empty">まだフォームがありません。最初のフォームを作りましょう。</div>`;
 
-  $("view").innerHTML = `
+  const approvedTotal = (STATE.forms||[]).reduce((s,f)=>s+(f.approved_count||0),0);
+  const upsell = (STATE.plan==="free" && approvedTotal>=5) ? `
+    <div class="card" style="background:var(--sun-soft);border:1.5px solid var(--sun-deep)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div><b style="font-size:15px">無料プランの掲載上限（5件）に達しています</b>
+          <p class="muted" style="margin:3px 0 0">Starter（月1,980円）にすると掲載が無制限になり、「star-reviews」表記も消せます。</p></div>
+        <button class="btn" id="up_btn" style="flex:0 0 auto">アップグレード</button>
+      </div>
+    </div>` : "";
+  const googleCard = `
+    <div class="card">
+      <h2>Googleクチコミへの誘導</h2>
+      <p class="muted" style="margin-top:-8px">投稿を書いてくれたお客様に、投稿完了画面で「Googleのクチコミにも書く」ボタンを表示します。GoogleマップのクチコミURLを貼ってください。</p>
+      <label>GoogleクチコミURL</label>
+      <input type="text" id="gurl" placeholder="https://g.page/r/xxxx/review など">
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px;align-items:center">
+        <button class="btn" id="gsave">保存</button>
+        <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noopener" class="muted" style="font-size:12px;text-decoration:underline">クチコミURLの調べ方</a>
+      </div>
+      <p class="muted" style="margin-top:10px;font-size:11.5px">※ Googleのポリシー上、評価の高い人だけに表示するのは避け、投稿した方全員に案内します。</p>
+    </div>`;
+  $("view").innerHTML = upsell + googleCard + `
     <div class="card">
       <h2>新しいフォームを作成</h2>
       <label>タイトル</label>
@@ -747,6 +768,17 @@ function renderForms(){
         levels_enabled:levels.join(","),require_verified:$("f_verified").checked})});
     if(!r.ok){ toast(r.data.error||"作成に失敗"); return; }
     toast("作成しました"); await loadForms(); renderForms();
+  };
+  if($("up_btn")) $("up_btn").onclick = ()=>document.querySelector('.tab[data-t="plan"]').click();
+  // Googleクチコミ誘導URLの読み込み・保存
+  (async()=>{
+    const g = await api("/api/settings/google");
+    if(g.ok && $("gurl")) $("gurl").value = g.data.google_url || "";
+  })();
+  if($("gsave")) $("gsave").onclick = async ()=>{
+    const url = $("gurl").value.trim();
+    const r = await api("/api/settings/google",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({google_url:url})});
+    if(r.ok){ toast("保存しました"); } else { toast(r.data.error||"保存に失敗しました"); }
   };
 }
 
@@ -795,7 +827,8 @@ function bindTi(){
     b.disabled=true;
     const r = await api(`/api/testimonials/${b.dataset.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:b.dataset.a})});
     if(r.ok){ toast(b.dataset.a==="approve"?"掲載しました":"外しました"); b.closest(".ti").style.opacity=.4; await loadForms(); }
-    else { toast("失敗しました"); b.disabled=false; }
+    else if(r.data && r.data.limit_reached){ b.disabled=false; if(confirm(r.data.error+"\n\nプランページを開きますか？")) document.querySelector('.tab[data-t="plan"]').click(); }
+    else { toast(r.data.error||"失敗しました"); b.disabled=false; }
   });
 }
 
