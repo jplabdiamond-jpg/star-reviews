@@ -12,6 +12,13 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, d
     .bind(businessId)
     .first<{ notify_enabled: number | null; notify_email: string | null; line_user_id: string | null; line_link_code: string | null }>();
 
+  // 配信モード（列未適用でも落とさない）
+  let digest = "instant";
+  try {
+    const d = await env.DB.prepare("SELECT notify_digest FROM businesses WHERE id = ?").bind(businessId).first<{ notify_digest: string | null }>();
+    digest = d?.notify_digest || "instant";
+  } catch { /* 列未適用 */ }
+
   const lineConfigured = !!(env.LINE_CHANNEL_ACCESS_TOKEN && env.LINE_CHANNEL_SECRET);
   const lineLinked = !!biz?.line_user_id;
 
@@ -26,6 +33,7 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, d
     notify_enabled: biz?.notify_enabled !== 0,
     notify_email: biz?.notify_email || "",
     owner_email: email,
+    notify_digest: digest,
     email_configured: !!(env.RESEND_API_KEY && env.RESEND_FROM),
     line_configured: lineConfigured,
     line_linked: lineLinked,
@@ -35,7 +43,7 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, d
 
 export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ request, env, data }) => {
   const { businessId } = data.session!;
-  const b = await readJson<{ notify_enabled?: boolean; notify_email?: string }>(request);
+  const b = await readJson<{ notify_enabled?: boolean; notify_email?: string; notify_digest?: string }>(request);
   if (!b) return json({ error: "invalid json" }, 400);
 
   const email = (b.notify_email ?? "").trim();
@@ -46,5 +54,13 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
   await env.DB.prepare("UPDATE businesses SET notify_enabled = ?, notify_email = ? WHERE id = ?")
     .bind(enabled, email || null, businessId)
     .run();
+
+  // 配信モード（列未適用でも全体を失敗させない）
+  if (typeof b.notify_digest === "string") {
+    const digest = ["instant", "daily"].includes(b.notify_digest) ? b.notify_digest : "instant";
+    try {
+      await env.DB.prepare("UPDATE businesses SET notify_digest = ? WHERE id = ?").bind(digest, businessId).run();
+    } catch { /* 列未適用 */ }
+  }
   return json({ ok: true, notify_enabled: enabled === 1, notify_email: email });
 };

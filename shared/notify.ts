@@ -66,6 +66,15 @@ export async function notifyNewTestimonial(env: Env, p: NotifyPayload): Promise<
     if (biz.notify_enabled === 0) return; // 明示的にOFFなら送らない
     // 新着通知(メール/LINE)は Starter 以上の機能。無料プランは受信トレイでの確認のみ。
     if (!isPaid(biz)) return;
+    // 配信モードが日次(daily)なら都度送信はせず、ダイジェストcronに任せる。列未適用なら instant 扱い。
+    try {
+      const dig = await env.DB.prepare("SELECT notify_digest FROM businesses WHERE id = ?")
+        .bind(p.businessId)
+        .first<{ notify_digest: string | null }>();
+      if ((dig?.notify_digest || "instant") === "daily") return;
+    } catch {
+      /* 列未適用 → instant として続行 */
+    }
 
     const snippet = p.body.length > 120 ? p.body.slice(0, 120) + "…" : p.body;
     const appUrl = `${p.baseUrl}/app`;

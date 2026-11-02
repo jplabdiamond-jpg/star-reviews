@@ -23,6 +23,7 @@
   var attrStar = rawAttr("data-star");
   var attrTheme = rawAttr("data-theme");
   var attrSummary = rawAttr("data-summary"); // "off" or null
+  var attrMode = rawAttr("data-mode"); // "badge" で評価バッジのみ表示
   var schemaOff = rawAttr("data-schema") === "off";
   // render() 内で属性→サーバー設定→既定 の順に解決して代入する
   var starStyle = "gold", theme = "light", summaryOff = false, accent = "#eaa400";
@@ -75,6 +76,9 @@
     ".sr-reply .sr-rl{display:block;font-size:10.5px;font-weight:800;color:#9a7a1a;letter-spacing:.04em;margin-bottom:3px}" +
     ".sr-theme-dark .sr-reply{background:#2a2617;color:#e7e1d0}" +
     ".sr-empty{color:#7c7563;font-size:13px;padding:10px}" +
+    ".sr-badgepill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #ece3cf;border-radius:999px;padding:8px 16px;box-shadow:0 2px 10px rgba(60,46,12,.06)}" +
+    ".sr-badgepill b{font-size:16px;font-weight:800}" +
+    ".sr-badgepill .sr-bc{color:#7c7563;font-size:12.5px;font-weight:700}" +
     ".sr-credit{margin-top:13px;font-size:10px;color:#b3a99c;text-align:right;letter-spacing:.08em;text-transform:uppercase}" +
     /* theme: minimal */
     ".sr-theme-minimal .sr-card{background:transparent;border:0;border-bottom:1px solid #ece3cf;border-radius:0;box-shadow:none;padding:16px 2px}" +
@@ -138,6 +142,17 @@
     var autoplay = !!st.autoplay && layoutName === "carousel";
     var summary = (data && data.summary) || { count: 0, avg: 0 };
     var th = theme;
+
+    // 評価サマリーバッジのみ表示するモード
+    if (attrMode === "badge") {
+      shadow.innerHTML =
+        "<style>" + css + "</style><div class='sr-root sr-theme-light' style='--sr-accent:" + accent + "'>" +
+        "<div class='sr-badgepill'>" + starHTML(summary.avg) +
+        "<b>" + (summary.avg || 0).toFixed(1) + "</b>" +
+        "<span class='sr-bc'>" + (summary.count || 0) + "件のレビュー</span></div></div>";
+      if (!schemaOff) injectSchema(data);
+      return;
+    }
 
     var html = "<style>" + css + "</style><div class='sr-root sr-theme-" + th + "' style='--sr-accent:" + accent + "'>";
 

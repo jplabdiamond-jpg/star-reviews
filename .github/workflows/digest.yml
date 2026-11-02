@@ -1,0 +1,17 @@
+name: Daily digest
+
+# 日次ダイジェスト: 1日1回、前日分の新着レビューをまとめてオーナーに通知。
+# 必要な設定: CRON_SECRET（Cloudflare Pages の環境変数 と GitHub Secrets の両方に同じ値）。
+on:
+  schedule:
+    - cron: "0 23 * * *"   # 毎日 23:00 UTC（＝日本時間 翌 08:00）
+  workflow_dispatch: {}
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger daily digest
+        run: |
+          curl -fsS -X POST "https://star-reviews.net/api/cron/digest" \
+            -H "x-cron-key: ${{ secrets.CRON_SECRET }}"

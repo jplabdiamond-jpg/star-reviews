@@ -688,6 +688,15 @@ async function renderNotify(){
         <input type="checkbox" id="nt_enabled" ${d.notify_enabled?"checked":""} style="width:18px;height:18px">
         <span>新着通知を受け取る</span>
       </label>
+      <div class="row" style="margin-top:12px">
+        <div style="flex:1"><label>配信タイミング</label>
+          <select id="nt_digest">
+            <option value="instant" ${(d.notify_digest||"instant")!=="daily"?"selected":""}>都度（届くたびに通知）</option>
+            <option value="daily" ${d.notify_digest==="daily"?"selected":""}>1日1回まとめて（日次ダイジェスト）</option>
+          </select>
+          <p class="muted" style="margin:6px 0 0;font-size:11.5px">※ まとめ配信は毎朝、前日分の新着をメールでお送りします（有料プラン）。</p>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">メール通知</h2>${emailState}</div>
@@ -706,11 +715,12 @@ async function renderNotify(){
   $("nt_save").onclick = async ()=>{
     const btn=$("nt_save"); btn.disabled=true; btn.textContent="保存中…";
     const r2 = await api("/api/settings/notify",{method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({notify_enabled: $("nt_enabled").checked, notify_email: $("nt_email").value.trim()})});
+      body:JSON.stringify({notify_enabled: $("nt_enabled").checked, notify_email: $("nt_email").value.trim(), notify_digest: $("nt_digest").value})});
     btn.disabled=false; btn.textContent="保存";
     toast(r2.ok ? "保存しました" : (r2.data.error||"保存に失敗しました"));
   };
   $("nt_enabled").onchange = ()=>{ $("nt_save").click(); };
+  $("nt_digest").onchange = ()=>{ $("nt_save").click(); };
 }
 
 function renderForms(){
@@ -1296,6 +1306,12 @@ async function renderEmbed(){
       <div class="code">${esc('<div data-star-reviews></div>')}</div>
     </div>
     <div class="card">
+      <h3>評価バッジ（コンパクト表示）</h3>
+      <p class="muted" style="margin-top:-6px">「★4.8 128件のレビュー」だけを小さく表示するバッジです。ヘッダーや購入ボタンの近く、フッターなどに最適。</p>
+      <div class="code">${esc(`<script src="${STATE.origin}/widget.js" data-token="${STATE.embedToken}" data-mode="badge" async></`+`script>`)}</div>
+      <button class="btn ghost sm" id="em_copybadge" style="margin-top:11px">バッジのコードをコピー</button>
+    </div>
+    <div class="card">
       <h3>Google検索に★を表示（SEO）</h3>
       <p class="muted" style="margin-top:-6px">貼るだけでレビューの構造化データ(JSON-LD)も自動出力され、Google検索で★リッチスニペットの対象になります（反映はGoogleの判断・数日〜）。不要なら <code>data-schema="off"</code> を足してください。</p>
     </div>`;
@@ -1330,6 +1346,7 @@ async function renderEmbed(){
   ["em_accent","em_layout","em_count","em_star","em_theme","em_summary","em_autoplay"].forEach(id=>{ $(id).oninput=update; $(id).onchange=update; });
   $("em_samples").onclick = openStarSamples;
   $("em_copy").onclick = ()=>copy(buildSnippet());
+  if($("em_copybadge")) $("em_copybadge").onclick = ()=>copy(`<script src="${STATE.origin}/widget.js" data-token="${STATE.embedToken}" data-mode="badge" async><\/script>`);
   $("em_save").onclick = async ()=>{
     const btn=$("em_save"); btn.disabled=true;
     const r = await api("/api/walls/settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(opts())});
