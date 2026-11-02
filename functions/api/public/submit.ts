@@ -23,8 +23,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
     photo_key?: string;
     video_key?: string;
     token?: string;
+    hp?: string;
   }>(request);
   if (!b || !b.slug) return badRequest("invalid json");
+
+  // --- スパム対策① ハニーポット（人間には見えない項目。埋まっていればbot）---
+  if ((b.hp || "").trim()) return json({ ok: true, reward: null });
+
+  // --- スパム対策② 簡易レート制限（IP単位・10分で8件まで）---
+  const ip = request.headers.get("cf-connecting-ip") || "unknown";
+  try {
+    const rlKey = `rl:sub:${ip}`;
+    const cur = parseInt((await env.SESSIONS.get(rlKey)) || "0", 10) || 0;
+    if (cur >= 8) return badRequest("短時間に送信が多すぎます。しばらくしてからお試しください。", 429);
+    await env.SESSIONS.put(rlKey, String(cur + 1), { expirationTtl: 600 });
+  } catch {
+    /* レート制限の失敗で投稿自体を止めない */
+  }
 
   const form = await env.DB.prepare(
     "SELECT id, business_id, title, levels_enabled, require_verified FROM forms WHERE slug = ?"
@@ -41,6 +56,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
   if (!rating) return badRequest("評価（星）を選んでください");
   const text = (b.body || "").trim();
   if (!text) return badRequest("ひとことコメントを入力してください");
+  if (text.length > 2000) return badRequest("コメントが長すぎます（2000文字以内）");
+
+  // --- スパム対策③ NGワード/露骨なスパム表現を拒否 ---
+  const haystack = `${text} ${(b.author_name || "")}`.toLowerCase();
+  const NG = [
+    "http://", "https://", "www.", ".com/", ".net/", "[url=", "<a href",
+    "viagra", "cialis", "casino", "ビットコイン", "bitcoin", "仮想通貨で稼",
+    "副業で稼", "必ず儲か", "出会い系", "アダルト動画", "セフレ",
+  ];
+  if (NG.some((w) => haystack.includes(w))) {
+    return badRequest("リンクや不適切な表現は投稿できません。内容をご確認ください。");
+  }
   if (level >= 2 && !b.consent_display) return badRequest("掲載の同意にチェックしてください");
   if (level >= 3 && !b.video_key) return badRequest("動画をアップロードしてください");
 

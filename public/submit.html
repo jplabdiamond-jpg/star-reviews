@@ -93,6 +93,10 @@
   <p class="intro" id="intro"></p>
 
   <form id="form" style="display:none">
+    <!-- スパム対策: 人間には見えないおとり項目。botが埋めると送信を無効化する -->
+    <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden">
+      <label>このらんは空のままにしてください<input type="text" id="hp" name="website" tabindex="-1" autocomplete="off" /></label>
+    </div>
     <div class="card">
       <p class="label"><span class="dot"></span>満足度を星で教えてください</p>
       <div class="stars" id="stars" role="radiogroup" aria-label="星評価">
@@ -268,7 +272,8 @@ $("form").addEventListener("submit", async (ev) => {
         body: $("body").value.trim(),
         author_name: $("name").value.trim(),
         consent_display: level >= 2 ? $("consent").checked : true,
-        photo_key: photoKey, video_key: videoKey, token
+        photo_key: photoKey, video_key: videoKey, token,
+        hp: $("hp") ? $("hp").value : ""
       })
     });
     const j = await res.json();

@@ -14,7 +14,7 @@ export interface NotifyPayload {
 }
 
 // Resend でメール送信（REST・SDK不使用）
-async function sendEmailResend(env: Env, to: string, subject: string, html: string): Promise<void> {
+export async function sendEmailResend(env: Env, to: string, subject: string, html: string): Promise<void> {
   if (!env.RESEND_API_KEY || !env.RESEND_FROM || !to) return;
   try {
     await fetch("https://api.resend.com/emails", {

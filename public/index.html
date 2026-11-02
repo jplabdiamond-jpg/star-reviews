@@ -391,6 +391,7 @@
         <p class="err" id="err"></p>
       </form>
       <p class="toggle" id="toggle">すでにアカウントをお持ちですか？ <a id="toggleLink">ログイン</a></p>
+      <p class="toggle" id="forgotRow" style="display:none;margin-top:6px"><a id="forgotLink">パスワードをお忘れですか？</a></p>
       <div class="trust">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--sun-deep)" aria-hidden="true"><path d="M12 1l9 4v6c0 5.25-3.6 9.74-9 11-5.4-1.26-9-5.75-9-11V5z"/></svg>
         初期費用・クレジットカード登録は不要です
@@ -649,6 +650,9 @@
     <a href="#pricing">料金</a>
     <a href="#faq">よくある質問</a>
     <a href="#auth">ログイン</a>
+    <a href="/tokushoho">特定商取引法</a>
+    <a href="/privacy">プライバシー</a>
+    <a href="/terms">利用規約</a>
   </nav>
   <span>© 2026 star-reviews</span>
 </footer>
@@ -664,12 +668,26 @@ function setMode(m){
   $("authSub").textContent = reg ? "クレカ不要。まずはアカウントを作成。" : "メールとパスワードでログイン。";
   $("submit").textContent = reg ? "アカウントを作成" : "ログイン";
   $("nameField").style.display = reg ? "block" : "none";
+  $("forgotRow").style.display = reg ? "none" : "block";
   $("toggle").innerHTML = reg
     ? 'すでにアカウントをお持ちですか？ <a id="toggleLink">ログイン</a>'
     : 'アカウントがまだですか？ <a id="toggleLink">新規登録</a>';
   $("toggleLink").addEventListener("click", () => setMode(reg ? "login" : "register"));
 }
 $("toggleLink").addEventListener("click", () => setMode("login"));
+
+// パスワード再設定メールの送信
+$("forgotLink").addEventListener("click", async () => {
+  const email = $("email").value.trim();
+  $("err").style.display = "none";
+  if(!email || !email.includes("@")){ $("err").textContent = "メールアドレスを入力してから押してください。"; $("err").style.display="block"; $("email").focus(); return; }
+  const link = $("forgotLink"); link.style.pointerEvents="none"; link.textContent="送信中…";
+  try{
+    await fetch("/api/auth/forgot", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ email }) });
+  }catch(e){ /* 成否にかかわらず同じ案内 */ }
+  link.textContent = "再設定メールを送信しました";
+  $("authSub").textContent = "ご登録があれば、再設定メールをお送りしました。メールをご確認ください。";
+});
 
 $("form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
