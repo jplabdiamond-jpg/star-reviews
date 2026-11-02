@@ -535,17 +535,28 @@ function renderPlan(){
   const manage = paid
     ? `<div style="margin-top:14px"><button class="btn ghost" id="pl_portal">プラン・お支払いを管理</button></div>` : "";
   const li=(ic,col,b)=>`<li style="display:flex;align-items:flex-start;gap:8px;margin:7px 0;font-size:13px"><span style="flex:none;font-weight:800;color:${col}">${ic}</span><span>${esc(b)}</span></li>`;
+  const interval = STATE.planInterval || "month";
+  const yr = interval==="year";
+  const price = (m,y)=> yr
+    ? `¥${y.toLocaleString()}<span style="font-size:12px;font-weight:600;color:var(--muted)">/年</span><div style="font-size:11.5px;color:var(--ok);font-weight:800;margin-top:2px">2ヶ月分お得（実質¥${Math.round(y/12).toLocaleString()}/月）</div>`
+    : `¥${m.toLocaleString()}<span style="font-size:12px;font-weight:600;color:var(--muted)">/月</span>`;
+  const toggle = `
+    <div style="display:inline-flex;background:#f0ead9;border-radius:999px;padding:3px;margin-top:12px;gap:2px">
+      <button class="plint" data-int="month" style="border:0;border-radius:999px;padding:7px 16px;font:inherit;font-weight:800;font-size:13px;cursor:pointer;background:${yr?'transparent':'#fff'};color:var(--ink);box-shadow:${yr?'none':'0 1px 4px rgba(0,0,0,.08)'}">月額</button>
+      <button class="plint" data-int="year" style="border:0;border-radius:999px;padding:7px 16px;font:inherit;font-weight:800;font-size:13px;cursor:pointer;background:${yr?'#fff':'transparent'};color:var(--ink);box-shadow:${yr?'0 1px 4px rgba(0,0,0,.08)':'none'}">年額 <span style="color:var(--ok)">2ヶ月分お得</span></button>
+    </div>`;
   $("view").innerHTML = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <h2 style="margin:0">プラン</h2>${planBadge}
       </div>
       <p class="muted" style="margin:8px 0 0">Freeでも主要機能はすべてお使いいただけます。有料プランにすると下記が解放されます。</p>
+      ${toggle}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
         <div style="border:2px solid var(--line-strong);border-radius:14px;padding:16px;display:flex;flex-direction:column">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
             <strong style="font-size:17px">Starter</strong>
-            <span style="font-weight:800">¥1,980<span style="font-size:12px;font-weight:600;color:var(--muted)">/月</span></span>
+            <span style="font-weight:800;text-align:right">${price(1980,19800)}</span>
           </div>
           <ul style="margin:12px 0 0;padding-left:0;list-style:none;flex:1">${starterFeat.map(b=>li("✓","var(--sun-deep)",b)).join("")}</ul>
           <div style="margin-top:14px">${starterBtn}</div>
@@ -553,7 +564,7 @@ function renderPlan(){
         <div style="border:2px solid var(--sun-deep);border-radius:14px;padding:16px;display:flex;flex-direction:column">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
             <strong style="font-size:17px">Pro</strong>
-            <span style="font-weight:800">¥3,980<span style="font-size:12px;font-weight:600;color:var(--muted)">/月</span></span>
+            <span style="font-weight:800;text-align:right">${price(3980,39800)}</span>
           </div>
           <ul style="margin:12px 0 0;padding-left:0;list-style:none;flex:1">${proFeat.map(b=>li("★","var(--sun-deep)",b)).join("")}</ul>
           <div style="margin-top:14px">${proBtn}</div>
@@ -564,13 +575,15 @@ function renderPlan(){
     </div>
     ${renderHostedCard()}`;
   bindHostedCard();
+  document.querySelectorAll('.plint').forEach(b=>{ b.onclick=()=>{ STATE.planInterval=b.dataset.int; renderPlan(); }; });
   document.querySelectorAll('[data-plan]').forEach(b=>{ b.onclick=()=>startCheckout(b.getAttribute('data-plan'), b); });
   if($("pl_portal")) $("pl_portal").onclick = openPortal;
 }
 async function startCheckout(plan, btn){
   const prev = btn ? btn.textContent : "";
   if(btn){btn.disabled=true;btn.textContent="準備中…";}
-  const r = await api("/api/billing/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({plan})});
+  const interval = STATE.planInterval || "month";
+  const r = await api("/api/billing/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({plan, interval})});
   if(r.ok && r.data.url){ location.href = r.data.url; return; }
   if(r.data.setup_required){ toast("オンライン決済は準備中です"); }
   else { toast(r.data.error || "エラーが発生しました"); }

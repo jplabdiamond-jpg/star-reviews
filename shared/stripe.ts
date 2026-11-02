@@ -84,25 +84,28 @@ interface PriceEnv {
   STRIPE_PRICE_STARTER?: string;
   STRIPE_PRICE_PRO?: string;
   STRIPE_PRICE_ID?: string;
+  STRIPE_PRICE_STARTER_YEAR?: string;
+  STRIPE_PRICE_PRO_YEAR?: string;
 }
 
-// プラン名 → Checkoutで使う price_...（未設定なら null）
-export function priceIdForPlan(env: PriceEnv, plan: string | null | undefined): string | null {
-  switch ((plan || "").toLowerCase()) {
-    case "starter":
-      return env.STRIPE_PRICE_STARTER || null;
-    case "pro":
-      return env.STRIPE_PRICE_PRO || env.STRIPE_PRICE_ID || null;
-    default:
-      return null;
-  }
+export type BillingInterval = "month" | "year";
+
+// プラン名＋期間 → Checkoutで使う price_...（未設定なら null）
+export function priceIdForPlan(env: PriceEnv, plan: string | null | undefined, interval: BillingInterval = "month"): string | null {
+  const p = (plan || "").toLowerCase();
+  const yr = interval === "year";
+  if (p === "starter") return yr ? (env.STRIPE_PRICE_STARTER_YEAR || null) : (env.STRIPE_PRICE_STARTER || null);
+  if (p === "pro") return yr ? (env.STRIPE_PRICE_PRO_YEAR || null) : (env.STRIPE_PRICE_PRO || env.STRIPE_PRICE_ID || null);
+  return null;
 }
 
-// price_... → プラン名（Webフックで購入プランを判定。未知なら null）
+// price_... → プラン名（Webフックで購入プランを判定。月額・年額どちらも対応。未知なら null）
 export function planForPriceId(env: PriceEnv, priceId: string | null | undefined): PaidPlan | null {
   if (!priceId) return null;
   if (env.STRIPE_PRICE_STARTER && priceId === env.STRIPE_PRICE_STARTER) return "starter";
+  if (env.STRIPE_PRICE_STARTER_YEAR && priceId === env.STRIPE_PRICE_STARTER_YEAR) return "starter";
   if (env.STRIPE_PRICE_PRO && priceId === env.STRIPE_PRICE_PRO) return "pro";
+  if (env.STRIPE_PRICE_PRO_YEAR && priceId === env.STRIPE_PRICE_PRO_YEAR) return "pro";
   if (env.STRIPE_PRICE_ID && priceId === env.STRIPE_PRICE_ID) return "pro";
   return null;
 }

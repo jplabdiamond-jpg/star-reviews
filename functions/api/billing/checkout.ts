@@ -14,13 +14,19 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
     );
   }
 
-  // 購入プランを決定（body.plan: "starter" | "pro"）。既定は pro（旧UI互換）。
-  const body0 = await (async () => { try { return (await request.json()) as { plan?: string }; } catch { return null; } })();
+  // 購入プランと期間を決定（body.plan: "starter"|"pro", body.interval: "month"|"year"）。
+  const body0 = await (async () => { try { return (await request.json()) as { plan?: string; interval?: string }; } catch { return null; } })();
   const plan = ((body0?.plan || "pro").toLowerCase() === "starter") ? "starter" : "pro";
-  const priceId = priceIdForPlan(env, plan);
+  const interval = ((body0?.interval || "month").toLowerCase() === "year") ? "year" : "month";
+  const priceId = priceIdForPlan(env, plan, interval);
   if (!priceId) {
     return json(
-      { error: "このプランはまだ設定されていません。管理者がStripeを登録すると有効になります。", setup_required: true },
+      {
+        error: interval === "year"
+          ? "年額プランはまだ設定されていません。管理者がStripeに年額価格を登録すると有効になります。"
+          : "このプランはまだ設定されていません。管理者がStripeを登録すると有効になります。",
+        setup_required: true,
+      },
       400
     );
   }
@@ -40,6 +46,7 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
     client_reference_id: businessId,
     "metadata[business_id]": businessId,
     "metadata[plan]": plan,
+    "metadata[interval]": interval,
     "subscription_data[metadata][business_id]": businessId,
     "subscription_data[metadata][plan]": plan,
     allow_promotion_codes: "true",

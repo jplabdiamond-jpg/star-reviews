@@ -9,6 +9,8 @@ export interface Env {
   STRIPE_SECRET_KEY?: string;      // sk_live_... / sk_test_...
   STRIPE_PRICE_STARTER?: string;   // Starterプランの price_...（¥1,980/月）
   STRIPE_PRICE_PRO?: string;       // Proプランの price_...（¥3,980/月）
+  STRIPE_PRICE_STARTER_YEAR?: string; // 任意: Starter年額の price_...（¥19,800/年）
+  STRIPE_PRICE_PRO_YEAR?: string;     // 任意: Pro年額の price_...（¥39,800/年）
   STRIPE_PRICE_ID?: string;        // 旧: 単一プラン用（互換のためProのフォールバックとして参照）
   STRIPE_WEBHOOK_SECRET?: string;  // whsec_...（Webhook署名検証）
   // 任意: 新着通知メール(Resend)。未設定ならメール通知は無効
