@@ -8,7 +8,8 @@ function isPublicPath(path: string): boolean {
     path.startsWith("/api/public/") ||
     path.startsWith("/api/auth/") ||
     path.startsWith("/api/wall/") ||
-    path.startsWith("/api/media/")
+    path.startsWith("/api/media/") ||
+    path.startsWith("/api/cron/")
   );
 }
 

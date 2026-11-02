@@ -20,6 +20,7 @@ export interface Env {
   // Workers AI（動画の文字起こし・字幕）。未バインドなら字幕生成は無効
   AI?: Ai;
   PUBLIC_BASE_URL?: string;        // 任意: 本番URL(未設定ならリクエストoriginを使用)
+  CRON_SECRET?: string;            // 任意: 自動フォローアップ送信の定期実行エンドポイントを保護する合言葉
 }
 
 // セッション（KVに保存する中身）

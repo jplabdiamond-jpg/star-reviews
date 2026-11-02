@@ -116,6 +116,7 @@
   <button class="tab on" data-t="forms">フォーム</button>
   <button class="tab" data-t="inbox">受信トレイ</button>
   <button class="tab" data-t="analytics">アナリティクス</button>
+  <button class="tab" data-t="followup">フォローアップ</button>
   <button class="tab" data-t="import">インポート</button>
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
@@ -277,6 +278,7 @@ function render(tab){
   if(tab==="forms") return renderForms();
   if(tab==="inbox") return renderInbox();
   if(tab==="analytics") return renderAnalytics();
+  if(tab==="followup") return renderFollowup();
   if(tab==="import") return renderImport();
   if(tab==="rewards") return renderRewards();
   if(tab==="embed") return renderEmbed();
@@ -833,6 +835,73 @@ function bindTi(){
 }
 
 /* ---------- レビューを選んで掲載（旧:手動インポート） ---------- */
+/* ---------- 自動フォローアップ（レビュー依頼の自動送信） ---------- */
+const DELAYS = [["0","今すぐ"],["1","翌日"],["3","3日後"],["7","1週間後"],["14","2週間後"],["30","30日後"]];
+function fupStatusPill(s){
+  if(s==="pending") return `<span class="pill o">予約中</span>`;
+  if(s==="sent") return `<span class="pill g">送信済み</span>`;
+  if(s==="canceled") return `<span class="pill n">取消</span>`;
+  return `<span class="pill n">失敗</span>`;
+}
+function fmtDate(epoch){ if(!epoch) return ""; const d=new Date(epoch*1000); return `${d.getMonth()+1}/${d.getDate()}`; }
+async function renderFollowup(){
+  const v=$("view");
+  if(!STATE.forms || STATE.forms.length===0){ v.innerHTML=`<div class="empty">先にフォームを作成すると、フォローアップを予約できます。</div>`; return; }
+  v.innerHTML=`<div class="card"><h2>自動フォローアップ</h2><p class="muted">読み込み中…</p></div>`;
+  const r = await api("/api/followups");
+  const d = r.ok ? r.data : {enabled:false,counts:{pending:0,sent:0},items:[]};
+  const formOpts = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
+  const delayOpts = DELAYS.map(([v,l])=>`<option value="${v}" ${v==="3"?"selected":""}>${l}</option>`).join("");
+  const rows = (d.items||[]).map(it=>`
+    <div class="ti" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><b style="font-size:13.5px">${esc(it.to_name||it.to_email)}</b> ${fupStatusPill(it.status)}
+        <div class="muted" style="margin-top:2px;font-size:12px">${esc(it.to_email)} ・ ${it.status==="sent"?("送信 "+fmtDate(it.sent_at)):("予定 "+fmtDate(it.send_at))}</div></div>
+      ${it.status==="pending"?`<button class="btn mut sm" data-cancel="${it.id}">取消</button>`:""}
+    </div></div>`).join("") || `<div class="empty" style="padding:20px">まだ予約はありません。</div>`;
+
+  v.innerHTML=`
+    <div class="card">
+      <h2>自動フォローアップ</h2>
+      <p class="muted" style="margin-top:-8px">来店・購入のあったお客様に、指定した日数のあとで「ご感想をお聞かせください」のメールを自動送信します。レビューが集まる数を一番伸ばせる機能です。</p>
+      ${d.enabled===false?`<div class="empty" style="margin:4px 0">この機能はまだ有効化されていません（データベースの更新 0009 の適用が必要です）。</div>`:`
+      <div class="row" style="margin-top:6px">
+        <div><label>どのフォームへ誘導するか</label><select id="fu_form">${formOpts}</select></div>
+        <div><label>送信タイミング</label><select id="fu_delay">${delayOpts}</select></div>
+      </div>
+      <label style="margin-top:8px">送信先（1行に1件。「メール, お名前」の形式。お名前は省略可）</label>
+      <textarea id="fu_list" rows="6" placeholder="hanako@example.com, 山田 花子&#10;taro@example.com"></textarea>
+      <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:10px">
+        <button class="btn" id="fu_add">この内容で予約する</button>
+        <span class="muted" id="fu_msg"></span>
+      </div>
+      <p class="muted" style="margin-top:10px;font-size:11.5px">※ 送信にはメール設定（Resend）が有効である必要があります。配信は毎時まとめて行われます。</p>`}
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">状況</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="flex:1;min-width:110px;background:#fffef9;border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px"><div class="muted" style="font-size:11.5px">予約中</div><div style="font-size:22px;font-weight:800;font-family:var(--disp)">${d.counts?.pending||0}</div></div>
+        <div style="flex:1;min-width:110px;background:#fffef9;border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px"><div class="muted" style="font-size:11.5px">送信済み</div><div style="font-size:22px;font-weight:800;font-family:var(--disp)">${d.counts?.sent||0}</div></div>
+      </div>
+      ${rows}
+    </div>`;
+
+  if($("fu_add")) $("fu_add").onclick = async ()=>{
+    const raw = $("fu_list").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    const recipients = raw.map(line=>{ const parts=line.split(/[,\t]/).map(x=>x.trim()); return {email:parts[0]||"", name:parts[1]||""}; });
+    if(recipients.length===0){ toast("送信先を入力してください"); return; }
+    $("fu_add").disabled=true;
+    const res = await api("/api/followups",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({form_id:$("fu_form").value, delay_days:+$("fu_delay").value, recipients})});
+    $("fu_add").disabled=false;
+    if(res.ok){ toast(`${res.data.queued}件を予約しました`); renderFollowup(); }
+    else { toast(res.data.error||"予約に失敗しました"); }
+  };
+  v.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=async()=>{
+    const res=await api("/api/followups/"+b.dataset.cancel,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:"cancel"})});
+    if(res.ok){ toast("取り消しました"); renderFollowup(); } else toast(res.data.error||"失敗しました");
+  });
+}
+
 async function renderImport(){
   const formOpts = `<option value="">すべてのフォーム</option>` + STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
   const gForms = STATE.forms.map(f=>`<option value="${f.id}">${esc(f.title)}</option>`).join("");
