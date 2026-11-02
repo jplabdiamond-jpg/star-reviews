@@ -39,6 +39,23 @@ async function notifyPaymentIssue(
   }
 }
 
+// プラン/期限の変更を、同一オーナーの全店舗(business)に同期する（複数店舗でPro特典を共有）
+async function syncSiblings(env: Env, bizId: string): Promise<void> {
+  try {
+    await env.DB.prepare(
+      `UPDATE businesses
+          SET plan = (SELECT plan FROM businesses WHERE id = ?1),
+              plan_until = (SELECT plan_until FROM businesses WHERE id = ?1)
+        WHERE owner_user_id = (SELECT owner_user_id FROM businesses WHERE id = ?1)
+          AND id <> ?1`
+    )
+      .bind(bizId)
+      .run();
+  } catch {
+    /* 同期失敗は致命ではない（次のイベントで整合） */
+  }
+}
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
     // 未設定時は 200 を返して Stripe 側の再送ループを避ける（何もしない）
@@ -94,6 +111,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         await env.DB.prepare(
           "UPDATE businesses SET plan = ?, stripe_customer_id = COALESCE(?, stripe_customer_id), stripe_subscription_id = COALESCE(?, stripe_subscription_id) WHERE id = ?"
         ).bind(resolvePlan(), customer, sub, bizId).run();
+        await syncSiblings(env, bizId);
       }
     } else if (type === "customer.subscription.updated" || type === "customer.subscription.created") {
       const bizId = await findBusinessId();
@@ -104,6 +122,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         await env.DB.prepare(
           "UPDATE businesses SET plan = ?, stripe_subscription_id = COALESCE(?, stripe_subscription_id), plan_until = ? WHERE id = ?"
         ).bind(active ? resolvePlan() : "free", typeof obj.id === "string" ? obj.id : null, periodEnd, bizId).run();
+        await syncSiblings(env, bizId);
       }
     } else if (type === "customer.subscription.deleted") {
       const bizId = await findBusinessId();
@@ -111,6 +130,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         const periodEnd: number | null = Number.isFinite(obj.current_period_end) ? obj.current_period_end : null;
         await env.DB.prepare("UPDATE businesses SET plan = 'free', plan_until = ? WHERE id = ?")
           .bind(periodEnd, bizId).run();
+        await syncSiblings(env, bizId);
       }
     } else if (type === "invoice.payment_failed") {
       // dunning: 決済失敗。再試行の有無で文面を変える。最終失敗の確定(= free化)は subscription.deleted 側で行う。
@@ -133,6 +153,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           await env.DB.prepare(
             "UPDATE businesses SET plan_until = COALESCE(?, plan_until) WHERE stripe_subscription_id = ?"
           ).bind(periodEnd, sub).run();
+          const owner = await env.DB.prepare("SELECT id FROM businesses WHERE stripe_subscription_id = ? LIMIT 1")
+            .bind(sub).first<{ id: string }>();
+          if (owner?.id) await syncSiblings(env, owner.id);
         }
       }
     }

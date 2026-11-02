@@ -1,6 +1,6 @@
 // GET /api/wall/:token   承認済みの声を返す（埋め込みウィジェット用・CORS許可）
 // 返却: layout, name, business_name, summary{count,avg}, items[]（JSON-LD用に date も含む）
-import { bumpMetric } from "../../../shared/util";
+import { bumpMetric, bumpMetricDaily } from "../../../shared/util";
 import { isPaid } from "../../../shared/plan";
 import type { Env } from "../../../shared/types";
 
@@ -18,6 +18,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
 
   // 表示回数カウント（ベストエフォート）
   await bumpMetric(env.DB, `wall_view:${wall.id}`);
+  await bumpMetricDaily(env.DB, wall.business_id, "wall_view");
 
   const biz = await env.DB.prepare("SELECT name, plan, plan_until FROM businesses WHERE id = ?")
     .bind(wall.business_id)

@@ -63,6 +63,28 @@ export async function bumpMetric(db: D1Database, key: string): Promise<void> {
   }
 }
 
+// JSTの日付文字列 'YYYY-MM-DD'（集計のバケットキー）
+export function jstDay(epochSec?: number): string {
+  const ms = (epochSec != null ? epochSec * 1000 : Date.now()) + 9 * 3600 * 1000;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+// 日次メトリクス加算（アナリティクス用・ベストエフォート）。
+// metric_daily 未適用環境でも落とさない。
+export async function bumpMetricDaily(db: D1Database, businessId: string, key: string): Promise<void> {
+  try {
+    await db
+      .prepare(
+        "INSERT INTO metric_daily (business_id, metric_key, day, count) VALUES (?, ?, ?, 1) " +
+          "ON CONFLICT(business_id, metric_key, day) DO UPDATE SET count = count + 1"
+      )
+      .bind(businessId, key, jstDay())
+      .run();
+  } catch {
+    /* 本処理に影響させない */
+  }
+}
+
 export function escapeHtml(s: string): string {
   return String(s ?? "")
     .replace(/&/g, "&amp;")

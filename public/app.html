@@ -27,6 +27,9 @@
   .biz{font-size:13px;color:#cfc8b6}
   .logout{font-size:12.5px;color:#cfc8b6;background:none;border:0;cursor:pointer;text-decoration:underline;font-family:var(--jp)}
   .logout:hover{color:#fff}
+  .storesel{background:#2a2617;color:#fff;border:1px solid #4b4431;border-radius:9px;padding:6px 10px;
+    font:inherit;font-size:13px;font-weight:700;max-width:180px;margin-right:6px;cursor:pointer}
+  .storesel:focus{outline:none;border-color:var(--sun)}
   .tabbar{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
   .tabs{max-width:940px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow:auto}
   .tab{border:0;background:none;padding:15px 14px;font:inherit;font-weight:800;color:var(--muted);
@@ -103,14 +106,20 @@
     <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
     star<em>·</em>reviews
   </span>
-  <span><span class="biz" id="bizName"></span> <button class="logout" id="help">使い方</button> <button class="logout" id="logout">ログアウト</button></span>
+  <span>
+    <select id="storeSel" class="storesel" style="display:none"></select>
+    <span class="biz" id="bizName"></span>
+    <button class="logout" id="help">使い方</button> <button class="logout" id="logout">ログアウト</button>
+  </span>
 </div></div>
 <div class="tabbar"><div class="tabs" id="tabs">
   <button class="tab on" data-t="forms">フォーム</button>
   <button class="tab" data-t="inbox">受信トレイ</button>
+  <button class="tab" data-t="analytics">アナリティクス</button>
   <button class="tab" data-t="import">インポート</button>
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
+  <button class="tab" data-t="stores">店舗</button>
   <button class="tab" data-t="plan">プラン</button>
   <button class="tab" data-t="notify">通知</button>
 </div></div>
@@ -146,6 +155,7 @@ async function boot(){
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on"); render(t.dataset.t);
   });
+  await loadStores();
   await loadForms();
   render("forms");
   // 初回のみチュートリアル
@@ -266,11 +276,185 @@ async function loadForms(){
 function render(tab){
   if(tab==="forms") return renderForms();
   if(tab==="inbox") return renderInbox();
+  if(tab==="analytics") return renderAnalytics();
   if(tab==="import") return renderImport();
   if(tab==="rewards") return renderRewards();
   if(tab==="embed") return renderEmbed();
+  if(tab==="stores") return renderStores();
   if(tab==="plan") return renderPlan();
   if(tab==="notify") return renderNotify();
+}
+
+/* ---------- 店舗（複数店舗の管理） ---------- */
+async function loadStores(){
+  const r = await api("/api/stores");
+  if(!r.ok){ STATE.stores=[]; return; }
+  STATE.stores = r.data.stores || [];
+  STATE.storeIsPro = !!r.data.is_pro;
+  STATE.storeCanCreate = !!r.data.can_create;
+  STATE.storeLimit = r.data.limit || 5;
+  const sel = $("storeSel");
+  if(!sel) return;
+  const active = STATE.stores.filter(s=>!s.archived);
+  if(active.length >= 2){
+    sel.innerHTML = active.map(s=>`<option value="${s.id}" ${s.active?"selected":""}>${esc(s.name)}</option>`).join("");
+    sel.style.display=""; if($("bizName")) $("bizName").style.display="none";
+    sel.onchange = ()=>switchStore(sel.value);
+  } else {
+    sel.style.display="none"; if($("bizName")) $("bizName").style.display="";
+  }
+}
+async function switchStore(id){
+  const r = await api("/api/stores/switch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({businessId:id})});
+  if(r.ok){ location.reload(); } else { toast(r.data.error||"切り替えに失敗しました"); }
+}
+function renderStores(){
+  const v=$("view"); const limit=STATE.storeLimit||5;
+  const stores=STATE.stores||[]; const activeCount=stores.filter(s=>!s.archived).length;
+  const rows=stores.map(s=>{
+    const badge=s.active?`<span class="pill o">表示中</span>`:(s.archived?`<span class="pill n">アーカイブ</span>`:"");
+    const a=[];
+    if(!s.active && !s.archived) a.push(`<button class="btn ghost sm" data-switch="${s.id}">表示切替</button>`);
+    if(!s.archived) a.push(`<button class="btn ghost sm" data-rename="${s.id}">名前変更</button>`);
+    if(!s.archived && !s.has_subscription && activeCount>1) a.push(`<button class="btn mut sm" data-archive="${s.id}">アーカイブ</button>`);
+    if(s.archived) a.push(`<button class="btn ghost sm" data-unarchive="${s.id}">戻す</button>`);
+    return `<div class="ti"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><b style="font-size:15px">${esc(s.name)}</b> ${badge}
+        <div class="muted" style="margin-top:3px">掲載 ${s.approved_count} 件 ・ 承認待ち ${s.pending_count} 件</div></div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">${a.join("")}</div></div></div>`;
+  }).join("");
+  const createBlock = STATE.storeIsPro
+    ? `<div class="row" style="margin-top:4px"><input type="text" id="newStore" placeholder="新しい店舗名（例: 2号店）" ${activeCount>=limit?"disabled":""}>
+        <button class="btn" id="addStore" style="flex:0 0 auto" ${activeCount>=limit?"disabled":""}>店舗を追加</button></div>
+       <p class="muted" style="margin-top:8px">${activeCount>=limit?`上限（${limit}店舗）に達しています。`:`あと ${limit-activeCount} 店舗まで追加できます。`}</p>`
+    : `<div class="empty" style="margin-top:4px">複数店舗の管理は <a style="color:var(--sun-deep);cursor:pointer;text-decoration:underline" id="st_toplan">Proプラン</a> の機能です。1アカウントで最大${limit}店舗まで、切り替えて管理できます。</div>`;
+  v.innerHTML=`<div class="card"><h2>店舗</h2>
+    <p class="muted" style="margin-top:-8px">1つのアカウントで複数の店舗（ブランド）を管理できます。「表示切替」で、フォーム・受信トレイ・壁などがその店舗のものに切り替わります。</p>
+    ${rows}
+    <div style="border-top:1px solid var(--line);margin:16px 0"></div>
+    <h2 style="font-size:16px">新しい店舗を追加</h2>
+    ${createBlock}</div>`;
+  v.querySelectorAll("[data-switch]").forEach(b=>b.onclick=()=>switchStore(b.dataset.switch));
+  v.querySelectorAll("[data-rename]").forEach(b=>b.onclick=()=>renameStore(b.dataset.rename));
+  v.querySelectorAll("[data-archive]").forEach(b=>b.onclick=()=>setArchive(b.dataset.archive,true));
+  v.querySelectorAll("[data-unarchive]").forEach(b=>b.onclick=()=>setArchive(b.dataset.unarchive,false));
+  if($("st_toplan")) $("st_toplan").onclick=()=>document.querySelector('.tab[data-t="plan"]').click();
+  if($("addStore")) $("addStore").onclick=addStore;
+}
+async function addStore(){
+  const el=$("newStore"); const name=(el.value||"").trim();
+  if(!name){ toast("店舗名を入力してください"); el.focus(); return; }
+  $("addStore").disabled=true;
+  const r=await api("/api/stores",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name})});
+  if(r.ok){ toast("店舗を追加しました"); await loadStores(); renderStores(); }
+  else { toast(r.data.error||"追加に失敗しました"); $("addStore").disabled=false; }
+}
+async function renameStore(id){
+  const cur=(STATE.stores.find(s=>s.id===id)||{}).name||"";
+  const name=prompt("新しい店舗名を入力してください", cur); if(name==null) return;
+  if(!name.trim()){ toast("店舗名を入力してください"); return; }
+  const r=await api("/api/stores/"+id,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({name:name.trim()})});
+  if(r.ok){ toast("変更しました"); await loadStores(); renderStores(); } else toast(r.data.error||"失敗しました");
+}
+async function setArchive(id,archived){
+  if(archived && !confirm("この店舗をアーカイブしますか？\nデータは残り、いつでも「戻す」で復帰できます。")) return;
+  const r=await api("/api/stores/"+id,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({archived})});
+  if(r.ok){ toast(archived?"アーカイブしました":"戻しました"); await loadStores(); renderStores(); } else toast(r.data.error||"失敗しました");
+}
+
+/* ---------- アナリティクス ---------- */
+function anaEmpty(msg){ return `<div class="empty" style="padding:22px">${msg||"まだデータがありません"}</div>`; }
+function lineSVG(series){
+  if(!series||series.length===0) return anaEmpty();
+  const W=620,H=130,p=24;
+  const max=Math.max(1,...series.map(s=>s.n));
+  const xs=series.map((_,i)=>series.length>1?p+i*(W-2*p)/(series.length-1):W/2);
+  const ys=series.map(s=>H-p-(s.n/max)*(H-2*p));
+  const pts=xs.map((x,i)=>`${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
+  const dots=xs.map((x,i)=>`<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="3" fill="var(--sun-deep)"/>`).join("");
+  const area=`${xs[0].toFixed(1)},${H-p} ${pts} ${xs[xs.length-1].toFixed(1)},${H-p}`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-height:160px">
+    <polygon points="${area}" fill="var(--sun-soft)" opacity="0.55"/>
+    <polyline points="${pts}" fill="none" stroke="var(--sun-deep)" stroke-width="2.5" stroke-linejoin="round"/>${dots}
+    <text x="${p}" y="14" font-size="10" fill="var(--muted)">最大 ${max}</text>
+    <text x="${p}" y="${H-6}" font-size="10" fill="var(--muted)">${(series[0].day||"").slice(5)}</text>
+    <text x="${W-p}" y="${H-6}" font-size="10" fill="var(--muted)" text-anchor="end">${(series[series.length-1].day||"").slice(5)}</text>
+  </svg>`;
+}
+function barsHTML(pairs){
+  if(!pairs||pairs.length===0) return anaEmpty();
+  const max=Math.max(1,...pairs.map(p=>p[1]));
+  return `<div style="display:flex;flex-direction:column;gap:7px;margin-top:6px">`+pairs.map(p=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="width:92px;font-size:12.5px;color:var(--ink-soft);text-align:right;flex:0 0 auto">${esc(String(p[0]))}</span>
+      <span style="flex:1;background:#f3edda;border-radius:7px;height:18px;position:relative;overflow:hidden">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:${Math.round(p[1]/max*100)}%;background:var(--sun-deep);border-radius:7px"></span></span>
+      <span style="width:38px;font-size:12.5px;font-weight:800;flex:0 0 auto">${p[1]}</span></div>`).join("")+`</div>`;
+}
+function funnelHTML(f){
+  const stages=[["フォーム閲覧",f.form_view||0],["投稿開始",f.submit_start||0],["投稿完了",f.submit_done||0],["掲載",f.approved||0]];
+  const top=Math.max(1,...stages.map(s=>s[1]));
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">`+stages.map((s,i)=>{
+    const pct=Math.round(s[1]/top*100);
+    const conv=i>0 && stages[i-1][1]>0 ? Math.round(s[1]/stages[i-1][1]*100)+"%" : "";
+    return `<div style="display:flex;align-items:center;gap:10px">
+      <span style="width:84px;font-size:12.5px;text-align:right;flex:0 0 auto;color:var(--ink-soft)">${s[0]}</span>
+      <span style="flex:1;background:#f3edda;border-radius:7px;height:22px;position:relative;overflow:hidden">
+        <span style="position:absolute;top:0;bottom:0;left:0;width:${pct}%;background:var(--ink);border-radius:7px"></span>
+        <span style="position:absolute;left:9px;top:0;line-height:22px;color:#fff;font-size:11.5px;font-weight:800">${s[1]}</span></span>
+      <span style="width:44px;font-size:11px;color:var(--muted);flex:0 0 auto">${conv}</span></div>`;
+  }).join("")+`</div><p class="muted" style="margin-top:8px;font-size:11.5px">※「投稿開始」は計測開始後のデータから集計されます。</p>`;
+}
+function statTiles(tiles){
+  return `<div style="display:flex;gap:10px;flex-wrap:wrap">`+tiles.map(t=>`
+    <div style="flex:1;min-width:92px;background:#fffef9;border:1px solid var(--line-strong);border-radius:13px;padding:13px 14px">
+      <div class="muted" style="font-size:11.5px">${t[0]}</div>
+      <div style="font-size:23px;font-weight:800;font-family:var(--disp);margin-top:2px">${t[1]}</div></div>`).join("")+`</div>`;
+}
+async function renderAnalytics(){
+  const v=$("view");
+  const range=STATE.anaRange||"30d";
+  v.innerHTML=`<div class="card"><h2>アナリティクス</h2><p class="muted">読み込み中…</p></div>`;
+  const r=await api("/api/analytics?range="+range);
+  if(!r.ok){ v.innerHTML=`<div class="empty">読み込みに失敗しました</div>`; return; }
+  const d=r.data, k=d.kpis||{};
+  const rangeSel=`<select id="anaRange" style="width:auto;flex:0 0 auto;padding:7px 10px">
+    <option value="7d" ${range==="7d"?"selected":""}>直近7日</option>
+    <option value="30d" ${range==="30d"?"selected":""}>直近30日</option>
+    <option value="90d" ${range==="90d"?"selected":""}>直近90日</option></select>`;
+  let html=`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 style="margin:0">アナリティクス</h2>${rangeSel}</div>
+    <div style="margin-top:14px">${statTiles([
+      ["総投稿数",k.total??0],["掲載中",k.approved??0],["承認待ち",k.pending??0],
+      ["承認率",(k.approval_rate??0)+"%"],["平均★",(k.avg_rating!=null?k.avg_rating:"—")]
+    ])}</div>
+    <div style="margin-top:18px"><label>投稿数の推移（直近${d.range_days||30}日）</label>${lineSVG((d.series&&d.series.submissions)||[])}</div>
+  </div>`;
+  if(d.pro){
+    const rw=d.reward||{issued:0,used:0};
+    const usage=rw.issued>0?Math.round(rw.used/rw.issued*100):0;
+    const views=(d.series&&d.series.views)||[];
+    const fvTotal=views.reduce((a,b)=>a+(b.form_view||0),0);
+    const wvTotal=views.reduce((a,b)=>a+(b.wall_view||0),0);
+    html+=`<div class="card"><h2 style="font-size:16px">投稿までのファネル</h2>${funnelHTML(d.funnel||{})}</div>`;
+    html+=`<div class="card"><h2 style="font-size:16px">内訳</h2>
+      <label>投稿レベル別</label>${barsHTML((d.byLevel||[]).map(x=>["レベル"+x.level,x.n]))}
+      <label style="margin-top:14px">流入元（ソース）</label>${barsHTML((d.bySource||[]).map(x=>[x.source,x.n]))}</div>`;
+    html+=`<div class="card"><h2 style="font-size:16px">返礼コード</h2>
+      ${statTiles([["発行数",rw.issued||0],["使用済み",rw.used||0],["使用率",usage+"%"]])}</div>`;
+    html+=`<div class="card"><h2 style="font-size:16px">閲覧数の推移</h2>
+      ${statTiles([["フォーム閲覧（合計）",fvTotal],["壁の表示（合計）",wvTotal]])}
+      <div style="margin-top:14px"><label>フォーム閲覧の推移</label>${lineSVG(views.map(x=>({day:x.day,n:x.form_view||0})))}</div></div>`;
+  } else {
+    html+=`<div class="card">
+      <h2 style="font-size:16px">詳しい分析 🔒 Pro</h2>
+      <p class="muted">投稿までのファネル（閲覧→開始→完了→掲載）、レベル別・流入元の内訳、返礼コードの使用率、閲覧数の推移などの詳しい分析は <b>Pro</b> でご覧いただけます。</p>
+      <button class="btn" id="ana_toplan">Proにアップグレード</button></div>`;
+  }
+  v.innerHTML=html;
+  if($("anaRange")) $("anaRange").onchange=()=>{ STATE.anaRange=$("anaRange").value; renderAnalytics(); };
+  if($("ana_toplan")) $("ana_toplan").onclick=()=>document.querySelector('.tab[data-t="plan"]').click();
 }
 
 /* ---------- ホスト型・声の壁ページ(SEO) + プラン ---------- */

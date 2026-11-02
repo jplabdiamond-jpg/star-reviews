@@ -83,3 +83,21 @@ export async function destroySession(request: Request, env: Env): Promise<void> 
   const token = parseCookies(request.headers.get("cookie"))[SESSION_COOKIE];
   if (token) await env.SESSIONS.delete(`sess:${token}`);
 }
+
+// アクティブ店舗(businessId)を切り替える。現在のセッションを維持したまま businessId だけ差し替える。
+// 成功すれば true。token やセッションが無ければ false。
+export async function setActiveBusiness(request: Request, env: Env, businessId: string): Promise<boolean> {
+  const token = parseCookies(request.headers.get("cookie"))[SESSION_COOKIE];
+  if (!token) return false;
+  const raw = await env.SESSIONS.get(`sess:${token}`);
+  if (!raw) return false;
+  let session: Session;
+  try {
+    session = JSON.parse(raw) as Session;
+  } catch {
+    return false;
+  }
+  session.businessId = businessId;
+  await env.SESSIONS.put(`sess:${token}`, JSON.stringify(session), { expirationTtl: SESSION_TTL });
+  return true;
+}

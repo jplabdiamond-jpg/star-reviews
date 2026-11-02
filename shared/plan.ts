@@ -19,6 +19,9 @@ export function isPaid(biz: PlanRow | null | undefined): boolean {
   return until + 86400 >= nowSec();
 }
 
+// Proプランのアカウントが作れる店舗(business)数の上限。
+export const STORE_LIMIT_PRO = 5;
+
 // 無料(Free)プランで「掲載(=承認して公開)」できる声の上限件数。
 // 収集(pending)は無制限。承認済み(status='approved')がこの数に達したら、以降はStarter以上へ案内。
 export const FREE_WALL_LIMIT = 15;

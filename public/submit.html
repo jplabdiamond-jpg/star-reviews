@@ -224,13 +224,22 @@ $("video").addEventListener("change", () => {
   };
 });
 
+// 投稿開始ビーコン（初回操作時に1回だけ・計測用）
+let _started = false;
+function markStart(){
+  if(_started || !slug) return; _started = true;
+  try{ fetch("/api/public/metric", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ slug, key:"submit_start" }), keepalive:true }); }catch(e){}
+}
+
 // stars
 $("stars").querySelectorAll("span").forEach(s => {
   s.addEventListener("click", () => {
+    markStart();
     rating = +s.dataset.v;
     $("stars").querySelectorAll("span").forEach(x => x.classList.toggle("on", +x.dataset.v <= rating));
   });
 });
+$("body").addEventListener("focus", markStart, { once:true });
 
 // photo preview
 $("photo").addEventListener("change", () => {

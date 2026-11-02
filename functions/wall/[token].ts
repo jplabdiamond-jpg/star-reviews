@@ -1,7 +1,7 @@
 // GET /wall/:token   ホスト型・声の壁ページ（SSR / SEO資産化）
 // token は walls.slug（pro特典の読みやすいURL）または walls.embed_token のどちらでも解決。
 // サーバー側で本文・JSON-LD・OGタグまで描画するので、JSを実行しないクローラでも内容が読める。
-import { bumpMetric, escapeHtml } from "../../shared/util";
+import { bumpMetric, bumpMetricDaily, escapeHtml } from "../../shared/util";
 import { isPaid } from "../../shared/plan";
 import type { Env } from "../../shared/types";
 
@@ -27,6 +27,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   }
 
   await bumpMetric(env.DB, `wallpage_view:${wall.id}`);
+  await bumpMetricDaily(env.DB, wall.business_id, "wall_view");
 
   const biz = await env.DB.prepare("SELECT name, plan, plan_until FROM businesses WHERE id = ?")
     .bind(wall.business_id)
