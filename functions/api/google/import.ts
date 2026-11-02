@@ -6,6 +6,7 @@
 // 注意: Places API(New) の Place Details は最も関連する最大5件のレビューのみ返す。
 //       全件取り込みには Business Profile API（オーナーOAuth）が別途必要。
 import { json, badRequest, genId, nowSec } from "../../../shared/util";
+import { isPro } from "../../../shared/plan";
 import type { Env, AppData } from "../../../shared/types";
 
 function extractPlaceId(input: string): string | null {
@@ -22,6 +23,20 @@ function extractPlaceId(input: string): string | null {
 
 export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ request, env, data }) => {
   const { businessId } = data.session!;
+
+  // --- プラン制限: Googleの口コミ取り込みは Pro プラン限定 ---
+  const bizPlan = await env.DB.prepare("SELECT plan, plan_until FROM businesses WHERE id = ?")
+    .bind(businessId)
+    .first<{ plan: string; plan_until: number | null }>();
+  if (!isPro(bizPlan)) {
+    return json(
+      {
+        error: "Googleの口コミ取り込みは Pro プラン限定の機能です。Proにアップグレードするとご利用いただけます。",
+        plan_required: "pro",
+      },
+      402
+    );
+  }
 
   if (!env.GOOGLE_MAPS_API_KEY) {
     return json(

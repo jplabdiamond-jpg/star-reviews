@@ -17,6 +17,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return badRequest("メールまたはパスワードが違います", 401);
   }
 
+  // メール認証チェック（完全必須）。email_verified 列が未適用の環境では素通り＝ロックアウト回避。
+  try {
+    const v = await env.DB.prepare("SELECT email_verified FROM users WHERE id = ?")
+      .bind(user.id)
+      .first<{ email_verified: number | null }>();
+    if (v && !v.email_verified) {
+      return json(
+        {
+          error: "メールアドレスの確認が完了していません。ご登録時の確認メールにあるリンクを開いてください。",
+          unverified: true,
+          email,
+        },
+        403
+      );
+    }
+  } catch {
+    /* email_verified 列が未適用の場合は認証チェックをスキップ */
+  }
+
   const biz = await env.DB.prepare("SELECT id, name FROM businesses WHERE owner_user_id = ?")
     .bind(user.id)
     .first<{ id: string; name: string }>();

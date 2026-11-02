@@ -2,6 +2,7 @@
 // body: { form_id, rows: [{ author_name?, rating, body, date? }] }
 // 取り込んだ声は status='approved', source='CSV' で即掲載し、デフォルト壁に追加。
 import { json, badRequest, readJson, genId, nowSec } from "../../../shared/util";
+import { isPaid, FREE_WALL_LIMIT } from "../../../shared/plan";
 import type { Env, AppData } from "../../../shared/types";
 
 interface Row { author_name?: string; rating?: number | string; body?: string; date?: string }
@@ -23,9 +24,35 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
     .bind(businessId)
     .first<{ id: string }>();
 
+  // --- プラン上限: 無料プランは掲載(承認)できる件数に上限。取込は即掲載なので残り枠まで ---
+  let remaining = Infinity;
+  const biz = await env.DB.prepare("SELECT plan, plan_until FROM businesses WHERE id = ?")
+    .bind(businessId)
+    .first<{ plan: string; plan_until: number | null }>();
+  if (!isPaid(biz)) {
+    const cnt = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM testimonials WHERE business_id = ? AND status = 'approved'"
+    )
+      .bind(businessId)
+      .first<{ n: number }>();
+    remaining = Math.max(0, FREE_WALL_LIMIT - (cnt?.n || 0));
+    if (remaining === 0) {
+      return json(
+        {
+          error: `無料プランで掲載できるのは${FREE_WALL_LIMIT}件までです。Starter以上にアップグレードすると無制限に取り込めます。`,
+          limit_reached: true,
+          limit: FREE_WALL_LIMIT,
+        },
+        402
+      );
+    }
+  }
+
   let imported = 0;
   let skipped = 0;
+  let limited = 0;
   for (const rv of b.rows) {
+    if (imported >= remaining) { limited++; continue; }
     const rating = Math.min(5, Math.max(1, Math.round(Number(rv.rating) || 0)));
     const text = (rv.body || "").toString().trim();
     if (!rating || !text) { skipped++; continue; }
@@ -52,5 +79,13 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
     imported++;
   }
 
-  return json({ ok: true, imported, skipped });
+  return json({
+    ok: true,
+    imported,
+    skipped,
+    limited,
+    ...(limited > 0
+      ? { notice: `無料プランの掲載上限（${FREE_WALL_LIMIT}件）に達したため、${limited}件は取り込めませんでした。Starter以上で無制限になります。` }
+      : {}),
+  });
 };

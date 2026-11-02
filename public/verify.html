@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>メールアドレスの確認｜star-reviews</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#fffdf5;--panel:#fff;--ink:#1c1a12;--ink-soft:#413d30;--muted:#7c7563;
+    --sun:#ffc62b;--sun-deep:#eaa400;--sun-soft:#ffe7a0;--line-strong:#e0d4b6;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    --disp:"Space Grotesk",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.7;
+    min-height:100vh;display:grid;place-items:center;padding:24px}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;
+    color:var(--ink);text-decoration:none;margin-bottom:18px}
+  .brand .star{width:18px;height:18px;color:var(--sun-deep)}
+  .card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line-strong);border-radius:20px;
+    padding:30px 26px;box-shadow:0 10px 34px rgba(60,46,12,.1);text-align:center}
+  .spin{width:34px;height:34px;border:3px solid var(--sun-soft);border-top-color:var(--sun-deep);border-radius:50%;
+    margin:6px auto 16px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  h1{font-size:20px;font-weight:800;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 4px}
+  .ok-ico,.err-ico{font-size:34px;line-height:1;margin-bottom:10px}
+  .btn{display:inline-block;margin-top:18px;border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:800;
+    font-size:15px;padding:13px 22px;cursor:pointer;font-family:var(--jp);text-decoration:none}
+  .btn:hover{background:#000}
+  .resend{margin-top:16px;display:none}
+  .resend input{width:100%;border:1.5px solid var(--line-strong);border-radius:12px;padding:12px 14px;font:inherit;background:#fffef9;margin-bottom:10px}
+  .resend input:focus{outline:none;border-color:var(--sun-deep);box-shadow:0 0 0 3px var(--sun-soft)}
+  .link{color:var(--sun-deep);font-weight:800;text-decoration:underline;cursor:pointer;font-size:13.5px}
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <a class="brand" href="/">
+      <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
+      star<em style="font-style:normal;color:var(--sun-deep)">·</em>reviews
+    </a>
+    <div id="body">
+      <div class="spin"></div>
+      <h1>確認しています…</h1>
+      <p class="sub">少々お待ちください。</p>
+    </div>
+  </div>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+  const token = new URLSearchParams(location.search).get("token") || "";
+  function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+  function showError(msg){
+    $("body").innerHTML =
+      '<div class="err-ico">⚠️</div><h1>確認できませんでした</h1>' +
+      '<p class="sub">'+esc(msg)+'</p>' +
+      '<div class="resend" id="resend" style="display:block">' +
+      '<p class="sub" style="margin:14px 0 8px">メールアドレスを入力して、認証メールを再送できます。</p>' +
+      '<input id="remail" type="email" placeholder="you@example.com" />' +
+      '<button class="btn" id="rbtn" style="width:100%">認証メールを再送する</button>' +
+      '<p id="rmsg" class="sub" style="margin-top:10px"></p></div>';
+    $("rbtn").addEventListener("click", async ()=>{
+      const email = $("remail").value.trim();
+      if(!email || !email.includes("@")){ $("rmsg").textContent="メールアドレスを入力してください。"; return; }
+      $("rbtn").disabled=true; $("rbtn").textContent="送信中…";
+      try{ await fetch("/api/auth/resend-verification",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email})}); }catch(e){}
+      $("rbtn").textContent="送信しました"; $("rmsg").textContent="メールが届いたら、リンクを開いて確認を完了してください。";
+    });
+  }
+  function showOk(){
+    $("body").innerHTML =
+      '<div class="ok-ico">✅</div><h1>確認が完了しました</h1>' +
+      '<p class="sub">ダッシュボードに移動します…</p>' +
+      '<a class="btn" href="/app.html">ダッシュボードを開く →</a>';
+    setTimeout(()=>{ location.href="/app.html"; }, 1200);
+  }
+
+  (async ()=>{
+    if(!token){ showError("リンクが正しくありません。メール内のリンクをもう一度お試しください。"); return; }
+    try{
+      const res = await fetch("/api/auth/verify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token})});
+      const j = await res.json().catch(()=>({}));
+      if(res.ok){ showOk(); } else { showError(j.error || "リンクが無効か、有効期限が切れています。"); }
+    }catch(e){ showError("通信エラーが発生しました。時間をおいてお試しください。"); }
+  })();
+</script>
+</body>
+</html>

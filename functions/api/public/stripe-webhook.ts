@@ -1,7 +1,43 @@
 // POST /api/public/stripe-webhook  Stripe Webフック受信（署名検証）
 // プラン状態を businesses に反映。公開パス(/api/public/)なので認証なしで受ける。
 import { verifyStripeEvent, planForPriceId, type PaidPlan } from "../../../shared/stripe";
+import { sendEmailResend } from "../../../shared/notify";
+import { escapeHtml } from "../../../shared/util";
 import type { Env } from "../../../shared/types";
+
+// 決済失敗(dunning)時: オーナーにカード更新を促すメールを送る。
+async function notifyPaymentIssue(
+  env: Env,
+  bizId: string,
+  opts: { payUrl: string | null; final: boolean; appUrl: string }
+): Promise<void> {
+  try {
+    const row = await env.DB.prepare(
+      `SELECT COALESCE(b.notify_email, u.email) AS to_email, b.name AS biz_name
+         FROM businesses b JOIN users u ON u.id = b.owner_user_id WHERE b.id = ?`
+    )
+      .bind(bizId)
+      .first<{ to_email: string | null; biz_name: string | null }>();
+    const to = (row?.to_email || "").trim();
+    if (!to) return;
+    const action = opts.payUrl || opts.appUrl;
+    const subject = opts.final
+      ? "【star-reviews】お支払いが確認できず、プランを停止しました"
+      : "【star-reviews】お支払いに失敗しました（カード情報のご確認のお願い）";
+    const lead = opts.final
+      ? "数回の再試行の後もお支払いを確認できなかったため、有料プランを一時停止し、無料プランに切り替えました。下のボタンからお支払い方法を更新すると、すぐに復帰できます。"
+      : "月額料金のお支払いに失敗しました。カードの有効期限切れや限度額などが考えられます。下のボタンからお支払い方法をご確認ください。数日の間に自動で再試行されます。";
+    const html =
+      `<div style="font-family:sans-serif;line-height:1.7;color:#1c1a12">` +
+      `<p>${escapeHtml(row?.biz_name || "")} のご担当者さま</p>` +
+      `<p>${lead}</p>` +
+      `<p style="margin:18px 0"><a href="${escapeHtml(action)}" style="display:inline-block;background:#1c1a12;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none">お支払い方法を確認する →</a></p>` +
+      `<p style="color:#7c7563;font-size:12px">このメールは star-reviews から自動送信されています。</p></div>`;
+    await sendEmailResend(env, to, subject, html);
+  } catch {
+    /* 通知失敗は webhook 処理を止めない */
+  }
+}
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
@@ -75,6 +111,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         const periodEnd: number | null = Number.isFinite(obj.current_period_end) ? obj.current_period_end : null;
         await env.DB.prepare("UPDATE businesses SET plan = 'free', plan_until = ? WHERE id = ?")
           .bind(periodEnd, bizId).run();
+      }
+    } else if (type === "invoice.payment_failed") {
+      // dunning: 決済失敗。再試行の有無で文面を変える。最終失敗の確定(= free化)は subscription.deleted 側で行う。
+      const bizId = await findBusinessId();
+      if (bizId) {
+        const base = (env.PUBLIC_BASE_URL || new URL(request.url).origin).replace(/\/+$/, "");
+        const payUrl: string | null = typeof obj.hosted_invoice_url === "string" ? obj.hosted_invoice_url : null;
+        const willRetry = obj.next_payment_attempt != null;
+        await notifyPaymentIssue(env, bizId, { payUrl, final: !willRetry, appUrl: `${base}/app` });
+      }
+    } else if (type === "invoice.payment_succeeded" || type === "invoice.paid") {
+      // 回復: past_due から復帰した場合にプランを有効化し直す（期間末も更新）。
+      const bizId = await findBusinessId();
+      if (bizId) {
+        const sub = typeof obj.subscription === "string" ? obj.subscription : null;
+        const periodEnd: number | null = Number.isFinite(obj.lines?.data?.[0]?.period?.end)
+          ? obj.lines.data[0].period.end
+          : null;
+        if (sub) {
+          await env.DB.prepare(
+            "UPDATE businesses SET plan_until = COALESCE(?, plan_until) WHERE stripe_subscription_id = ?"
+          ).bind(periodEnd, sub).run();
+        }
       }
     }
   } catch (e) {

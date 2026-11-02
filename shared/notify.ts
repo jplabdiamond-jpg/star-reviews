@@ -1,6 +1,7 @@
 // 新着レビューのオーナー通知（メール=Resend / LINE=Messaging API push）
 // いずれも環境変数が未設定ならその経路は黙ってスキップ（best-effort）。本処理は止めない。
 import { escapeHtml } from "./util";
+import { isPaid } from "./plan";
 import type { Env } from "./types";
 
 export interface NotifyPayload {
@@ -54,14 +55,17 @@ export async function notifyNewTestimonial(env: Env, p: NotifyPayload): Promise<
   try {
     const biz = await env.DB.prepare(
       `SELECT b.notify_enabled AS notify_enabled, b.notify_email AS notify_email,
-              b.line_user_id AS line_user_id, u.email AS owner_email
+              b.line_user_id AS line_user_id, b.plan AS plan, b.plan_until AS plan_until,
+              u.email AS owner_email
          FROM businesses b JOIN users u ON u.id = b.owner_user_id
         WHERE b.id = ?`
     )
       .bind(p.businessId)
-      .first<{ notify_enabled: number | null; notify_email: string | null; line_user_id: string | null; owner_email: string | null }>();
+      .first<{ notify_enabled: number | null; notify_email: string | null; line_user_id: string | null; plan: string | null; plan_until: number | null; owner_email: string | null }>();
     if (!biz) return;
     if (biz.notify_enabled === 0) return; // 明示的にOFFなら送らない
+    // 新着通知(メール/LINE)は Starter 以上の機能。無料プランは受信トレイでの確認のみ。
+    if (!isPaid(biz)) return;
 
     const snippet = p.body.length > 120 ? p.body.slice(0, 120) + "…" : p.body;
     const appUrl = `${p.baseUrl}/app`;

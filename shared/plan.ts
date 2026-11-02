@@ -19,6 +19,19 @@ export function isPaid(biz: PlanRow | null | undefined): boolean {
   return until + 86400 >= nowSec();
 }
 
+// 無料(Free)プランで「掲載(=承認して公開)」できる声の上限件数。
+// 収集(pending)は無制限。承認済み(status='approved')がこの数に達したら、以降はStarter以上へ案内。
+export const FREE_WALL_LIMIT = 15;
+
+// Proプラン(= Google口コミ取込など上位特典)か判定。plan が 'pro' かつ期限内。
+export function isPro(biz: PlanRow | null | undefined): boolean {
+  if (!biz) return false;
+  if ((biz.plan || "").toLowerCase() !== "pro") return false;
+  const until = biz.plan_until;
+  if (until == null) return true;
+  return until + 86400 >= nowSec();
+}
+
 // 表示用のプラン名
 export function planLabel(plan?: string | null): string {
   switch ((plan || "free").toLowerCase()) {

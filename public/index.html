@@ -587,7 +587,6 @@
         <ul>
           <li>Starter のすべて</li>
           <li>Googleの口コミ取り込み</li>
-          <li>複数店舗の管理</li>
           <li>詳しいアナリティクス</li>
           <li>優先サポート</li>
         </ul>
@@ -689,18 +688,44 @@ $("forgotLink").addEventListener("click", async () => {
   $("authSub").textContent = "ご登録があれば、再設定メールをお送りしました。メールをご確認ください。";
 });
 
+function escH(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+async function resendVerify(email, where){
+  if(!email || !email.includes("@")) return;
+  if(where) where.textContent = "送信中…";
+  try{ await fetch("/api/auth/resend-verification", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ email }) }); }catch(e){}
+  if(where) where.textContent = "再送しました";
+}
+function showVerifySent(email){
+  $("form").style.display = "none";
+  $("err").style.display = "none";
+  $("authTitle").textContent = "確認メールを送信しました";
+  $("authSub").innerHTML = "<b>"+escH(email)+"</b> に認証メールをお送りしました。メール内のリンクを開くと登録が完了します。<br>届かない場合は迷惑メールフォルダもご確認ください。<br><br><a id='resendLink' style='color:var(--sun-deep);font-weight:800;text-decoration:underline;cursor:pointer'>認証メールを再送する</a>";
+  const r = document.getElementById("resendLink");
+  if(r) r.addEventListener("click", ()=>resendVerify(email, r));
+}
 $("form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   $("err").style.display = "none";
   const btn = $("submit"); btn.disabled = true;
-  const payload = { email: $("email").value.trim(), password: $("password").value };
+  const email = $("email").value.trim();
+  const payload = { email, password: $("password").value };
   if(mode === "register") payload.business_name = $("bname").value.trim();
   try{
     const res = await fetch("/api/auth/" + mode, {
       method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify(payload)
     });
     const j = await res.json();
-    if(!res.ok){ $("err").textContent = j.error || "エラーが発生しました"; $("err").style.display="block"; btn.disabled=false; return; }
+    if(res.ok && j.pending_verification){ showVerifySent(email); return; }
+    if(!res.ok){
+      $("err").innerHTML = escH(j.error || "エラーが発生しました");
+      if(j.unverified){
+        $("err").innerHTML += " <a id='resendLink' style='color:inherit;font-weight:800;text-decoration:underline;cursor:pointer'>認証メールを再送</a>";
+      }
+      $("err").style.display="block"; btn.disabled=false;
+      const rl = document.getElementById("resendLink");
+      if(rl) rl.addEventListener("click", ()=>resendVerify(email, rl));
+      return;
+    }
     location.href = "/app.html";
   }catch(e){ $("err").textContent = "通信エラー"; $("err").style.display="block"; btn.disabled=false; }
 });

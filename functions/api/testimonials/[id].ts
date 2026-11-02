@@ -1,6 +1,7 @@
 // PATCH /api/testimonials/:id   { action: "approve" | "reject" }
 // 承認すると事業者のデフォルト壁に自動で載る
 import { json, badRequest, readJson, nowSec } from "../../../shared/util";
+import { isPaid, FREE_WALL_LIMIT } from "../../../shared/plan";
 import type { Env, AppData } from "../../../shared/types";
 
 export const onRequestPatch: PagesFunction<Env, string, AppData> = async ({ request, env, params, data }) => {
@@ -20,6 +21,28 @@ export const onRequestPatch: PagesFunction<Env, string, AppData> = async ({ requ
     await env.DB.prepare("UPDATE testimonials SET status='rejected', approved_at=NULL WHERE id = ?").bind(id).run();
     await env.DB.prepare("DELETE FROM wall_testimonials WHERE testimonial_id = ?").bind(id).run();
     return json({ ok: true, status: "rejected" });
+  }
+
+  // --- プラン上限: 無料プランは掲載(承認)できる件数に上限 ---
+  const biz = await env.DB.prepare("SELECT plan, plan_until FROM businesses WHERE id = ?")
+    .bind(businessId)
+    .first<{ plan: string; plan_until: number | null }>();
+  if (!isPaid(biz)) {
+    const cnt = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM testimonials WHERE business_id = ? AND status = 'approved'"
+    )
+      .bind(businessId)
+      .first<{ n: number }>();
+    if ((cnt?.n || 0) >= FREE_WALL_LIMIT) {
+      return json(
+        {
+          error: `無料プランで掲載できるのは${FREE_WALL_LIMIT}件までです。Starter以上にアップグレードすると無制限に掲載できます。`,
+          limit_reached: true,
+          limit: FREE_WALL_LIMIT,
+        },
+        402
+      );
+    }
   }
 
   await env.DB.prepare("UPDATE testimonials SET status='approved', approved_at=? WHERE id = ?").bind(now, id).run();
