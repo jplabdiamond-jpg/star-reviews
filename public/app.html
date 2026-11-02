@@ -968,14 +968,11 @@ async function renderRewards(){
 }
 
 /* ---------- 埋め込み ---------- */
-function buildSnippet(o){
-  const attrs = [`data-token="${STATE.embedToken}"`];
-  if(o.layout && o.layout!=="grid") attrs.push(`data-layout="${o.layout}"`);
-  if(o.star && o.star!=="gold") attrs.push(`data-star="${o.star}"`);
-  if(o.theme && o.theme!=="light") attrs.push(`data-theme="${o.theme}"`);
-  if(!o.summary) attrs.push(`data-summary="off"`);
-  return `<script src="${STATE.origin}/widget.js" ${attrs.join(" ")} async><\/script>`;
+function buildSnippet(){
+  // 見た目はダッシュボードの保存設定を使うため、タグはトークンのみでOK
+  return `<script src="${STATE.origin}/widget.js" data-token="${STATE.embedToken}" async><\/script>`;
 }
+const ACCENTS = [["#eaa400","ゴールド"],["#f2721f","オレンジ"],["#e5484d","レッド"],["#e5489d","ピンク"],["#7c5cff","パープル"],["#2f6feb","ブルー"],["#1c7d52","グリーン"],["#1c1a12","ブラック"]];
 // プレビュー用の★描画
 function pvStars(v, star){
   v=Math.max(0,Math.min(5,v||0));
@@ -988,12 +985,12 @@ function pvStars(v, star){
 }
 const PV_CSS = `
   .pv-wrap{background:#fffdf5;border:1px solid var(--line);border-radius:14px;padding:16px}
-  .pv-root{font-family:var(--jp);color:#1c1a12}
+  .pv-root{font-family:var(--jp);color:#1c1a12;--pv-accent:#eaa400}
   .pv-st{font-size:15px;letter-spacing:1.5px;line-height:1;white-space:nowrap}
-  .pv-gold .f{color:#eaa400}.pv-gold .e{color:#e4dcc8}
+  .pv-gold .f{color:var(--pv-accent)}.pv-gold .e{color:#e4dcc8}
   .pv-mono .f{color:#1c1a12}.pv-mono .e{color:#d8cfbb}
   .pv-heart .f{color:#e5484d}.pv-heart .e{color:#f0cfd0}
-  .pv-num{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:#eaa400}
+  .pv-num{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:var(--pv-accent)}
   .pv-sum{display:flex;align-items:center;gap:10px;margin:0 0 13px;flex-wrap:wrap}
   .pv-sum-avg{font-size:26px;font-weight:800;line-height:1}
   .pv-sum .pv-st{font-size:17px}.pv-sum-c{font-size:12px;color:#7c7563;font-weight:700}
@@ -1007,7 +1004,7 @@ const PV_CSS = `
   .pv-src{font-size:9.5px;color:#9a917c;font-weight:700}
   .pv-body{color:#413d30;font-size:13px;line-height:1.65;margin:8px 0 10px}
   .pv-foot{display:flex;align-items:center;gap:8px}
-  .pv-av{width:30px;height:30px;border-radius:50%;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:#eaa400;font-weight:800;font-size:12px}
+  .pv-av{width:30px;height:30px;border-radius:50%;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:var(--pv-accent);font-weight:800;font-size:12px}
   .pv-who{font-size:12px;font-weight:700}
   .pv-bd{font-size:10px;color:#1c7d52;background:#e2f3e8;border-radius:999px;padding:1px 7px;font-weight:700;margin-left:auto}
   /* themes */
@@ -1020,27 +1017,34 @@ const PV_CSS = `
   .pv-theme-dark .pv-body{color:#e7e1d0}.pv-theme-dark .pv-who{color:#fff}
   .pv-theme-dark .pv-mono .f{color:#fff}.pv-theme-dark .pv-mono .e{color:#4a4636}
   .pv-theme-dark .pv-av{background:#3a3626;color:#ffca45}
-  .pv-big{font-size:24px;letter-spacing:3px}.pv-big .f{color:#eaa400}.pv-big .e{color:#e8dcc0}
+  .pv-big{font-size:24px;letter-spacing:3px}.pv-big .f{color:var(--pv-accent)}.pv-big .e{color:#e8dcc0}
   .pv-glow .f{color:#ffbe00;animation:srGlow 1.8s ease-in-out infinite}.pv-glow .e{color:#eadfbf}
   @keyframes srGlow{0%,100%{text-shadow:0 0 2px rgba(255,190,0,.25)}50%{text-shadow:0 0 10px rgba(255,185,0,.95),0 0 20px rgba(255,185,0,.55)}}
   .pv-shine .f{background:linear-gradient(100deg,#c57f00 0%,#ffd34d 22%,#fff7d6 34%,#ffd34d 48%,#c57f00 72%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:srShine 2.6s linear infinite}.pv-shine .e{color:#e6d9b6}
   @keyframes srShine{0%{background-position:180% 0}100%{background-position:-70% 0}}
   .pv-metal .f{background:linear-gradient(180deg,#ffe9a3 0%,#f3b808 46%,#a86f09 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(255,255,255,.45))}.pv-metal .e{color:#e2d4b0}
-  .pv-mini{font-size:11px;letter-spacing:1px}.pv-mini .f{color:#eaa400}.pv-mini .e{color:#e4dcc8}
+  .pv-mini{font-size:11px;letter-spacing:1px}.pv-mini .f{color:var(--pv-accent)}.pv-mini .e{color:#e4dcc8}
   .pv-chips{display:flex;flex-wrap:wrap;gap:10px}.pv-chips .pv-card{flex:0 1 220px}
+  .pv-masonry{columns:2 150px;column-gap:12px}.pv-masonry .pv-card{break-inside:avoid;margin:0 0 12px}
   @media(prefers-reduced-motion:reduce){.pv-glow .f,.pv-shine .f{animation:none}}`;
 const PV_ITEMS = [
   {rating:5, body:"スタッフの対応がとても丁寧で、初めてでも安心して任せられました。", author:"M.T様", verified:true, source:"Google"},
-  {rating:4, body:"予約が取りやすく、居心地がよかったです。また来ます！", author:"匿名希望", verified:false, source:""}
+  {rating:4, body:"予約が取りやすく、居心地がよかったです。また来ます！", author:"匿名希望", verified:false, source:""},
+  {rating:5, body:"コスパが良くて驚きました。説明も分かりやすかったです。", author:"K.S様", verified:false, source:"Instagram"},
+  {rating:5, body:"友人の紹介で来ました。対応が早くて助かりました！", author:"佐藤様", verified:true, source:""},
+  {rating:4, body:"清潔感があって好印象。また利用したいです。", author:"匿名希望", verified:false, source:""},
+  {rating:5, body:"細かい要望にも応えてもらえて、大満足です。", author:"渡辺様", verified:true, source:"Google"}
 ];
+function pvLayClass(l){ return l==="carousel"?"pv-carousel":l==="list"?"pv-list":l==="chips"?"pv-chips":l==="masonry"?"pv-masonry":"pv-grid"; }
 function pvRender(o){
   const th = o.theme||"light";
-  const lay = o.layout==="carousel"?"pv-carousel":o.layout==="list"?"pv-list":o.layout==="chips"?"pv-chips":"pv-grid";
-  let h = `<style>${PV_CSS}</style><div class="pv-root pv-theme-${th}">`;
+  const lay = pvLayClass(o.layout);
+  const items = (o.count>0 ? PV_ITEMS.slice(0, o.count) : PV_ITEMS);
+  let h = `<style>${PV_CSS}</style><div class="pv-root pv-theme-${th}" style="--pv-accent:${o.accent||'#eaa400'}">`;
   if(o.summary){
     h += `<div class="pv-sum">${o.star!=="number"?`<span class="pv-sum-avg">4.8</span>`:""}<span>${pvStars(4.8,o.star)}<br><span class="pv-sum-c">128件のお客様の声</span></span></div>`;
   }
-  h += `<div class="${lay}">` + PV_ITEMS.map(it=>{
+  h += `<div class="${lay}">` + items.map(it=>{
     const ini = it.author && it.author!=="匿名希望" ? it.author.charAt(0) : "★";
     return `<div class="pv-card"><div class="pv-top">${pvStars(it.rating,o.star)}${it.source?`<span class="pv-src">via ${esc(it.source)}</span>`:""}</div>`+
       `<div class="pv-body">${esc(it.body)}</div>`+
@@ -1048,57 +1052,119 @@ function pvRender(o){
   }).join("") + `</div></div>`;
   return h;
 }
-function renderEmbed(){
+const LAYOUT_OPTS = [["grid","グリッド（タイル状）"],["masonry","マソンリー（高さ自由）"],["carousel","カルーセル（横スクロール）"],["list","リスト（縦1列）"],["chips","チップス（小カード）"]];
+async function renderEmbed(){
   if(!STATE.embedToken){ $("view").innerHTML=`<div class="empty">先にフォームを作成すると、埋め込みコードが発行されます。</div>`; return; }
+  // 現在の保存設定を取得（公開APIから）
+  let S = {accent:"#eaa400",layout:"grid",star:"gold",theme:"light",summary:true,count:0,autoplay:false};
+  try{ const cur = await api("/api/wall/"+STATE.embedToken); if(cur.ok && cur.data.settings) S = Object.assign(S, cur.data.settings); }catch(e){}
+
+  const swatches = ACCENTS.map(([hex,name])=>`<button type="button" class="sw" data-hex="${hex}" title="${name}" style="background:${hex}"></button>`).join("");
   $("view").innerHTML = `
+    <style>
+      .sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line-strong);cursor:pointer;padding:0}
+      .sw.on{box-shadow:0 0 0 2.5px var(--ink)}
+      .swrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:2px}
+      .emhint{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+    </style>
     <div class="card" style="background:var(--ink);color:#fff;border:0">
       <p style="margin:0;font-size:12.5px;color:#cfc8b6;font-weight:700;letter-spacing:.04em">声の壁の表示回数</p>
       <p style="margin:4px 0 0;font-size:34px;font-weight:800;font-family:var(--disp)">${(STATE.wallViews||0).toLocaleString()}<span style="font-size:15px;color:#cfc8b6;font-weight:700;font-family:var(--jp)"> 回</span></p>
     </div>
     ${renderHostedCard()}
     <div class="card">
-      <h2>サイトに「声の壁」を貼る</h2>
-      <p class="muted" style="margin-top:-8px">見せ方を選ぶと下にプレビューが出ます。気に入ったらコードをコピーして貼るだけ。</p>
-      <div class="row">
-        <div><label>レイアウト</label><select id="em_layout">${LAYOUTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
-        <div><label>★マークの種類 <a id="em_samples" style="font-weight:800;color:var(--sun-deep);cursor:pointer;text-decoration:underline;font-size:12px">見本を見る</a></label><select id="em_star">${STAR_STYLES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
+      <h2>見た目をカスタマイズ</h2>
+      <p class="muted" style="margin-top:-8px">ここで調整して「保存」すると、<b>サイト埋め込み</b>と<b>ホスト型ページ（/wall）</b>の両方に反映されます。</p>
+
+      <label>テーマカラー</label>
+      <div class="swrow" id="em_sw">${swatches}
+        <label style="display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:600;color:var(--muted);font-size:12px">カスタム<input type="color" id="em_accent" value="${esc(S.accent)}" style="width:34px;height:28px;padding:0;border:1px solid var(--line-strong);border-radius:8px;background:none;cursor:pointer"></label>
       </div>
+
+      <div class="row" style="margin-top:14px">
+        <div><label>並べ方（レイアウト）</label><select id="em_layout">${LAYOUT_OPTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
+        <div><label>表示する枚数</label><select id="em_count">
+          <option value="0">すべて</option><option value="3">3枚</option><option value="6">6枚</option><option value="9">9枚</option><option value="12">12枚</option><option value="20">20枚</option>
+        </select></div>
+      </div>
+
       <div class="row">
+        <div><label>★マークの種類 <a id="em_samples" style="font-weight:800;color:var(--sun-deep);cursor:pointer;text-decoration:underline;font-size:12px">見本を見る</a></label><select id="em_star">${STAR_STYLES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
         <div><label>テーマ（カードの見せ方）</label><select id="em_theme">
           <option value="light">ライト（白カード）</option>
           <option value="minimal">ミニマル（罫線のみ）</option>
           <option value="quote">引用（大きな “）</option>
           <option value="dark">ダーク</option>
         </select></div>
+      </div>
+
+      <div class="row">
         <div><label>星サマリー（平均★と件数）</label><select id="em_summary">
           <option value="1">表示する</option><option value="0">表示しない</option>
         </select></div>
+        <div id="em_autowrap"><label>自動スライド（カルーセル時）</label><select id="em_autoplay">
+          <option value="0">しない</option><option value="1">する</option>
+        </select><p class="emhint" id="em_autohint"></p></div>
       </div>
-      <label style="margin-top:4px">プレビュー</label>
+
+      <label style="margin-top:8px">プレビュー</label>
       <div class="pv-wrap" id="em_prev"></div>
-      <label style="margin-top:14px">埋め込みコード</label>
-      <div class="code" id="snip"></div>
-      <button class="btn ghost sm copy" id="em_copy" style="margin-top:11px">コードをコピー</button>
+
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">
+        <button class="btn" id="em_save">この設定を保存</button>
+        <span class="pill n" id="em_saved" style="align-self:center;display:none">保存しました ✓</span>
+      </div>
     </div>
     <div class="card">
-      <h3>置き場所を指定したいとき</h3>
-      <p class="muted" style="margin-top:-6px">表示したい場所に下のタグを置くと、そこに描画されます。</p>
+      <h2>サイトに貼り付ける</h2>
+      <p class="muted" style="margin-top:-8px">このタグを1行コピーして、サイトの表示したい場所に貼るだけ。見た目は上で保存した設定が反映されます。</p>
+      <div class="code" id="snip"></div>
+      <button class="btn ghost sm" id="em_copy" style="margin-top:11px">コードをコピー</button>
+      <p class="muted" style="margin-top:12px">置き場所を指定したいときは、表示したい位置に次のタグを置きます。</p>
       <div class="code">${esc('<div data-star-reviews></div>')}</div>
     </div>
     <div class="card">
       <h3>Google検索に★を表示（SEO）</h3>
-      <p class="muted" style="margin-top:-6px">このタグを貼ると、レビューの構造化データ(JSON-LD)も自動で出力され、Google検索で★リッチスニペットの対象になります（反映はGoogleの判断・数日〜）。不要なら <code>data-schema="off"</code> を足してください。</p>
+      <p class="muted" style="margin-top:-6px">貼るだけでレビューの構造化データ(JSON-LD)も自動出力され、Google検索で★リッチスニペットの対象になります（反映はGoogleの判断・数日〜）。不要なら <code>data-schema="off"</code> を足してください。</p>
     </div>`;
-  const opts=()=>({layout:$("em_layout").value,star:$("em_star").value,theme:$("em_theme").value,summary:$("em_summary").value==="1"});
-  const update=()=>{
-    const o=opts();
+
+  // 初期値を反映
+  $("em_accent").value = S.accent;
+  $("em_layout").value = S.layout;
+  $("em_count").value = String(S.count||0);
+  $("em_star").value = S.star;
+  $("em_theme").value = S.theme;
+  $("em_summary").value = S.summary ? "1" : "0";
+  $("em_autoplay").value = S.autoplay ? "1" : "0";
+
+  const curAccent = ()=>$("em_accent").value;
+  function markSwatch(){
+    document.querySelectorAll("#em_sw .sw").forEach(b=>b.classList.toggle("on", b.dataset.hex.toLowerCase()===curAccent().toLowerCase()));
+  }
+  const opts = ()=>({
+    accent: curAccent(), layout:$("em_layout").value, count:+$("em_count").value,
+    star:$("em_star").value, theme:$("em_theme").value,
+    summary:$("em_summary").value==="1", autoplay:$("em_autoplay").value==="1"
+  });
+  const update = ()=>{
+    const o = opts();
     $("em_prev").innerHTML = pvRender(o);
-    const snip = buildSnippet(o);
-    $("snip").textContent = snip;
-    $("em_copy").onclick = ()=>copy(snip);
+    $("em_autowrap").style.opacity = o.layout==="carousel" ? "1" : ".5";
+    $("em_autohint").textContent = o.layout==="carousel" ? "" : "カルーセルを選ぶと有効になります";
+    $("snip").textContent = buildSnippet();
+    markSwatch();
   };
-  ["em_layout","em_star","em_theme","em_summary"].forEach(id=>$(id).onchange=update);
+  document.querySelectorAll("#em_sw .sw").forEach(b=>b.onclick=()=>{ $("em_accent").value=b.dataset.hex; update(); });
+  ["em_accent","em_layout","em_count","em_star","em_theme","em_summary","em_autoplay"].forEach(id=>{ $(id).oninput=update; $(id).onchange=update; });
   $("em_samples").onclick = openStarSamples;
+  $("em_copy").onclick = ()=>copy(buildSnippet());
+  $("em_save").onclick = async ()=>{
+    const btn=$("em_save"); btn.disabled=true;
+    const r = await api("/api/walls/settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(opts())});
+    btn.disabled=false;
+    if(r.ok){ toast("保存しました（埋め込み・声の壁ページに反映）"); const s=$("em_saved"); s.style.display="inline-block"; setTimeout(()=>s.style.display="none",2200); }
+    else { toast(r.data.error||"保存に失敗しました"); }
+  };
   bindHostedCard();
   update();
 }

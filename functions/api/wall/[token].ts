@@ -2,6 +2,7 @@
 // 返却: layout, name, business_name, summary{count,avg}, items[]（JSON-LD用に date も含む）
 import { bumpMetric, bumpMetricDaily } from "../../../shared/util";
 import { isPaid } from "../../../shared/plan";
+import { parseWallSettings } from "../../../shared/wallsettings";
 import type { Env } from "../../../shared/types";
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, params }) => {
@@ -10,11 +11,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   const cors = { "access-control-allow-origin": "*", "content-type": "application/json; charset=utf-8" };
 
   const wall = await env.DB.prepare(
-    "SELECT id, business_id, layout, name FROM walls WHERE embed_token = ?"
+    "SELECT id, business_id, layout, theme, name FROM walls WHERE embed_token = ?"
   )
     .bind(token)
-    .first<{ id: string; business_id: string; layout: string; name: string }>();
+    .first<{ id: string; business_id: string; layout: string; theme: string | null; name: string }>();
   if (!wall) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers: cors });
+
+  const settings = parseWallSettings(wall.theme, wall.layout);
 
   // 表示回数カウント（ベストエフォート）
   await bumpMetric(env.DB, `wall_view:${wall.id}`);
@@ -48,7 +51,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
       at: number;
     }>();
 
-  const items = results.map((r) => ({
+  const allItems = results.map((r) => ({
     rating: r.rating,
     body: r.body,
     author: r.author_label,
@@ -59,16 +62,18 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     video_url: r.video_key ? `${origin}/api/media/${r.video_key}` : null,
   }));
 
-  // 星サマリー（平均・件数）
-  const count = items.length;
-  const avg = count ? Math.round((items.reduce((s, i) => s + (i.rating || 0), 0) / count) * 10) / 10 : 0;
+  // 星サマリーは全件で算出し、表示枚数(count)だけ items を絞る
+  const total = allItems.length;
+  const avg = total ? Math.round((allItems.reduce((s, i) => s + (i.rating || 0), 0) / total) * 10) / 10 : 0;
+  const items = settings.count > 0 ? allItems.slice(0, settings.count) : allItems;
 
   return new Response(
     JSON.stringify({
-      layout: wall.layout,
+      layout: settings.layout, // 後方互換
+      settings,
       name: wall.name,
       business_name: biz?.name || "",
-      summary: { count, avg },
+      summary: { count: total, avg },
       branding,
       items,
     }),

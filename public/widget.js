@@ -17,12 +17,15 @@
   if (!me) return;
   var token = me.getAttribute("data-token");
   if (!token) return;
-  var A = function (k, d) { return (me.getAttribute(k) || d || "").toLowerCase(); };
-  var layoutAttr = A("data-layout");
-  var starStyle = A("data-star", "gold");
-  var theme = A("data-theme", "light");
-  var summaryOff = A("data-summary") === "off";
-  var schemaOff = A("data-schema") === "off";
+  // data-* 属性は「上書き」。未指定ならサーバー保存の設定を使う。
+  var rawAttr = function (k) { var v = me.getAttribute(k); return v == null ? null : String(v).toLowerCase(); };
+  var attrLayout = rawAttr("data-layout");
+  var attrStar = rawAttr("data-star");
+  var attrTheme = rawAttr("data-theme");
+  var attrSummary = rawAttr("data-summary"); // "off" or null
+  var schemaOff = rawAttr("data-schema") === "off";
+  // render() 内で属性→サーバー設定→既定 の順に解決して代入する
+  var starStyle = "gold", theme = "light", summaryOff = false, accent = "#eaa400";
   var base;
   try { base = new URL(me.src).origin; } catch (e) { base = ""; }
 
@@ -36,15 +39,15 @@
   var css =
     ":host{all:initial;display:block}" +
     "*{box-sizing:border-box}" +
-    ".sr-root{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;color:#1c1a12}" +
+    ".sr-root{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;color:#1c1a12;--sr-accent:#eaa400}" +
     /* stars */
     ".sr-stars{font-size:16px;letter-spacing:1.5px;line-height:1;white-space:nowrap}" +
-    ".sr-s-gold .sr-f{color:#eaa400}.sr-s-gold .sr-e{color:#e4dcc8}" +
+    ".sr-s-gold .sr-f{color:var(--sr-accent)}.sr-s-gold .sr-e{color:#e4dcc8}" +
     ".sr-s-mono .sr-f{color:#1c1a12}.sr-s-mono .sr-e{color:#d8cfbb}" +
     ".sr-s-heart .sr-f{color:#e5484d}.sr-s-heart .sr-e{color:#f0cfd0}" +
     ".sr-s-emoji{letter-spacing:1px}" +
     ".sr-num{display:inline-flex;align-items:center;gap:5px;font-weight:800}" +
-    ".sr-num b{font-size:1.05em}.sr-num .sr-f{color:#eaa400}" +
+    ".sr-num b{font-size:1.05em}.sr-num .sr-f{color:var(--sr-accent)}" +
     /* summary */
     ".sr-sum{display:flex;align-items:center;gap:12px;margin:0 0 16px;flex-wrap:wrap}" +
     ".sr-sum-avg{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em}" +
@@ -52,6 +55,7 @@
     ".sr-sum-count{font-size:13px;color:#7c7563;font-weight:700}" +
     /* layouts */
     ".sr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}" +
+    ".sr-masonry{columns:240px 3;column-gap:14px}.sr-masonry .sr-card{break-inside:avoid;margin:0 0 14px}" +
     ".sr-list{display:flex;flex-direction:column;gap:14px}" +
     ".sr-carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;-webkit-overflow-scrolling:touch}" +
     ".sr-carousel::-webkit-scrollbar{height:7px}.sr-carousel::-webkit-scrollbar-thumb{background:#e0d4b6;border-radius:999px}" +
@@ -64,7 +68,7 @@
     ".sr-video{width:100%;border-radius:10px;margin:10px 0;background:#000;display:block}" +
     ".sr-foot{display:flex;align-items:center;gap:9px}" +
     ".sr-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto}" +
-    ".sr-avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:#eaa400;font-weight:800;font-size:14px}" +
+    ".sr-avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:var(--sr-accent);font-weight:800;font-size:14px}" +
     ".sr-who{font-size:13px;color:#1c1a12;font-weight:700}" +
     ".sr-badge{font-size:10.5px;color:#1c7d52;background:#e2f3e8;border-radius:999px;padding:1px 8px;font-weight:700;margin-left:auto}" +
     ".sr-empty{color:#7c7563;font-size:13px;padding:10px}" +
@@ -83,13 +87,13 @@
     ".sr-theme-dark .sr-avatar{background:#3a3626;color:#ffca45}" +
     ".sr-theme-dark.sr-root .sr-sum-avg{color:#1c1a12}" +
     /* 追加★スタイル（サイズ・質感・アニメ） */
-    ".sr-s-big{font-size:26px;letter-spacing:3px}.sr-s-big .sr-f{color:#eaa400}.sr-s-big .sr-e{color:#e8dcc0}" +
+    ".sr-s-big{font-size:26px;letter-spacing:3px}.sr-s-big .sr-f{color:var(--sr-accent)}.sr-s-big .sr-e{color:#e8dcc0}" +
     ".sr-s-glow .sr-f{color:#ffbe00;animation:srGlow 1.8s ease-in-out infinite}.sr-s-glow .sr-e{color:#eadfbf}" +
     "@keyframes srGlow{0%,100%{text-shadow:0 0 2px rgba(255,190,0,.25)}50%{text-shadow:0 0 10px rgba(255,185,0,.95),0 0 20px rgba(255,185,0,.55)}}" +
     ".sr-s-shine .sr-f{background:linear-gradient(100deg,#c57f00 0%,#ffd34d 22%,#fff7d6 34%,#ffd34d 48%,#c57f00 72%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:srShine 2.6s linear infinite}.sr-s-shine .sr-e{color:#e6d9b6}" +
     "@keyframes srShine{0%{background-position:180% 0}100%{background-position:-70% 0}}" +
     ".sr-s-metal .sr-f{background:linear-gradient(180deg,#ffe9a3 0%,#f3b808 46%,#a86f09 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(255,255,255,.45))}.sr-s-metal .sr-e{color:#e2d4b0}" +
-    ".sr-s-mini{font-size:12px;letter-spacing:1px}.sr-s-mini .sr-f{color:#eaa400}.sr-s-mini .sr-e{color:#e4dcc8}" +
+    ".sr-s-mini{font-size:12px;letter-spacing:1px}.sr-s-mini .sr-f{color:var(--sr-accent)}.sr-s-mini .sr-e{color:#e4dcc8}" +
     ".sr-chips{display:flex;flex-wrap:wrap;gap:14px}.sr-chips .sr-card{flex:0 1 260px;padding:13px 15px}" +
     "@media(prefers-reduced-motion:reduce){.sr-s-glow .sr-f,.sr-s-shine .sr-f{animation:none}}";
 
@@ -113,16 +117,26 @@
       "<span class='sr-f'>" + rep(g[0], n) + "</span><span class='sr-e'>" + rep(g[1], 5 - n) + "</span></span>";
   }
 
-  function layoutClass(l) { return l === "carousel" ? "sr-carousel" : l === "list" ? "sr-list" : l === "chips" ? "sr-chips" : "sr-grid"; }
+  function layoutClass(l) { return l === "carousel" ? "sr-carousel" : l === "list" ? "sr-list" : l === "chips" ? "sr-chips" : l === "masonry" ? "sr-masonry" : "sr-grid"; }
   var THEMES = { light: 1, minimal: 1, quote: 1, dark: 1 };
+  function isHex(s) { return /^#[0-9a-f]{6}$/i.test(s || ""); }
 
   function render(data) {
     var items = (data && data.items) || [];
-    var layout = layoutClass(layoutAttr || (data && data.layout) || "grid");
+    var st = (data && data.settings) || {};
+    // 属性 → サーバー設定 → 既定 の順で解決
+    var layoutName = attrLayout || st.layout || (data && data.layout) || "grid";
+    var layout = layoutClass(layoutName);
+    starStyle = attrStar || st.star || "gold";
+    theme = (attrTheme || st.theme || "light");
+    if (!THEMES[theme]) theme = "light";
+    summaryOff = attrSummary != null ? (attrSummary === "off") : (st.summary === false);
+    accent = isHex(st.accent) ? st.accent : "#eaa400";
+    var autoplay = !!st.autoplay && layoutName === "carousel";
     var summary = (data && data.summary) || { count: 0, avg: 0 };
-    var th = THEMES[theme] ? theme : "light";
+    var th = theme;
 
-    var html = "<style>" + css + "</style><div class='sr-root sr-theme-" + th + "'>";
+    var html = "<style>" + css + "</style><div class='sr-root sr-theme-" + th + "' style='--sr-accent:" + accent + "'>";
 
     if (!summaryOff && summary.count > 0) {
       html +=
@@ -162,6 +176,25 @@
     }
     html += "</div>";
     shadow.innerHTML = html;
+
+    if (autoplay) {
+      try {
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+        var car = shadow.querySelector ? shadow.querySelector(".sr-carousel") : null;
+        if (car && !reduce) {
+          if (car._srTimer) clearInterval(car._srTimer);
+          car._srTimer = setInterval(function () {
+            var cards = car.querySelectorAll(".sr-card");
+            if (!cards.length) return;
+            var step = cards[0].getBoundingClientRect().width + 14;
+            var max = car.scrollWidth - car.clientWidth - 4;
+            if (car.scrollLeft >= max) car.scrollTo({ left: 0, behavior: "smooth" });
+            else car.scrollBy({ left: step, behavior: "smooth" });
+          }, 3200);
+          car.addEventListener("pointerdown", function () { clearInterval(car._srTimer); });
+        }
+      } catch (e) { /* autoplayは本体描画に影響させない */ }
+    }
 
     if (!schemaOff) injectSchema(data);
   }
