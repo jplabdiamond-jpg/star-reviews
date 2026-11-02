@@ -121,6 +121,7 @@
   <button class="tab" data-t="rewards">返礼設定</button>
   <button class="tab" data-t="embed">埋め込み</button>
   <button class="tab" data-t="stores">店舗</button>
+  <button class="tab" data-t="team">チーム</button>
   <button class="tab" data-t="plan">プラン</button>
   <button class="tab" data-t="notify">通知</button>
 </div></div>
@@ -283,6 +284,7 @@ function render(tab){
   if(tab==="rewards") return renderRewards();
   if(tab==="embed") return renderEmbed();
   if(tab==="stores") return renderStores();
+  if(tab==="team") return renderTeam();
   if(tab==="plan") return renderPlan();
   if(tab==="notify") return renderNotify();
 }
@@ -915,6 +917,54 @@ function bindTi(){
 }
 
 /* ---------- レビューを選んで掲載（旧:手動インポート） ---------- */
+/* ---------- チーム（店舗を複数人で運用） ---------- */
+async function renderTeam(){
+  const v=$("view");
+  v.innerHTML=`<div class="card"><h2>チーム</h2><p class="muted">読み込み中…</p></div>`;
+  const r=await api("/api/team");
+  if(!r.ok){ v.innerHTML=`<div class="empty">読み込みに失敗しました</div>`; return; }
+  const d=r.data;
+  const memberRows=(d.members||[]).map(m=>`
+    <div class="ti" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><b style="font-size:13.5px">${esc(m.email)}</b> ${m.role==="owner"?'<span class="pill o">オーナー</span>':'<span class="pill n">メンバー</span>'}</div>
+      ${(d.is_owner && m.role!=="owner")?`<button class="btn mut sm" data-rm="${m.user_id}">外す</button>`:""}
+    </div>`).join("");
+  const inviteRows=(d.invites||[]).map(iv=>`
+    <div class="ti" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><b style="font-size:13.5px">${esc(iv.email)}</b> <span class="pill o">招待中</span></div>
+      <button class="btn mut sm" data-cxl="${iv.id}">取消</button>
+    </div>`).join("");
+  v.innerHTML=`
+    ${d.is_owner?`<div class="card">
+      <h2>メンバーを招待</h2>
+      <p class="muted" style="margin-top:-8px">この店舗の管理を一緒に行う人をメールで招待します。参加すると受信トレイ・フォーム・声の壁などを共同で操作できます（プラン変更・チーム管理はオーナーのみ）。</p>
+      <div class="row"><div style="flex:1"><label>招待するメールアドレス</label><input type="email" id="tm_email" placeholder="member@example.com"></div></div>
+      <div style="margin-top:12px"><button class="btn" id="tm_invite">招待を送る</button></div>
+    </div>`:`<div class="card"><h2>チーム</h2><p class="muted" style="margin-top:-8px">この店舗のメンバーです。招待やメンバーの管理はオーナーのみ行えます。</p></div>`}
+    <div class="card">
+      <h3 style="margin-top:0">メンバー</h3>
+      ${memberRows||`<div class="empty" style="padding:18px">メンバーはいません。</div>`}
+      ${(d.is_owner && (d.invites||[]).length)?`<h3 style="margin:16px 0 6px">保留中の招待</h3>${inviteRows}`:""}
+    </div>`;
+  if($("tm_invite")) $("tm_invite").onclick=async()=>{
+    const email=($("tm_email").value||"").trim();
+    if(!email){ toast("メールアドレスを入力してください"); return; }
+    $("tm_invite").disabled=true;
+    const res=await api("/api/team",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email})});
+    $("tm_invite").disabled=false;
+    if(res.ok){ toast("招待を送信しました"); renderTeam(); } else { toast(res.data.error||"送信に失敗しました"); }
+  };
+  v.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{
+    if(!confirm("このメンバーを外しますか？")) return;
+    const res=await api("/api/team/remove",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({user_id:b.dataset.rm})});
+    if(res.ok){ toast("外しました"); renderTeam(); } else toast(res.data.error||"失敗しました");
+  });
+  v.querySelectorAll("[data-cxl]").forEach(b=>b.onclick=async()=>{
+    const res=await api("/api/team/remove",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({invite_id:b.dataset.cxl})});
+    if(res.ok){ toast("招待を取り消しました"); renderTeam(); } else toast(res.data.error||"失敗しました");
+  });
+}
+
 /* ---------- 自動フォローアップ（レビュー依頼の自動送信） ---------- */
 const DELAYS = [["0","今すぐ"],["1","翌日"],["3","3日後"],["7","1週間後"],["14","2週間後"],["30","30日後"]];
 function fupStatusPill(s){

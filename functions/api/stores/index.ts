@@ -3,34 +3,40 @@
 import { json, badRequest, readJson, genId, nowSec } from "../../../shared/util";
 import { isPro, STORE_LIMIT_PRO } from "../../../shared/plan";
 import { createDefaultFormAndWall } from "../../../shared/onboard";
+import { memberBusinessIds } from "../../../shared/access";
 import type { Env, AppData } from "../../../shared/types";
 
-// セッションの businessId からオーナー(userId)を解決
-async function ownerIdOf(env: Env, businessId: string): Promise<string | null> {
-  const row = await env.DB.prepare("SELECT owner_user_id FROM businesses WHERE id = ?")
-    .bind(businessId)
-    .first<{ owner_user_id: string }>();
-  return row?.owner_user_id || null;
-}
+type Row = { id: string; name: string; plan: string; plan_until: number | null; archived: number; owner_user_id: string; sub: string | null; approved_count: number; pending_count: number };
 
 export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, data }) => {
-  const { businessId } = data.session!;
-  const ownerId = await ownerIdOf(env, businessId);
-  if (!ownerId) return badRequest("アカウントが見つかりません", 404);
+  const { businessId, userId } = data.session!;
 
-  const { results } = await env.DB.prepare(
-    `SELECT b.id, b.name, b.plan, b.plan_until, b.archived,
-            b.stripe_subscription_id AS sub,
-            (SELECT COUNT(*) FROM testimonials t WHERE t.business_id = b.id AND t.status='approved') AS approved_count,
-            (SELECT COUNT(*) FROM testimonials t WHERE t.business_id = b.id AND t.status='pending') AS pending_count
-       FROM businesses b
-      WHERE b.owner_user_id = ?
-      ORDER BY b.created_at ASC`
-  )
-    .bind(ownerId)
-    .all<{ id: string; name: string; plan: string; plan_until: number | null; archived: number; sub: string | null; approved_count: number; pending_count: number }>();
+  // 自分がオーナーの店舗 ＋ メンバー参加している店舗
+  const memberIds = await memberBusinessIds(env, userId);
+  const ids = new Set<string>(memberIds);
+  const selectCols =
+    `b.id, b.name, b.plan, b.plan_until, b.archived, b.owner_user_id, b.stripe_subscription_id AS sub,
+     (SELECT COUNT(*) FROM testimonials t WHERE t.business_id = b.id AND t.status='approved') AS approved_count,
+     (SELECT COUNT(*) FROM testimonials t WHERE t.business_id = b.id AND t.status='pending') AS pending_count`;
 
-  const stores = (results || []).map((s) => ({
+  const owned = await env.DB.prepare(`SELECT ${selectCols} FROM businesses b WHERE b.owner_user_id = ? ORDER BY b.created_at ASC`)
+    .bind(userId)
+    .all<Row>();
+  const ownedRows = owned.results || [];
+  ownedRows.forEach((r) => ids.delete(r.id)); // オーナー分はメンバー集合から除外
+
+  let memberRows: Row[] = [];
+  if (ids.size > 0) {
+    const arr = [...ids];
+    const ph = arr.map(() => "?").join(",");
+    const m = await env.DB.prepare(`SELECT ${selectCols} FROM businesses b WHERE b.id IN (${ph}) ORDER BY b.created_at ASC`)
+      .bind(...arr)
+      .all<Row>();
+    memberRows = m.results || [];
+  }
+
+  const all = [...ownedRows, ...memberRows];
+  const stores = all.map((s) => ({
     id: s.id,
     name: s.name,
     plan: s.plan,
@@ -39,36 +45,41 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ env, d
     approved_count: s.approved_count,
     pending_count: s.pending_count,
     active: s.id === businessId,
+    role: s.owner_user_id === userId ? "owner" : "member",
   }));
 
-  const activeCount = stores.filter((s) => !s.archived).length;
-  // アカウントのプランは全店舗で同期済みのため、アクティブ店舗の plan で判定できる
-  const active = stores.find((s) => s.active) || stores[0];
-  const proAccount = isPro({ plan: active?.plan, plan_until: (results || []).find((r) => r.id === active?.id)?.plan_until });
+  const ownedActiveCount = ownedRows.filter((s) => !s.archived).length;
+  const active = all.find((s) => s.id === businessId) || all[0];
+  const proAccount = isPro({ plan: active?.plan, plan_until: active?.plan_until });
+  const activeIsOwned = !!active && active.owner_user_id === userId;
 
   return json({
     stores,
     active_business_id: businessId,
+    active_role: active ? (active.owner_user_id === userId ? "owner" : "member") : null,
     is_pro: proAccount,
     limit: STORE_LIMIT_PRO,
-    can_create: proAccount && activeCount < STORE_LIMIT_PRO,
+    // 店舗追加は自分がオーナーの Pro アカウントのみ
+    can_create: proAccount && activeIsOwned && ownedActiveCount < STORE_LIMIT_PRO,
   });
 };
 
 export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ request, env, data }) => {
-  const { businessId } = data.session!;
+  const { businessId, userId } = data.session!;
   const body = await readJson<{ name?: string }>(request);
   const name = (body?.name || "").trim();
   if (!name) return badRequest("店舗名を入力してください");
   if (name.length > 60) return badRequest("店舗名が長すぎます");
 
-  const ownerId = await ownerIdOf(env, businessId);
-  if (!ownerId) return badRequest("アカウントが見つかりません", 404);
+  const ownerId = userId; // 店舗は自分のアカウントに作成する
 
-  // 現在の店舗（アクティブ）のプランを取得（= アカウントのプラン。全店舗同期済み）
-  const parent = await env.DB.prepare("SELECT plan, plan_until FROM businesses WHERE id = ?")
+  // アクティブ店舗が自分のものか確認（メンバーとして他人の店舗を見ている時は追加不可）
+  const parent = await env.DB.prepare("SELECT plan, plan_until, owner_user_id FROM businesses WHERE id = ?")
     .bind(businessId)
-    .first<{ plan: string; plan_until: number | null }>();
+    .first<{ plan: string; plan_until: number | null; owner_user_id: string }>();
+  if (!parent || parent.owner_user_id !== userId) {
+    return badRequest("店舗の追加は、自分がオーナーの店舗を表示しているときに行えます。", 403);
+  }
   if (!isPro(parent)) {
     return json(
       { error: "複数店舗の管理は Pro プラン限定です。Proにアップグレードすると店舗を追加できます。", plan_required: "pro" },

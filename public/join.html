@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>チームに参加｜star-reviews</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#fffdf5;--panel:#fff;--ink:#1c1a12;--ink-soft:#413d30;--muted:#7c7563;
+    --sun:#ffc62b;--sun-deep:#eaa400;--sun-soft:#ffe7a0;--line-strong:#e0d4b6;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    --disp:"Space Grotesk",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.7;min-height:100vh;display:grid;place-items:center;padding:24px}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink);text-decoration:none;margin-bottom:18px}
+  .brand .star{width:18px;height:18px;color:var(--sun-deep)}
+  .card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line-strong);border-radius:20px;padding:30px 26px;box-shadow:0 10px 34px rgba(60,46,12,.1);text-align:center}
+  .spin{width:34px;height:34px;border:3px solid var(--sun-soft);border-top-color:var(--sun-deep);border-radius:50%;margin:6px auto 16px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  h1{font-size:20px;font-weight:800;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 4px}
+  .ico{font-size:34px;line-height:1;margin-bottom:10px}
+  .btn{display:inline-block;margin-top:18px;border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:800;font-size:15px;padding:13px 22px;cursor:pointer;font-family:var(--jp);text-decoration:none}
+  .btn:hover{background:#000}
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <a class="brand" href="/">
+      <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
+      star<em style="font-style:normal;color:var(--sun-deep)">·</em>reviews
+    </a>
+    <div id="body"><div class="spin"></div><h1>確認しています…</h1><p class="sub">少々お待ちください。</p></div>
+  </div>
+<script>
+  const $=(id)=>document.getElementById(id);
+  const token=new URLSearchParams(location.search).get("token")||"";
+  function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+  function show(html){ $("body").innerHTML=html; }
+  (async()=>{
+    if(!token){ show('<div class="ico">⚠️</div><h1>リンクが正しくありません</h1><p class="sub">招待メールのリンクをもう一度お試しください。</p>'); return; }
+    let me; try{ me=await (await fetch("/api/auth/me")).json(); }catch(e){ me={}; }
+    if(!me.authenticated){
+      try{ localStorage.setItem("sr_join_token", token); }catch(e){}
+      show('<div class="ico">🔑</div><h1>参加するにはログインが必要です</h1><p class="sub">ログインまたは新規登録のあと、もう一度この招待リンクを開いてください。</p><a class="btn" href="/#auth">ログイン・新規登録へ</a>');
+      return;
+    }
+    try{
+      const res=await fetch("/api/team/accept",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token})});
+      const j=await res.json().catch(()=>({}));
+      if(!res.ok){ show('<div class="ico">⚠️</div><h1>参加できませんでした</h1><p class="sub">'+esc(j.error||"招待が無効か、期限切れの可能性があります。")+'</p><a class="btn" href="/app">ダッシュボードへ</a>'); return; }
+      try{ localStorage.removeItem("sr_join_token"); }catch(e){}
+      // 参加した店舗に切り替えてダッシュボードへ
+      try{ await fetch("/api/stores/switch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({businessId:j.business_id})}); }catch(e){}
+      show('<div class="ico">✅</div><h1>参加しました</h1><p class="sub">「'+esc(j.name||"店舗")+'」の管理に参加しました。ダッシュボードに移動します…</p><a class="btn" href="/app">ダッシュボードを開く →</a>');
+      setTimeout(()=>{ location.href="/app"; },1300);
+    }catch(e){ show('<div class="ico">⚠️</div><h1>通信エラー</h1><p class="sub">時間をおいてお試しください。</p>'); }
+  })();
+</script>
+</body>
+</html>
