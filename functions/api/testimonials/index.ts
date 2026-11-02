@@ -8,20 +8,23 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ reques
   const status = url.searchParams.get("status") || "pending";
   const formId = url.searchParams.get("form_id");
 
-  let sql =
-    "SELECT id, form_id, level, rating, body, author_name, author_label, photo_key, video_key, verified, consent_display, status, submitted_at, source " +
-    "FROM testimonials WHERE business_id = ?";
-  const binds: unknown[] = [businessId];
-  if (status !== "all") {
-    sql += " AND status = ?";
-    binds.push(status);
-  }
-  if (formId) {
-    sql += " AND form_id = ?";
-    binds.push(formId);
-  }
-  sql += " ORDER BY submitted_at DESC LIMIT 300";
+  const cols =
+    "id, form_id, level, rating, body, author_name, author_label, photo_key, video_key, verified, consent_display, status, submitted_at, source";
+  const where = (() => {
+    let s = " FROM testimonials WHERE business_id = ?";
+    const binds: unknown[] = [businessId];
+    if (status !== "all") { s += " AND status = ?"; binds.push(status); }
+    if (formId) { s += " AND form_id = ?"; binds.push(formId); }
+    s += " ORDER BY submitted_at DESC LIMIT 300";
+    return { s, binds };
+  })();
 
-  const { results } = await env.DB.prepare(sql).bind(...binds).all();
-  return json({ testimonials: results });
+  // reply 列(0010)があれば含める。未適用でも落とさない。
+  try {
+    const { results } = await env.DB.prepare("SELECT " + cols + ", reply, reply_at" + where.s).bind(...where.binds).all();
+    return json({ testimonials: results });
+  } catch {
+    const { results } = await env.DB.prepare("SELECT " + cols + where.s).bind(...where.binds).all();
+    return json({ testimonials: results });
+  }
 };

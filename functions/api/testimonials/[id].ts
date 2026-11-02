@@ -7,9 +7,9 @@ import type { Env, AppData } from "../../../shared/types";
 export const onRequestPatch: PagesFunction<Env, string, AppData> = async ({ request, env, params, data }) => {
   const { businessId } = data.session!;
   const id = String(params.id);
-  const body = await readJson<{ action?: string }>(request);
+  const body = await readJson<{ action?: string; reply?: string }>(request);
   const action = body?.action;
-  if (action !== "approve" && action !== "reject") return badRequest("action は approve か reject");
+  if (action !== "approve" && action !== "reject" && action !== "reply") return badRequest("action は approve / reject / reply");
 
   const row = await env.DB.prepare("SELECT business_id FROM testimonials WHERE id = ?")
     .bind(id)
@@ -17,6 +17,20 @@ export const onRequestPatch: PagesFunction<Env, string, AppData> = async ({ requ
   if (!row || row.business_id !== businessId) return badRequest("not found", 404);
 
   const now = nowSec();
+
+  // オーナーからの返信を保存（空文字で削除）
+  if (action === "reply") {
+    const reply = (body?.reply || "").trim();
+    if (reply.length > 1000) return badRequest("返信は1000文字以内にしてください");
+    try {
+      await env.DB.prepare("UPDATE testimonials SET reply = ?, reply_at = ? WHERE id = ?")
+        .bind(reply || null, reply ? now : null, id)
+        .run();
+    } catch {
+      return badRequest("返信機能はまだ有効化されていません（データベースの更新が必要です）。", 503);
+    }
+    return json({ ok: true, reply: reply || null });
+  }
   if (action === "reject") {
     await env.DB.prepare("UPDATE testimonials SET status='rejected', approved_at=NULL WHERE id = ?").bind(id).run();
     await env.DB.prepare("DELETE FROM wall_testimonials WHERE testimonial_id = ?").bind(id).run();

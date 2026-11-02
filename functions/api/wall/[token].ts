@@ -29,27 +29,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   // 有料プランはホワイトラベル（クレジット非表示）
   const branding = !isPaid(biz);
 
-  const { results } = await env.DB.prepare(
-    `SELECT t.rating, t.body, t.author_label, t.photo_key, t.video_key, t.level, t.verified, t.source,
-            COALESCE(t.approved_at, t.submitted_at) AS at
-     FROM wall_testimonials wt
-     JOIN testimonials t ON t.id = wt.testimonial_id
-     WHERE wt.wall_id = ? AND t.status = 'approved'
-     ORDER BY wt.position DESC
-     LIMIT 100`
-  )
-    .bind(wall.id)
-    .all<{
-      rating: number;
-      body: string;
-      author_label: string;
-      photo_key: string | null;
-      video_key: string | null;
-      level: number;
-      verified: number;
-      source: string | null;
-      at: number;
-    }>();
+  type TRow = {
+    rating: number; body: string; author_label: string;
+    photo_key: string | null; video_key: string | null; level: number;
+    verified: number; source: string | null; at: number; reply?: string | null;
+  };
+  const baseSel =
+    `t.rating, t.body, t.author_label, t.photo_key, t.video_key, t.level, t.verified, t.source,
+            COALESCE(t.approved_at, t.submitted_at) AS at`;
+  const tail =
+    ` FROM wall_testimonials wt JOIN testimonials t ON t.id = wt.testimonial_id
+      WHERE wt.wall_id = ? AND t.status = 'approved' ORDER BY wt.position DESC LIMIT 100`;
+  let results: TRow[] = [];
+  try {
+    const q = await env.DB.prepare(`SELECT ${baseSel}, t.reply ${tail}`).bind(wall.id).all<TRow>();
+    results = q.results || [];
+  } catch {
+    const q = await env.DB.prepare(`SELECT ${baseSel} ${tail}`).bind(wall.id).all<TRow>();
+    results = q.results || [];
+  }
 
   const allItems = results.map((r) => ({
     rating: r.rating,
@@ -60,6 +58,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     date: r.at ? new Date(r.at * 1000).toISOString().slice(0, 10) : null,
     photo_url: r.photo_key ? `${origin}/api/media/${r.photo_key}` : null,
     video_url: r.video_key ? `${origin}/api/media/${r.video_key}` : null,
+    reply: r.reply || null,
   }));
 
   // 星サマリーは全件で算出し、表示枚数(count)だけ items を絞る

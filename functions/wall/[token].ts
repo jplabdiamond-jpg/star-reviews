@@ -10,7 +10,7 @@ interface WallRow { id: string; business_id: string; name: string; layout: strin
 interface Row {
   rating: number; body: string; author_label: string;
   photo_key: string | null; video_key: string | null;
-  verified: number; source: string | null; at: number;
+  verified: number; source: string | null; at: number; reply?: string | null;
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, params }) => {
@@ -38,15 +38,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   const bizName = biz?.name || wall.name || "お客様の声";
   const showCredit = !isPaid(biz);
 
-  const { results } = await env.DB.prepare(
-    `SELECT t.rating, t.body, t.author_label, t.photo_key, t.video_key, t.verified, t.source,
-            COALESCE(t.approved_at, t.submitted_at) AS at
-     FROM wall_testimonials wt
-     JOIN testimonials t ON t.id = wt.testimonial_id
-     WHERE wt.wall_id = ? AND t.status = 'approved'
-     ORDER BY wt.position DESC
-     LIMIT 200`
-  ).bind(wall.id).all<Row>();
+  const baseSel =
+    `t.rating, t.body, t.author_label, t.photo_key, t.video_key, t.verified, t.source,
+            COALESCE(t.approved_at, t.submitted_at) AS at`;
+  const tail =
+    ` FROM wall_testimonials wt JOIN testimonials t ON t.id = wt.testimonial_id
+      WHERE wt.wall_id = ? AND t.status = 'approved' ORDER BY wt.position DESC LIMIT 200`;
+  let results: Row[] = [];
+  try {
+    const q = await env.DB.prepare(`SELECT ${baseSel}, t.reply ${tail}`).bind(wall.id).all<Row>();
+    results = q.results || [];
+  } catch {
+    const q = await env.DB.prepare(`SELECT ${baseSel} ${tail}`).bind(wall.id).all<Row>();
+    results = q.results || [];
+  }
 
   const items = (results || []).map((r) => ({
     rating: Math.min(5, Math.max(0, Number(r.rating) || 0)),
@@ -57,6 +62,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     date: r.at ? new Date(r.at * 1000).toISOString().slice(0, 10) : null,
     photo_url: r.photo_key ? `${base}/api/media/${r.photo_key}` : null,
     video_url: r.video_key ? `${base}/api/media/${r.video_key}` : null,
+    reply: r.reply || null,
   }));
 
   // サマリーは全件、表示は count 件に絞る
@@ -114,7 +120,7 @@ function jsonLd(bizName: string, items: Array<{ rating: number; body: string; au
 
 function renderPage(d: {
   bizName: string;
-  items: Array<{ rating: number; body: string; author: string; verified: boolean; source: string | null; date: string | null; photo_url: string | null; video_url: string | null }>;
+  items: Array<{ rating: number; body: string; author: string; verified: boolean; source: string | null; date: string | null; photo_url: string | null; video_url: string | null; reply?: string | null }>;
   count: number; avg: number; canonical: string; showCredit: boolean; base: string; settings: WallSettings;
 }): string {
   const st = d.settings;
@@ -133,6 +139,7 @@ function renderPage(d: {
       `<div class="ctop">${stars(it.rating, st.star)}${it.source ? `<span class="src">via ${escapeHtml(it.source)}</span>` : ""}</div>` +
       (it.video_url ? `<video class="vid" controls playsinline preload="metadata" crossorigin="anonymous" src="${escapeHtml(it.video_url)}"><track kind="captions" srclang="ja" label="日本語" default src="${escapeHtml(it.video_url)}.vtt"></video>` : "") +
       `<p class="body">${escapeHtml(it.body)}</p>` +
+      (it.reply ? `<div class="reply"><span class="rl">お店からの返信</span>${escapeHtml(it.reply)}</div>` : "") +
       `<footer class="cfoot">${avatar}<span class="who">${escapeHtml(it.author)}</span>${it.verified ? `<span class="badge">確認済み</span>` : ""}${it.date ? `<time class="dt">${escapeHtml(it.date)}</time>` : ""}</footer>` +
       `</article>`
     );
@@ -194,6 +201,9 @@ h1 .mk{background:linear-gradient(transparent 62%,var(--sun) 62%);padding:0 .08e
 .src{font-size:11px;color:var(--muted)}
 .vid{width:100%;border-radius:10px;margin-bottom:10px;background:#000;display:block}
 .body{margin:0 0 12px;font-size:15px;white-space:pre-wrap;word-break:break-word}
+.reply{margin:0 0 12px;padding:11px 13px;background:rgba(255,198,43,.1);border-left:3px solid var(--sun);border-radius:8px;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.reply .rl{display:block;font-size:11px;font-weight:700;color:var(--sun);opacity:.85;margin-bottom:3px;letter-spacing:.03em}
+.th-dark .reply{background:rgba(255,255,255,.06)}
 .cfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--sun);color:var(--ink);font-weight:700;font-size:14px;flex:none}
 .ph{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none}

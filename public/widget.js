@@ -71,6 +71,9 @@
     ".sr-avatar{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:#ffe7a0;display:flex;align-items:center;justify-content:center;color:var(--sr-accent);font-weight:800;font-size:14px}" +
     ".sr-who{font-size:13px;color:#1c1a12;font-weight:700}" +
     ".sr-badge{font-size:10.5px;color:#1c7d52;background:#e2f3e8;border-radius:999px;padding:1px 8px;font-weight:700;margin-left:auto}" +
+    ".sr-reply{margin:10px 0 2px;padding:10px 12px;background:#fffaf0;border-left:3px solid var(--sr-accent);border-radius:8px;font-size:13px;color:#413d30;line-height:1.65;white-space:pre-wrap}" +
+    ".sr-reply .sr-rl{display:block;font-size:10.5px;font-weight:800;color:#9a7a1a;letter-spacing:.04em;margin-bottom:3px}" +
+    ".sr-theme-dark .sr-reply{background:#2a2617;color:#e7e1d0}" +
     ".sr-empty{color:#7c7563;font-size:13px;padding:10px}" +
     ".sr-credit{margin-top:13px;font-size:10px;color:#b3a99c;text-align:right;letter-spacing:.08em;text-transform:uppercase}" +
     /* theme: minimal */
@@ -164,6 +167,7 @@
           "</div>" +
           (it.video_url ? "<video class='sr-video' controls playsinline preload='metadata' crossorigin='anonymous' src='" + esc(it.video_url) + "'><track kind='captions' srclang='ja' label='\u65e5\u672c\u8a9e' default src='" + esc(it.video_url) + ".vtt'></video>" : "") +
           "<div class='sr-body'>" + esc(it.body) + "</div>" +
+          (it.reply ? "<div class='sr-reply'><span class='sr-rl'>お店からの返信</span>" + esc(it.reply) + "</div>" : "") +
           "<div class='sr-foot'>" + avatar +
           "<span class='sr-who'>" + esc(it.author) + "</span>" +
           (it.verified ? "<span class='sr-badge'>確認済み</span>" : "") +

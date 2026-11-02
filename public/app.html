@@ -807,17 +807,54 @@ async function renderInbox(){
         <div><label>状態</label><select id="in_status">
           <option value="pending">未対応</option><option value="approved">掲載中</option><option value="rejected">非掲載</option>
         </select></div>
+        <div><label>評価</label><select id="in_rating">
+          <option value="">すべて</option><option value="5">★5のみ</option><option value="4">★4以上</option><option value="3">★3以下</option>
+        </select></div>
+      </div>
+      <label style="margin-top:6px">キーワード検索</label>
+      <input type="text" id="in_q" placeholder="本文・お名前で絞り込み">
+    </div>
+    <div class="card" id="bulkbar" style="display:none;padding:12px 16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <label class="chk" style="margin:0"><input type="checkbox" id="in_all"> 全選択</label>
+        <span class="muted" id="in_selcount">0件選択</span>
+        <span style="flex:1;min-width:10px"></span>
+        <button class="btn ok sm" id="bulk_approve">まとめて掲載</button>
+        <button class="btn mut sm" id="bulk_reject">まとめて非掲載</button>
       </div>
     </div>
     <div id="inboxList"><div class="empty">読み込み中…</div></div>`;
+  let ALL = [];
+  const selected = ()=>[...document.querySelectorAll(".tsel:checked")].map(c=>c.dataset.id);
+  const updateCount = ()=>{ if($("in_selcount")) $("in_selcount").textContent = selected().length + "件選択"; };
+  const bindSel = ()=>{ document.querySelectorAll(".tsel").forEach(c=>c.onchange=updateCount); if($("in_all")) $("in_all").checked=false; updateCount(); };
+  const applyFilter = ()=>{
+    const rt = $("in_rating").value, q = ($("in_q").value||"").trim().toLowerCase();
+    let items = ALL.slice();
+    if(rt==="5") items = items.filter(t=>t.rating===5);
+    else if(rt==="4") items = items.filter(t=>t.rating>=4);
+    else if(rt==="3") items = items.filter(t=>t.rating<=3);
+    if(q) items = items.filter(t=>((t.body||"")+" "+(t.author_label||"")).toLowerCase().includes(q));
+    $("inboxList").innerHTML = items.length ? items.map(renderTi).join("") : `<div class="empty">該当する声はありません。</div>`;
+    bindTi(); bindSel();
+  };
   const load = async ()=>{
     const fid = $("in_form").value, st = $("in_status").value;
     const r = await api(`/api/testimonials?status=${st}${fid?`&form_id=${fid}`:""}`);
-    const items = r.data.testimonials || [];
-    $("inboxList").innerHTML = items.length ? items.map(renderTi).join("") : `<div class="empty">該当する声はありません。</div>`;
-    bindTi();
+    ALL = r.data.testimonials || [];
+    $("bulkbar").style.display = ALL.length ? "block" : "none";
+    applyFilter();
+  };
+  const bulk = async (action)=>{
+    const ids = selected(); if(ids.length===0){ toast("まとめて操作する声を選択してください"); return; }
+    const r = await api("/api/testimonials/bulk",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({ids,action})});
+    if(r.ok){ let m=(action==="approve"?"掲載":"非掲載")+` ${r.data.done}件`; if(r.data.limited) m+=`（上限で${r.data.limited}件は未掲載）`; toast(m); await loadForms(); load(); }
+    else { toast(r.data.error||"失敗しました"); }
   };
   $("in_form").onchange = load; $("in_status").onchange = load;
+  $("in_rating").onchange = applyFilter; $("in_q").oninput = applyFilter;
+  $("in_all").onchange = ()=>{ document.querySelectorAll(".tsel").forEach(c=>c.checked=$("in_all").checked); updateCount(); };
+  $("bulk_approve").onclick = ()=>bulk("approve"); $("bulk_reject").onclick = ()=>bulk("reject");
   load();
 }
 function renderTi(t){
@@ -828,13 +865,23 @@ function renderTi(t){
     ? `<button class="btn ok sm act" data-id="${t.id}" data-a="approve">掲載する</button>
        <button class="btn mut sm act" data-id="${t.id}" data-a="reject">非掲載</button>`
     : (t.status==="approved" ? `<button class="btn mut sm act" data-id="${t.id}" data-a="reject">掲載を外す</button>` : "");
+  const replyVal = t.reply ? esc(t.reply) : "";
+  const replyUI = `<div style="margin-top:10px">
+    <details ${t.reply?"open":""}><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--muted);list-style:none">${t.reply?"お店からの返信（編集）":"＋ 返信する"}</summary>
+      <textarea class="tReply" data-id="${t.id}" rows="2" style="margin-top:8px" placeholder="お客様への返信を書く（声の壁・埋め込みに表示されます）">${replyVal}</textarea>
+      <div style="display:flex;gap:8px;margin-top:6px"><button class="btn ghost sm tReplySave" data-id="${t.id}">返信を保存</button>${t.reply?`<button class="btn mut sm tReplyDel" data-id="${t.id}">削除</button>`:""}</div>
+    </details></div>`;
   return `<div class="ti">
-    <div class="meta"><span class="stars">${stars(t.rating)}</span>
-      <span class="pill n">${lv}</span>${t.verified?'<span class="pill g">確認済み</span>':''}</div>
+    <div class="meta" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span><span class="stars">${stars(t.rating)}</span>
+        <span class="pill n">${lv}</span>${t.verified?'<span class="pill g">確認済み</span>':''}</span>
+      <label class="chk" style="margin:0"><input type="checkbox" class="tsel" data-id="${t.id}" data-status="${t.status}"></label>
+    </div>
     <div class="body">${esc(t.body)}</div>
     ${video}
     <div class="who">${photo}<span class="muted">${esc(t.author_label)}</span></div>
-    <div>${actions}</div>
+    <div style="margin-top:8px">${actions}</div>
+    ${replyUI}
   </div>`;
 }
 function bindTi(){
@@ -844,6 +891,16 @@ function bindTi(){
     if(r.ok){ toast(b.dataset.a==="approve"?"掲載しました":"外しました"); b.closest(".ti").style.opacity=.4; await loadForms(); }
     else if(r.data && r.data.limit_reached){ b.disabled=false; if(confirm(r.data.error+"\n\nプランページを開きますか？")) document.querySelector('.tab[data-t="plan"]').click(); }
     else { toast(r.data.error||"失敗しました"); b.disabled=false; }
+  });
+  const saveReply = async (id, reply)=>{
+    const r = await api(`/api/testimonials/${id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:"reply", reply})});
+    if(r.ok){ toast(reply?"返信を保存しました":"返信を削除しました"); } else { toast(r.data.error||"失敗しました"); }
+  };
+  document.querySelectorAll(".tReplySave").forEach(b=>b.onclick=async()=>{
+    const ta=document.querySelector(`.tReply[data-id="${b.dataset.id}"]`); await saveReply(b.dataset.id, (ta.value||"").trim());
+  });
+  document.querySelectorAll(".tReplyDel").forEach(b=>b.onclick=async()=>{
+    const ta=document.querySelector(`.tReply[data-id="${b.dataset.id}"]`); if(ta) ta.value=""; await saveReply(b.dataset.id, "");
   });
 }
 
