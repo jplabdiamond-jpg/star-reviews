@@ -101,7 +101,7 @@ export async function notifyNewTestimonial(env: Env, p: NotifyPayload): Promise<
         `${p.formTitle}\n評価：${stars(p.rating)}（${p.rating}）\n投稿者：${p.authorLabel}\n\n「${snippet}」\n\n受信トレイ：${appUrl}`;
       await sendLinePush(env, biz.line_user_id, text);
     }
-  } catch {
-    /* 通知全体が失敗しても本処理は継続 */
+  } catch (e) {
+    console.error("notifyNewTestimonial error", e);
   }
 }

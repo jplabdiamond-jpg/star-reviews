@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>掲載・削除のご依頼｜star-reviews</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#fffdf5;--panel:#fff;--ink:#1c1a12;--ink-soft:#413d30;--muted:#7c7563;
+    --sun:#ffc62b;--sun-deep:#eaa400;--sun-soft:#ffe7a0;--line-strong:#e0d4b6;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    --disp:"Space Grotesk",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.75;min-height:100vh;display:grid;place-items:center;padding:24px}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink);text-decoration:none;margin-bottom:16px}
+  .brand .star{width:18px;height:18px;color:var(--sun-deep)}
+  .card{width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line-strong);border-radius:20px;padding:28px 26px;box-shadow:0 10px 34px rgba(60,46,12,.1)}
+  h1{font-size:21px;font-weight:800;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+  label{display:block;font-size:12.5px;font-weight:700;margin:12px 0 6px;color:var(--ink-soft)}
+  input,textarea{width:100%;border:1.5px solid var(--line-strong);border-radius:12px;padding:12px 14px;font:inherit;background:#fffef9}
+  input:focus,textarea:focus{outline:none;border-color:var(--sun-deep);box-shadow:0 0 0 3px var(--sun-soft)}
+  .btn{width:100%;margin-top:16px;border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:800;font-size:16px;padding:14px;cursor:pointer;font-family:var(--jp)}
+  .btn:hover{background:#000}.btn:disabled{opacity:.55}
+  .msg{font-size:13.5px;margin:12px 0 0;border-radius:9px;padding:10px 12px;display:none}
+  .msg.err{color:#b4341f;background:#fdecea}.msg.ok{color:#1c7d52;background:#e2f3e8}
+</style>
+</head>
+<body>
+  <div class="card">
+    <a class="brand" href="/">
+      <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
+      star<em style="font-style:normal;color:var(--sun-deep)">·</em>reviews
+    </a>
+    <h1>掲載・削除のご依頼</h1>
+    <p class="sub">掲載されている声の削除や、個人情報に関するご依頼を、店舗の運営者へお送りします。ご本人確認のうえ運営者が対応します。</p>
+    <form id="f">
+      <label for="email">ご連絡先メールアドレス</label>
+      <input type="email" id="email" placeholder="you@example.com" required />
+      <label for="message">ご依頼内容（対象の声や理由をご記入ください）</label>
+      <textarea id="message" rows="5" placeholder="例）〇〇という内容の口コミの削除を希望します。" required></textarea>
+      <button class="btn" id="submit" type="submit">依頼を送信する</button>
+      <p class="msg err" id="err"></p>
+      <p class="msg ok" id="ok">送信しました。店舗の運営者に届きます。ご対応までお待ちください。</p>
+    </form>
+  </div>
+<script>
+  const $=(id)=>document.getElementById(id);
+  const w=new URLSearchParams(location.search).get("w")||"";
+  $("f").addEventListener("submit", async (ev)=>{
+    ev.preventDefault();
+    $("err").style.display="none";
+    if(!w){ $("err").textContent="対象の店舗が指定されていません。店舗の「声の壁」ページのリンクからお進みください。"; $("err").style.display="block"; return; }
+    const btn=$("submit"); btn.disabled=true; btn.textContent="送信中…";
+    try{
+      const res=await fetch("/api/public/delete-request",{method:"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify({w, email:$("email").value.trim(), message:$("message").value.trim()})});
+      const j=await res.json().catch(()=>({}));
+      if(!res.ok){ $("err").textContent=j.error||"送信に失敗しました。"; $("err").style.display="block"; btn.disabled=false; btn.textContent="依頼を送信する"; return; }
+      $("f").querySelectorAll("input,textarea,button").forEach(el=>el.style.display="none");
+      $("ok").style.display="block";
+    }catch(e){ $("err").textContent="通信エラーが発生しました。"; $("err").style.display="block"; btn.disabled=false; btn.textContent="依頼を送信する"; }
+  });
+</script>
+</body>
+</html>

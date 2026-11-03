@@ -58,8 +58,8 @@ async function run(env: Env, request: Request): Promise<Response> {
         }
       }
       await env.DB.prepare("UPDATE businesses SET digest_last_at = ? WHERE id = ?").bind(now, b.id).run();
-    } catch {
-      /* 1社の失敗で全体を止めない */
+    } catch (e) {
+      console.error("digest failed for business", b.id, e);
     }
   }
 

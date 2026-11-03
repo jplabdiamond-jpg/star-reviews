@@ -160,7 +160,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }
     }
   } catch (e) {
-    // 失敗しても200を返す（Stripeの再送でリカバリ）。ログは今は持たない。
+    // 失敗しても200を返す（Stripeの再送でリカバリ）。Cloudflareログに記録する。
+    console.error("stripe-webhook error", (event && event.type) || "", e);
     return new Response("handled with error", { status: 200 });
   }
 

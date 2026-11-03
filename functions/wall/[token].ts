@@ -71,7 +71,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   const shown = settings.count > 0 ? items.slice(0, settings.count) : items;
   const canonical = `${base}/wall/${encodeURIComponent(token)}`;
 
-  return htmlResponse(renderPage({ bizName, items: shown, count, avg, canonical, showCredit, base, settings }), 200);
+  return htmlResponse(renderPage({ bizName, items: shown, count, avg, canonical, showCredit, base, settings, wtoken: token }), 200);
 };
 
 function htmlResponse(html: string, status: number): Response {
@@ -121,7 +121,7 @@ function jsonLd(bizName: string, items: Array<{ rating: number; body: string; au
 function renderPage(d: {
   bizName: string;
   items: Array<{ rating: number; body: string; author: string; verified: boolean; source: string | null; date: string | null; photo_url: string | null; video_url: string | null; reply?: string | null }>;
-  count: number; avg: number; canonical: string; showCredit: boolean; base: string; settings: WallSettings;
+  count: number; avg: number; canonical: string; showCredit: boolean; base: string; settings: WallSettings; wtoken: string;
 }): string {
   const st = d.settings;
   const title = `${d.bizName}のお客様の声${d.count ? `（★${d.avg} / ${d.count}件）` : ""}`;
@@ -229,7 +229,8 @@ ${summary}
 </header>
 ${d.count ? `<main class="wall lay-${st.layout}">${cards}</main>` : `<p class="empty">まだお客様の声はありません。</p>`}
 <footer class="ft">
-${d.showCredit ? `このページは <a href="${escapeHtml(d.base)}/" rel="nofollow">star-reviews</a> で作られています` : ``}
+${d.showCredit ? `このページは <a href="${escapeHtml(d.base)}/" rel="nofollow">star-reviews</a> で作られています<br>` : ``}
+<a href="${escapeHtml(d.base)}/delete-request?w=${encodeURIComponent(d.wtoken)}" rel="nofollow" style="color:inherit;border:0">掲載・削除のご依頼</a>
 </footer>
 </div>${st.layout === "carousel" && st.autoplay ? `<script>(function(){try{if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;var c=document.querySelector('.lay-carousel');if(!c)return;setInterval(function(){var cs=c.querySelectorAll('.card');if(!cs.length)return;var step=cs[0].getBoundingClientRect().width+16;if(c.scrollLeft>=c.scrollWidth-c.clientWidth-4)c.scrollTo({left:0,behavior:'smooth'});else c.scrollBy({left:step,behavior:'smooth'});},3200);c.addEventListener('pointerdown',function(){});}catch(e){}})();</script>` : ``}</body></html>`;
 }

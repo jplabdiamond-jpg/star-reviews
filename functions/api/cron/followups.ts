@@ -47,7 +47,8 @@ async function run(env: Env, request: Request): Promise<Response> {
       await sendEmailResend(env, f.to_email, `【${bizName}】ご感想をお聞かせください`, reviewRequestHtml(bizName, link));
       await env.DB.prepare("UPDATE followups SET status='sent', sent_at=? WHERE id = ?").bind(nowSec(), f.id).run();
       sent++;
-    } catch {
+    } catch (e) {
+      console.error("followup send failed", f.id, e);
       await env.DB.prepare("UPDATE followups SET status='failed' WHERE id = ?").bind(f.id).run().catch(() => {});
       failed++;
     }
