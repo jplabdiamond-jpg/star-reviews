@@ -19,12 +19,15 @@ export const onRequestGet: PagesFunction<Env, string, AppData> = async ({ reques
     return { s, binds };
   })();
 
-  // reply 列(0010)があれば含める。未適用でも落とさない。
+  // reply(0010)・flagged(0013) 列があれば含める。未適用でも段階的にフォールバック。
+  try {
+    const { results } = await env.DB.prepare("SELECT " + cols + ", reply, reply_at, flagged, flag_reason" + where.s).bind(...where.binds).all();
+    return json({ testimonials: results });
+  } catch { /* 0013未適用 */ }
   try {
     const { results } = await env.DB.prepare("SELECT " + cols + ", reply, reply_at" + where.s).bind(...where.binds).all();
     return json({ testimonials: results });
-  } catch {
-    const { results } = await env.DB.prepare("SELECT " + cols + where.s).bind(...where.binds).all();
-    return json({ testimonials: results });
-  }
+  } catch { /* 0010未適用 */ }
+  const { results } = await env.DB.prepare("SELECT " + cols + where.s).bind(...where.binds).all();
+  return json({ testimonials: results });
 };

@@ -3,6 +3,7 @@
 // 返礼ルールがあれば検証条件を満たした投稿にクーポンコードを自動発行する。
 import { json, badRequest, readJson, genId, genCode, nowSec, bumpMetricDaily } from "../../../shared/util";
 import { notifyNewTestimonial } from "../../../shared/notify";
+import { applyModeration } from "../../../shared/moderate";
 import type { Env } from "../../../shared/types";
 
 function rewardText(type: string, value: string): string {
@@ -134,6 +135,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
 
   // アナリティクス: 投稿完了を日次カウント
   waitUntil(bumpMetricDaily(env.DB, form.business_id, "submit_done"));
+
+  // AIモデレーション（ベストエフォート・非同期。ブロックはしない）
+  waitUntil(applyModeration(env, id, text));
 
   // 新着通知（ベストエフォート・応答はブロックしない）
   const baseUrl = (env.PUBLIC_BASE_URL || new URL(request.url).origin).replace(/\/+$/, "");

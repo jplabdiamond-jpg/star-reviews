@@ -886,7 +886,7 @@ function renderTi(t){
   return `<div class="ti">
     <div class="meta" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
       <span><span class="stars">${stars(t.rating)}</span>
-        <span class="pill n">${lv}</span>${t.verified?'<span class="pill g">確認済み</span>':''}</span>
+        <span class="pill n">${lv}</span>${t.verified?'<span class="pill g">確認済み</span>':''}${t.flagged?`<span class="pill" style="background:#fdecea;color:#b4341f" title="${esc(t.flag_reason||'')}">⚠️ 要確認</span>`:''}</span>
       <label class="chk" style="margin:0"><input type="checkbox" class="tsel" data-id="${t.id}" data-status="${t.status}"></label>
     </div>
     <div class="body">${esc(t.body)}</div>
