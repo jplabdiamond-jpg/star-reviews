@@ -1,0 +1,22 @@
+name: CI
+
+# push/PR のたびに 型チェック と ユニットテスト を自動実行（回帰検知）。
+on:
+  push:
+    branches: [init-mvp]
+  pull_request: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test

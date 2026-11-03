@@ -4,6 +4,8 @@
   "private": true,
   "description": "お客様の声（Testimonial）収集・掲載SaaS — Cloudflare Pages + Functions + D1 + R2 + KV",
   "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "dev": "wrangler pages dev",
     "deploy": "wrangler pages deploy",
     "db:create": "wrangler d1 create star-reviews-db",
@@ -14,6 +16,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9",
     "wrangler": "^3.90.0"
   }
 }
