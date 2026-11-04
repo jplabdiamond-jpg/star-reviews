@@ -84,6 +84,18 @@ article.body th,article.body td{border:1px solid var(--line-strong);padding:10px
 article.body thead th{background:var(--ink);color:#fff;font-weight:700}
 article.body tbody th{background:var(--sun-soft);font-weight:700;color:var(--ink)}
 article.body blockquote{margin:0 0 20px;padding:14px 18px;background:#fff;border-left:4px solid var(--sun);border-radius:0 12px 12px 0;color:var(--ink-soft)}
+.lead-answer{margin:22px 0 4px;padding:18px 20px;background:#fff;border:1px solid var(--line-strong);border-left:5px solid var(--sun);border-radius:0 14px 14px 0;box-shadow:0 6px 18px rgba(60,46,12,.05)}
+.lead-answer .k{display:inline-block;font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sun-deep);margin:0 0 6px}
+.lead-answer p{margin:0;font-size:16px;font-weight:700;color:var(--ink);line-height:1.8}
+.faq{margin:46px 0 0;border-top:2px solid var(--ink);padding-top:22px}
+.faq h2{font-family:var(--disp);font-weight:700;font-size:22px;color:var(--ink);margin:0 0 16px}
+.faq details{border:1px solid var(--line-strong);border-radius:12px;background:#fff;margin:0 0 10px;overflow:hidden}
+.faq summary{list-style:none;cursor:pointer;padding:15px 18px;font-weight:700;font-size:15.5px;color:var(--ink);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"＋";color:var(--sun-deep);font-weight:700;flex:none}
+.faq details[open] summary::after{content:"−"}
+.faq summary:hover{color:var(--sun-deep)}
+.faq .a{padding:0 18px 16px;color:var(--ink-soft);font-size:15px;line-height:1.85}
 .cta-box{margin:40px 0 0;padding:26px 24px;background:var(--ink);border-radius:18px;color:#fff;text-align:center}
 .cta-box h3{font-family:var(--disp);font-size:20px;margin:0 0 8px;color:#fff;border:0}
 .cta-box p{color:#cfc8b6;font-size:14.5px;margin:0 0 16px}
@@ -221,6 +233,20 @@ export function renderArticle(post: BlogPost, all: BlogPost[], base: string): st
       ],
     }),
   ];
+  // FAQ があれば FAQPage 構造化データを追加（AI検索・リッチリザルト用。可視FAQと同一文面）
+  if (post.faq?.length) {
+    ld.push(
+      JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: post.faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      })
+    );
+  }
   const tags = post.tags?.length
     ? `<div class="tags">${post.tags.map((t) => `<span>${escapeHtml(t)}</span>`).join("")}</div>`
     : "";
@@ -229,6 +255,17 @@ export function renderArticle(post: BlogPost, all: BlogPost[], base: string): st
     : "";
   const updated =
     post.updated && post.updated !== post.date ? ` ・ 更新 ${formatDateJa(post.updated)}` : "";
+  const lead = post.lead
+    ? `<div class="lead-answer"><span class="k">結論</span><p>${escapeHtml(post.lead)}</p></div>`
+    : "";
+  const faq = post.faq?.length
+    ? `<section class="faq"><h2>よくある質問</h2>${post.faq
+        .map(
+          (f) =>
+            `<details><summary>${escapeHtml(f.q)}</summary><div class="a">${escapeHtml(f.a)}</div></details>`
+        )
+        .join("")}</section>`
+    : "";
 
   return (
     head({ title: `${post.title}｜star-reviews コラム`, desc: post.description, canonical, ogType: "article", image, jsonLd: ld }) +
@@ -241,10 +278,12 @@ export function renderArticle(post: BlogPost, all: BlogPost[], base: string): st
         author
       )}</span><span>約${readingMinutes(post.bodyHtml)}分で読めます</span></div>
       ${tags}
+      ${lead}
       ${cover}
       <article class="body">${post.bodyHtml
         .replace(/<table>/g, '<div class="tbl"><table>')
         .replace(/<\/table>/g, "</table></div>")}</article>
+      ${faq}
       <div class="cta-box">
         <h3>お客様の声を、集めて・貼るだけ。</h3>
         <p>匿名OK・返礼コードで集まる。無料プランはカード登録不要です。</p>

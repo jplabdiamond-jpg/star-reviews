@@ -9,6 +9,8 @@ export interface BlogPost {
   tags?: string[]; // 表示用タグ
   cover?: string; // カバー画像の絶対パス（例 /blog/assets/xxx.png）。未指定なら /og.png
   bodyHtml: string; // 本文（セマンティックHTML。h2/h3/p/ul/table 等）
+  lead?: string; // 冒頭の結論ボックス（40〜80字で記事の問いに直接回答。AEO/スニペット用）
+  faq?: { q: string; a: string }[]; // よくある質問（可視FAQ＋FAQPage構造化データを自動出力）
   published?: boolean; // false または未来日なら一覧・サイトマップに出さない（既定 true）
   author?: string; // 著者表示（既定 'star-reviews 編集部'）
 }
