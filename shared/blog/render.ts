@@ -67,7 +67,8 @@ h1.post-title{font-family:var(--disp);font-weight:700;font-size:clamp(27px,4.4vw
 .tags{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 0}
 .tags span{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--sun-soft);border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px}
 .cover{width:100%;border-radius:16px;border:1px solid var(--line);margin:22px 0 0;display:block}
-article.body{margin:30px 0 0;font-size:16.5px;color:var(--ink-soft)}
+article.body{margin:30px 0 0;font-size:16.5px;color:var(--ink-soft);max-width:100%;overflow-wrap:break-word}
+article.body img{max-width:100%;height:auto;border-radius:12px}
 article.body h2{font-family:var(--disp);font-weight:700;font-size:23px;color:var(--ink);line-height:1.35;margin:42px 0 14px;padding-top:6px;border-top:2px solid var(--ink)}
 article.body h3{font-weight:700;font-size:18px;color:var(--ink);margin:30px 0 10px}
 article.body p{margin:0 0 18px}
@@ -76,7 +77,9 @@ article.body ul,article.body ol{margin:0 0 18px;padding-left:1.3em}
 article.body li{margin:0 0 8px}
 article.body strong{color:var(--ink);font-weight:700}
 article.body .mark{background:linear-gradient(transparent 58%,var(--mark) 58% 92%,transparent 92%);padding:0 .08em}
-article.body table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14.5px}
+article.body .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:0 0 22px}
+article.body table{width:100%;border-collapse:collapse;font-size:14.5px}
+@media(max-width:560px){article.body .tbl table{min-width:460px}}
 article.body th,article.body td{border:1px solid var(--line-strong);padding:10px 12px;text-align:left;vertical-align:top}
 article.body thead th{background:var(--ink);color:#fff;font-weight:700}
 article.body tbody th{background:var(--sun-soft);font-weight:700;color:var(--ink)}
@@ -239,7 +242,9 @@ export function renderArticle(post: BlogPost, all: BlogPost[], base: string): st
       )}</span><span>約${readingMinutes(post.bodyHtml)}分で読めます</span></div>
       ${tags}
       ${cover}
-      <article class="body">${post.bodyHtml}</article>
+      <article class="body">${post.bodyHtml
+        .replace(/<table>/g, '<div class="tbl"><table>')
+        .replace(/<\/table>/g, "</table></div>")}</article>
       <div class="cta-box">
         <h3>お客様の声を、集めて・貼るだけ。</h3>
         <p>匿名OK・返礼コードで集まる。無料プランはカード登録不要です。</p>
