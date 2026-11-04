@@ -23,7 +23,7 @@
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.75;
-    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;word-break:auto-phrase}
   .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
   @media(max-width:640px){.wrap{padding:0 15px}}
   a{color:inherit}
@@ -239,6 +239,7 @@
   .pain-turn .bounce{display:inline-block;color:#e5484d;animation:kataBounce 1.15s ease-in-out infinite}
   @keyframes kataBounce{0%,100%{transform:translateY(0)}20%{transform:translateY(-12px)}38%{transform:translateY(0)}54%{transform:translateY(-6px)}70%{transform:translateY(0)}84%{transform:translateY(-2px)}}
   @media(prefers-reduced-motion:reduce){.pain-turn .bounce{animation:none}}
+  @media(max-width:600px){.pain-turn .pt-br{display:none}}
   /* levels × reward (tickets) */
   .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
   @media(max-width:760px){.levels{grid-template-columns:1fr}}
@@ -485,7 +486,7 @@ footer span{color:#cfc8b6 !important}
         <span class="who">— 個人店・教室</span>
       </div>
     </div>
-    <p class="pain-turn">star-reviews は、この<span class="mark">「お願いしづらい・載せづらい」</span>をまるごと<span class="bounce">肩代わり</span>します。</p>
+    <p class="pain-turn">star-reviews は、この<span class="mark">「お願いしづらい・載せづらい」</span>を<br class="pt-br">まるごと<span class="bounce">肩代わり</span>します。</p>
   </section>
 
   <!-- 使い方 3ステップ -->
