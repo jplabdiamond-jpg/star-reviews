@@ -49,12 +49,12 @@
     padding:0 .08em;font-weight:inherit}
   .js .mark{background-size:0% 100%;transition:background-size .75s cubic-bezier(.22,.61,.36,1)}
   .js .mark.draw{background-size:100% 100%}
-  /* キャプションのマーカーはスライド表示のたびに引かれる */
-  .js .show .cap .txt{background-repeat:no-repeat;background-position:100% 0;background-size:0% 100%;
+  /* キャプションのマーカーは表示のたびに右→左へ引かれる */
+  .js .scene-cap .cap .txt{background-repeat:no-repeat;background-position:100% 0;background-size:0% 100%;
     transition:background-size .7s cubic-bezier(.22,.61,.36,1)}
-  .js .show .slide.on .cap .txt{background-size:100% 100%}
+  .js .hero-scene.p1 .c1 .txt,.js .hero-scene.p2 .c2 .txt,.js .hero-scene.p3 .c3 .txt,.js .hero-scene.p4 .c4 .txt{background-size:100% 100%}
   @media(prefers-reduced-motion:reduce){
-    .js .mark,.js .show .cap .txt,.js .show .slide.on .cap .txt{transition:none;background-size:100% 100%}}
+    .js .mark,.js .scene-cap .cap .txt{transition:none;background-size:100% 100%}}
   /* チェックリストの弾けるポップイン */
   @keyframes ptIn{0%{opacity:0;transform:translateY(14px)}60%{opacity:1;transform:translateY(-4px)}100%{opacity:1;transform:translateY(0)}}
   @keyframes ptPop{0%{transform:rotate(-6deg) scale(0)}55%{transform:rotate(-6deg) scale(1.24)}100%{transform:rotate(-6deg) scale(1)}}
@@ -124,22 +124,64 @@
   .js .note:nth-child(1){animation-delay:.5s}
   .js .note:nth-child(2){animation-delay:.72s}
   @media(prefers-reduced-motion:reduce){.js .note{animation:none;opacity:1;transform:rotate(var(--rot))}}
-  /* hero slideshow (card-less: 透過画像＋テキストのみ) */
-  .show{position:relative;aspect-ratio:1/1;width:100%}
-  @media(max-width:860px){.show{max-width:420px;align-self:center;margin-top:2px}}
+  /* hero scene (振り付けアニメ: 透過画像＋テキストのみ) */
   .hero-right{display:flex;flex-direction:column}
   .hero-act{text-align:center;margin-top:20px}
   .hero-act .hero-cta{margin-top:0}
-  .show .slides{position:absolute;inset:0}
-  .show .slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-    opacity:0;transition:opacity .9s ease;pointer-events:none}
-  .show .slide.on{opacity:1}
-  .show .slide img{flex:1;min-height:0;width:100%;object-fit:contain;
+  .hero-scene{position:relative;display:flex;flex-direction:column}
+  .hero-stage{position:relative;aspect-ratio:1/1;width:100%}
+  @media(max-width:860px){.hero-stage{max-width:420px;align-self:center;margin-top:2px}}
+  .hero-stage .layer{position:absolute;will-change:opacity,transform;transition:opacity .6s ease}
+  .hero-stage .layer img{display:block;width:100%;height:100%;object-fit:contain;
     filter:drop-shadow(0 12px 22px rgba(60,46,12,.14))}
-  .show .cap{flex:none;text-align:center;padding:10px 6px 0}
-  .show .cap .txt{font-weight:800;font-size:clamp(17px,2.35vw,23px);line-height:1.5;letter-spacing:-.01em;color:var(--ink);
+  /* 各画像の配置（店=中央／困り顔オーナー=1.5倍で店の右半分に重ね／ひらめき=1.5倍で中央／レビュー陣=全面) */
+  .layer-shop {left:9%;  top:16%; width:82%; height:57%; z-index:1}
+  .layer-owner{left:42%; top:18%; width:53%; height:74%; z-index:3}
+  .layer-plus {left:22%; top:15%; width:55%; height:76%; z-index:4}
+  .layer-rev  {inset:0; z-index:2; display:flex; align-items:center; justify-content:center}
+  /* 既定（JSなし）＝レビュー陣だけ静止表示。JSありは最初は全部隠して順に出す */
+  .layer-shop,.layer-owner,.layer-plus{opacity:0}
+  .layer-rev{opacity:1}
+  .js .hero-stage .layer{opacity:0}
+  /* 表示切替（フェード）: 1=店 → 2=店70%＋困り顔 → 3=ひらめき → 4=レビュー陣 */
+  .hero-scene.p1 .layer-shop{opacity:1}
+  .hero-scene.p2 .layer-shop{opacity:.7}
+  .hero-scene.p2 .layer-owner{opacity:1}
+  .hero-scene.p3 .layer-plus{opacity:1}
+  .hero-scene.p4 .layer-rev{opacity:1}
+  /* 各フェーズの動き */
+  .hero-scene.p1 .layer-shop img{animation:sr-tremble .55s ease-in-out infinite}
+  .hero-scene.p3 .layer-plus img{animation:sr-jump .78s cubic-bezier(.2,.85,.25,1.5) both}
+  .hero-scene.p4 .layer-rev img{animation:sr-zoom 1.9s ease-in-out infinite}
+  @keyframes sr-tremble{   /* 1: ゆっくりブルブル震える */
+    0%,100%{transform:translate(0,0) rotate(0)}
+    25%{transform:translate(-2.5px,2px) rotate(-1deg)}
+    50%{transform:translate(2.5px,-1.5px) rotate(1deg)}
+    75%{transform:translate(-2px,-1.5px) rotate(-.7deg)}}
+  @keyframes sr-jump{      /* 3: 下からジャンプして出る */
+    0%{transform:translateY(80%) scale(.9)}
+    55%{transform:translateY(-8%) scale(1.04)}
+    74%{transform:translateY(3%) scale(.99)}
+    100%{transform:translateY(0) scale(1)}}
+  @keyframes sr-zoom{      /* 4: 拡大縮小を繰り返す */
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.08)}}
+  /* キャプション（フェーズ連動・マーカー） */
+  .scene-cap{position:relative;height:64px;margin-top:6px}
+  @media(max-width:860px){.scene-cap{height:56px}}
+  .scene-cap .cap{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;
+    text-align:center;opacity:0;transition:opacity .45s ease;pointer-events:none}
+  .scene-cap .cap .txt{font-weight:800;font-size:clamp(17px,2.35vw,23px);line-height:1.5;letter-spacing:-.01em;color:var(--ink);
     background:linear-gradient(transparent 56%, var(--mark) 56% 96%, transparent 96%);
     -webkit-box-decoration-break:clone;box-decoration-break:clone;padding:1px .14em}
+  .hero-scene.p1 .c1{opacity:1}
+  .hero-scene.p2 .c2{opacity:1}
+  .hero-scene.p3 .c3{opacity:1}
+  .hero-scene.p4 .c4{opacity:1}
+  @media(prefers-reduced-motion:reduce){
+    .hero-stage .layer img{animation:none!important}
+    .js .hero-scene .layer-rev{opacity:1}
+    .js .hero-scene .scene-cap .c4{opacity:1}}
   /* hero cta */
   .hero-cta{display:inline-flex;align-items:center;gap:9px;margin-top:28px;background:var(--ink);color:#fff;text-decoration:none;
     font-weight:800;font-size:16px;padding:14px 28px;border-radius:12px;transition:.15s;box-shadow:4px 4px 0 var(--sun)}
@@ -338,29 +380,27 @@
       </div>
 
     <div class="hero-right">
-      <div class="show" role="group" aria-label="star-reviews を使うと起きること">
-      <div class="slides">
-        <div class="slide on">
-          <img src="/hero/hero-0.webp" alt="お店の前で、お客さんが来ずに悩むオーナー" width="900" height="900" fetchpriority="high">
-          <div class="cap"><span class="txt">なかなかお客さんが安定して来店しない…</span></div>
+      <div class="hero-scene" role="group" aria-label="star-reviews を使うと起きること">
+        <div class="hero-stage">
+          <div class="layer layer-shop">
+            <img src="/hero/shop.webp" alt="オープンしたばかりのお店" width="1200" height="832" fetchpriority="high">
+          </div>
+          <div class="layer layer-owner">
+            <img src="/hero/owner.webp" alt="口コミの集め方に悩むお店のオーナー" width="867" height="1200" loading="lazy">
+          </div>
+          <div class="layer layer-plus">
+            <img src="/hero/plus.webp" alt="star-reviews を思いついてひらめくオーナー" width="860" height="1200" loading="lazy">
+          </div>
+          <div class="layer layer-rev">
+            <img src="/hero/reviewers.webp" alt="★5つのレビューを次々と寄せる、たくさんのお客様" width="1200" height="661" loading="lazy">
+          </div>
         </div>
-        <div class="slide">
-          <img src="/hero/hero-1.webp" alt="star-reviews を思いついてひらめくオーナー" width="900" height="900" loading="lazy">
-          <div class="cap"><span class="txt">STAR REVIEWS？使ってみよう！</span></div>
+        <div class="scene-cap">
+          <span class="cap c1"><span class="txt">良いお店なのに、お客さんの声が集まらない…</span></span>
+          <span class="cap c2"><span class="txt">口コミって、どうやって集めればいいの…？</span></span>
+          <span class="cap c3"><span class="txt">そうだ、star-reviews を使ってみよう！</span></span>
+          <span class="cap c4"><span class="txt">★5の声が、どんどん集まる！</span></span>
         </div>
-        <div class="slide">
-          <img src="/hero/hero-2.webp" alt="パソコンからお客さんへレビューを依頼するオーナー" width="900" height="900" loading="lazy">
-          <div class="cap"><span class="txt">お客さんにレビュー依頼してみよう！</span></div>
-        </div>
-        <div class="slide">
-          <img src="/hero/hero-3.webp" alt="星5つのレビューが次々と届く様子" width="900" height="900" loading="lazy">
-          <div class="cap"><span class="txt">お客さんからレビューがどんどん届く！</span></div>
-        </div>
-        <div class="slide">
-          <img src="/hero/hero-4.webp" alt="お客さんでにぎわう、うれしそうなオーナー" width="900" height="900" loading="lazy">
-          <div class="cap"><span class="txt">レビューが増えて、お客さんも増えた！</span></div>
-        </div>
-      </div>
       </div>
       <div class="hero-act">
         <a class="hero-cta" href="#auth">無料ではじめる <span class="ar" aria-hidden="true">→</span></a>
@@ -743,30 +783,35 @@ $("form").addEventListener("submit", async (ev) => {
 // 既ログインならダッシュボードへ
 fetch("/api/auth/me").then(r=>r.json()).then(j=>{ if(j.authenticated) location.href="/app.html"; });
 
-// ヒーローのスライドショー（自動切替・クロスフェード）
+// ヒーローの振り付けアニメ（1:震え → 2:下からジャンプで重ねて → 3:拡大縮小ループ、で切替）
 (function(){
-  const root = document.querySelector(".show");
-  if(!root) return;
-  const slides = [...root.querySelectorAll(".slide")];
-  const dots   = [...root.querySelectorAll(".dot")];
-  const stepNo = root.querySelector(".step-no");
-  if(slides.length < 2) return;
+  const scene = document.querySelector(".hero-scene");
+  if(!scene) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let i = 0, timer = null;
-  const DELAY = 3200;
-  function go(n){
-    slides[i].classList.remove("on"); if(dots[i]) dots[i].classList.remove("on");
-    i = (n + slides.length) % slides.length;
-    slides[i].classList.add("on"); if(dots[i]) dots[i].classList.add("on");
-    if(stepNo) stepNo.textContent = (i+1) + " / " + slides.length;
+  if(reduce) return; // 動きを抑える設定なら最終カット（レビュー陣）を静止表示
+  const steps = [
+    { cls:"p1", ms:2600 },  // お店がゆっくり震えて登場
+    { cls:"p2", ms:2700 },  // 困り顔オーナー(1.5倍)が店の右半分に重なる・店は70%に
+    { cls:"p3", ms:2500 },  // 店とオーナーが消え、ひらめきオーナー(1.5倍)が下からジャンプ
+    { cls:"p4", ms:3900 }   // レビュー陣が拡大縮小を繰り返す
+  ];
+  let idx = 0, timer = null, running = false;
+  function tick(){
+    scene.classList.remove("p1","p2","p3","p4");
+    const step = steps[idx];
+    scene.classList.add(step.cls);
+    idx = (idx + 1) % steps.length;
+    timer = setTimeout(tick, step.ms);
   }
-  function start(){ if(reduce) return; stop(); timer = setInterval(() => go(i+1), DELAY); }
-  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
-  dots.forEach((d,n) => d.addEventListener("click", () => { go(n); start(); }));
-  root.addEventListener("mouseenter", stop);
-  root.addEventListener("mouseleave", start);
+  function start(){ if(running) return; running = true; idx = 0; tick(); }
+  function stop(){ running = false; if(timer){ clearTimeout(timer); timer = null; } scene.classList.remove("p1","p2","p3","p4"); }
   document.addEventListener("visibilitychange", () => { document.hidden ? stop() : start(); });
-  start();
+  // 画面に入ったら開始
+  if(!("IntersectionObserver" in window)){ start(); return; }
+  const io = new IntersectionObserver((ents) => {
+    ents.forEach(e => { e.isIntersecting ? start() : stop(); });
+  }, { threshold: 0.2 });
+  io.observe(scene);
 })();
 
 // チェックリスト・レビューカードを、画面に入ったら再生
