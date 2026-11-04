@@ -8,6 +8,8 @@ export interface WallSettings {
   summary: boolean; // 平均★サマリーの表示
   count: number;    // 表示枚数（0=すべて, 1..100）
   autoplay: boolean;// カルーセルの自動スライド
+  cover: string;    // レビューページ上部のカバー画像 R2キー（""=なし）
+  logo: string;     // ブランドロゴ画像 R2キー（""=なし）
 }
 
 export const LAYOUTS = ["grid", "masonry", "carousel", "list", "chips"];
@@ -22,6 +24,8 @@ export const DEFAULT_SETTINGS: WallSettings = {
   summary: true,
   count: 0,
   autoplay: false,
+  cover: "",
+  logo: "",
 };
 
 function cleanHex(v: unknown, fallback: string): string {
@@ -36,6 +40,12 @@ function clampInt(v: unknown, min: number, max: number, fallback: number): numbe
   const n = Math.floor(Number(v));
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
+}
+// R2メディアキーのみ許可（brand/ or photos/ 配下の画像）。不正・空文字は "" に正規化。
+function cleanKey(v: unknown): string {
+  const s = String(v ?? "").trim();
+  if (!s) return "";
+  return /^(brand|photos)\/[A-Za-z0-9._/-]{1,120}\.(jpg|jpeg|png|webp|gif|svg)$/i.test(s) ? s : "";
 }
 
 // 任意の入力（JSON文字列 or オブジェクト）を正規化。fallbackLayout は walls.layout 列からの既定。
@@ -55,5 +65,7 @@ export function parseWallSettings(raw: unknown, fallbackLayout?: string): WallSe
     summary: o.summary == null ? d.summary : !!o.summary,
     count: clampInt(o.count, 0, 100, d.count),
     autoplay: o.autoplay == null ? d.autoplay : !!o.autoplay,
+    cover: cleanKey(o.cover),
+    logo: cleanKey(o.logo),
   };
 }

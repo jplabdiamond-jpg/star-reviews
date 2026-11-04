@@ -1288,8 +1288,9 @@ const LAYOUT_OPTS = [["grid","グリッド（タイル状）"],["masonry","マ�
 async function renderEmbed(){
   if(!STATE.embedToken){ $("view").innerHTML=`<div class="empty">先にフォームを作成すると、埋め込みコードが発行されます。</div>`; return; }
   // 現在の保存設定を取得（公開APIから）
-  let S = {accent:"#eaa400",layout:"grid",star:"gold",theme:"light",summary:true,count:0,autoplay:false};
+  let S = {accent:"#eaa400",layout:"grid",star:"gold",theme:"light",summary:true,count:0,autoplay:false,cover:"",logo:""};
   try{ const cur = await api("/api/wall/"+STATE.embedToken); if(cur.ok && cur.data.settings) S = Object.assign(S, cur.data.settings); }catch(e){}
+  let coverKey = S.cover||"", logoKey = S.logo||"";
 
   const swatches = ACCENTS.map(([hex,name])=>`<button type="button" class="sw" data-hex="${hex}" title="${name}" style="background:${hex}"></button>`).join("");
   $("view").innerHTML = `
@@ -1298,6 +1299,14 @@ async function renderEmbed(){
       .sw.on{box-shadow:0 0 0 2.5px var(--ink)}
       .swrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:2px}
       .emhint{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+      .brandrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+      @media(max-width:640px){.brandrow{grid-template-columns:1fr}}
+      .bprev{border:1.5px dashed var(--line-strong);border-radius:11px;background:#fff;margin:6px 0 8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden}
+      .bprev.cover{height:108px}
+      .bprev.logo{height:108px;background:#faf6ea}
+      .bprev img{max-width:100%;max-height:100%;object-fit:contain}
+      .bprev.cover img{width:100%;height:100%;object-fit:cover}
+      .brow{display:flex;gap:8px;flex-wrap:wrap}
     </style>
     <div class="card" style="background:var(--ink);color:#fff;border:0">
       <p style="margin:0;font-size:12.5px;color:#cfc8b6;font-weight:700;letter-spacing:.04em">レビューページの表示回数</p>
@@ -1306,11 +1315,36 @@ async function renderEmbed(){
     ${renderHostedCard()}
     <div class="card">
       <h2>見た目をカスタマイズ</h2>
-      <p class="muted" style="margin-top:-8px">ここで調整して「保存」すると、<b>サイト埋め込み</b>と<b>ホスト型ページ（/wall）</b>の両方に反映されます。<a href="/guide" target="_blank" rel="noopener" style="color:var(--sun-deep);font-weight:800;text-decoration:underline;margin-left:4px">使い方ガイド →</a></p>
+      <p class="muted" style="margin-top:-8px">ここで調整して「保存」すると、<b>サイト埋め込み</b>と<b>レビューページ（/wall）</b>の両方に反映されます。カバー画像・ロゴはレビューページのみ。<a href="/guide" target="_blank" rel="noopener" style="color:var(--sun-deep);font-weight:800;text-decoration:underline;margin-left:4px">使い方ガイド →</a></p>
 
       <label>テーマカラー</label>
       <div class="swrow" id="em_sw">${swatches}
         <label style="display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:600;color:var(--muted);font-size:12px">カスタム<input type="color" id="em_accent" value="${esc(S.accent)}" style="width:34px;height:28px;padding:0;border:1px solid var(--line-strong);border-radius:8px;background:none;cursor:pointer"></label>
+      </div>
+      <p class="emhint">★・マーカー・アバターの色に反映されます（レビューページ／埋め込み共通）。</p>
+
+      <label style="margin-top:16px">カバー画像・ロゴ <span class="muted" style="font-weight:600;font-size:12px">（レビューページ上部に表示）</span></label>
+      <div class="brandrow">
+        <div>
+          <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:2px">カバー画像</div>
+          <div class="bprev cover" id="bp_cover">カバー画像なし</div>
+          <div class="brow">
+            <button type="button" class="btn ghost sm" id="bp_cover_pick">画像を選ぶ</button>
+            <button type="button" class="btn ghost sm" id="bp_cover_del" style="display:none">削除</button>
+            <input type="file" id="bp_cover_file" accept="image/*" hidden>
+          </div>
+          <p class="emhint">横長の写真がおすすめ・5MBまで（JPEG/PNG/WebP）</p>
+        </div>
+        <div>
+          <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:2px">ブランドロゴ</div>
+          <div class="bprev logo" id="bp_logo">ロゴなし</div>
+          <div class="brow">
+            <button type="button" class="btn ghost sm" id="bp_logo_pick">画像を選ぶ</button>
+            <button type="button" class="btn ghost sm" id="bp_logo_del" style="display:none">削除</button>
+            <input type="file" id="bp_logo_file" accept="image/*" hidden>
+          </div>
+          <p class="emhint">透過PNG・SVGがおすすめ・5MBまで</p>
+        </div>
       </div>
 
       <div class="row" style="margin-top:14px">
@@ -1382,8 +1416,35 @@ async function renderEmbed(){
   const opts = ()=>({
     accent: curAccent(), layout:$("em_layout").value, count:+$("em_count").value,
     star:$("em_star").value, theme:$("em_theme").value,
-    summary:$("em_summary").value==="1", autoplay:$("em_autoplay").value==="1"
+    summary:$("em_summary").value==="1", autoplay:$("em_autoplay").value==="1",
+    cover: coverKey, logo: logoKey
   });
+  // カバー画像・ロゴ（レビューページのブランド表示）
+  const brandUrl = (k)=> k ? STATE.origin+"/api/media/"+k : "";
+  function renderBrand(){
+    $("bp_cover").innerHTML = coverKey ? `<img src="${esc(brandUrl(coverKey))}" alt="">` : "カバー画像なし";
+    $("bp_logo").innerHTML  = logoKey  ? `<img src="${esc(brandUrl(logoKey))}" alt="">`  : "ロゴなし";
+    $("bp_cover_del").style.display = coverKey ? "inline-block" : "none";
+    $("bp_logo_del").style.display  = logoKey  ? "inline-block" : "none";
+  }
+  async function uploadBrand(kind, file){
+    if(!file) return;
+    if(file.size > 5*1024*1024){ toast("画像は5MBまでです"); return; }
+    const pick = $("bp_"+kind+"_pick"); const label = pick.textContent; pick.disabled=true; pick.textContent="アップロード中…";
+    try{
+      const r = await api("/api/walls/asset?kind="+kind, {method:"POST", headers:{"content-type":file.type||"application/octet-stream"}, body:file});
+      if(r.ok && r.data.key){ if(kind==="cover") coverKey=r.data.key; else logoKey=r.data.key; renderBrand(); update(); toast("アップロードしました（「この設定を保存」で反映）"); }
+      else { toast(r.data.error||"アップロードに失敗しました"); }
+    }catch(e){ toast("アップロードに失敗しました"); }
+    pick.disabled=false; pick.textContent=label;
+  }
+  $("bp_cover_pick").onclick=()=>$("bp_cover_file").click();
+  $("bp_logo_pick").onclick =()=>$("bp_logo_file").click();
+  $("bp_cover_file").onchange=e=>{ uploadBrand("cover", e.target.files[0]); e.target.value=""; };
+  $("bp_logo_file").onchange =e=>{ uploadBrand("logo",  e.target.files[0]); e.target.value=""; };
+  $("bp_cover_del").onclick=()=>{ coverKey=""; renderBrand(); update(); };
+  $("bp_logo_del").onclick =()=>{ logoKey="";  renderBrand(); update(); };
+  renderBrand();
   const update = ()=>{
     const o = opts();
     $("em_prev").innerHTML = pvRender(o);

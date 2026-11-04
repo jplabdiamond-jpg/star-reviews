@@ -124,6 +124,9 @@ function renderPage(d: {
   count: number; avg: number; canonical: string; showCredit: boolean; base: string; settings: WallSettings; wtoken: string;
 }): string {
   const st = d.settings;
+  const coverUrl = st.cover ? `${d.base}/api/media/${st.cover}` : "";
+  const logoUrl = st.logo ? `${d.base}/api/media/${st.logo}` : "";
+  const ogImage = coverUrl || logoUrl;
   const title = `${d.bizName}のお客様の声${d.count ? `（★${d.avg} / ${d.count}件）` : ""}`;
   const desc = d.count
     ? `${d.bizName}に寄せられた${d.count}件のお客様の声。平均評価★${d.avg}。実際のご利用者の口コミをご覧いただけます。`
@@ -159,7 +162,9 @@ function renderPage(d: {
 <meta property="og:title" content="${escapeHtml(title)}">
 <meta property="og:description" content="${escapeHtml(desc)}">
 <meta property="og:url" content="${escapeHtml(d.canonical)}">
-<meta name="twitter:card" content="summary">
+${ogImage ? `<meta property="og:image" content="${escapeHtml(ogImage)}">` : ""}
+<meta name="twitter:card" content="${coverUrl ? "summary_large_image" : "summary"}">
+${ogImage ? `<meta name="twitter:image" content="${escapeHtml(ogImage)}">` : ""}
 <meta name="robots" content="index,follow">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -169,7 +174,12 @@ ${jsonLd(d.bizName, d.items, d.count, d.avg)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",-apple-system,"Noto Sans JP",sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1000px;margin:0 auto;padding:0 15px}
+.cover{width:100%;max-height:300px;object-fit:cover;display:block;border-bottom:3px solid var(--ink)}
 header.hd{padding:46px 0 10px;text-align:center}
+header.hd.has-cover{padding-top:26px}
+.logo{display:block;max-width:168px;max-height:76px;width:auto;height:auto;object-fit:contain;margin:0 auto 16px}
+header.hd.has-cover .logo{margin-top:-62px;position:relative;background:var(--paper);padding:8px 12px;border-radius:14px;border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.th-dark header.hd.has-cover .logo{background:#201d12}
 .eyebrow{font-family:"Space Grotesk",sans-serif;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:var(--muted)}
 h1{font-size:clamp(26px,5vw,40px);margin:.3em 0 .1em;line-height:1.25}
 h1 .mk{background:linear-gradient(transparent 62%,var(--sun) 62%);padding:0 .08em}
@@ -221,8 +231,11 @@ footer.ft a{color:var(--ink);font-weight:700;text-decoration:none;border-bottom:
 .th-dark .body{color:#e7e1d0}.th-dark .who{color:#fff}.th-dark .dt,.th-dark .src{color:#9c927a}.th-dark .stars .e{color:#4a4636}
 @media(prefers-color-scheme:dark){:root{--paper:#17150e;--ink:#f3ecda;--line:#38331f;--muted:#9c927a}.sum,.card{background:#201d12}.stars .e{color:#4a442e}}
 </style></head>
-<body class="th-${st.theme}"><div class="wrap">
-<header class="hd">
+<body class="th-${st.theme}">
+${coverUrl ? `<img class="cover" src="${escapeHtml(coverUrl)}" alt="">` : ""}
+<div class="wrap">
+<header class="hd${coverUrl ? " has-cover" : ""}">
+${logoUrl ? `<img class="logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(d.bizName)}">` : ""}
 <div class="eyebrow">Customer Voices</div>
 <h1><span class="mk">${escapeHtml(d.bizName)}</span><br>お客様の声</h1>
 ${summary}
