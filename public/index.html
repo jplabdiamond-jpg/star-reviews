@@ -149,7 +149,7 @@
   .hero-act .hero-cta{margin-top:0}
   .hero-scene{position:relative;display:flex;flex-direction:column}
   .hero-stage{position:relative;aspect-ratio:1/1;width:100%}
-  @media(max-width:860px){.hero-stage{max-width:420px;align-self:center;margin-top:2px}}
+  @media(max-width:860px){.hero-stage{max-width:420px;align-self:center;margin-top:0;order:2}}
   .hero-stage .layer{position:absolute;will-change:opacity,transform;transition:opacity .6s ease}
   .hero-stage .layer img{display:block;width:100%;height:100%;object-fit:contain;
     filter:drop-shadow(0 12px 22px rgba(60,46,12,.14))}
@@ -187,7 +187,7 @@
     50%{transform:scale(1.08)}}
   /* キャプション（フェーズ連動・マーカー）: txtはインラインのままにして行ごとにマーカーを引く */
   .scene-cap{position:relative;min-height:72px;margin-top:10px}
-  @media(max-width:860px){.scene-cap{min-height:64px}}
+  @media(max-width:860px){.scene-cap{min-height:64px;order:1;margin:0 0 12px}}
   .scene-cap .cap{position:absolute;left:0;right:0;top:0;text-align:center;
     opacity:0;transition:opacity .45s ease;pointer-events:none}
   .scene-cap .cap .txt{font-weight:800;font-size:clamp(16px,2.1vw,22px);line-height:1.62;letter-spacing:-.01em;color:var(--ink);
