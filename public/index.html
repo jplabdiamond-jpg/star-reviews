@@ -166,14 +166,14 @@
   @keyframes sr-zoom{      /* 4: 拡大縮小を繰り返す */
     0%,100%{transform:scale(1)}
     50%{transform:scale(1.08)}}
-  /* キャプション（フェーズ連動・マーカー） */
-  .scene-cap{position:relative;height:64px;margin-top:6px}
-  @media(max-width:860px){.scene-cap{height:56px}}
-  .scene-cap .cap{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;
-    text-align:center;opacity:0;transition:opacity .45s ease;pointer-events:none}
-  .scene-cap .cap .txt{font-weight:800;font-size:clamp(17px,2.35vw,23px);line-height:1.5;letter-spacing:-.01em;color:var(--ink);
-    background:linear-gradient(transparent 56%, var(--mark) 56% 96%, transparent 96%);
-    -webkit-box-decoration-break:clone;box-decoration-break:clone;padding:1px .14em}
+  /* キャプション（フェーズ連動・マーカー）: txtはインラインのままにして行ごとにマーカーを引く */
+  .scene-cap{position:relative;min-height:72px;margin-top:10px}
+  @media(max-width:860px){.scene-cap{min-height:64px}}
+  .scene-cap .cap{position:absolute;left:0;right:0;top:0;text-align:center;
+    opacity:0;transition:opacity .45s ease;pointer-events:none}
+  .scene-cap .cap .txt{font-weight:800;font-size:clamp(16px,2.1vw,22px);line-height:1.62;letter-spacing:-.01em;color:var(--ink);
+    background:linear-gradient(transparent 56%, var(--mark) 56% 92%, transparent 92%);
+    -webkit-box-decoration-break:clone;box-decoration-break:clone;padding:2px .1em}
   .hero-scene.p1 .c1{opacity:1}
   .hero-scene.p2 .c2{opacity:1}
   .hero-scene.p3 .c3{opacity:1}
@@ -396,9 +396,9 @@
           </div>
         </div>
         <div class="scene-cap">
-          <span class="cap c1"><span class="txt">良いお店なのに、お客さんの声が集まらない…</span></span>
-          <span class="cap c2"><span class="txt">口コミって、どうやって集めればいいの…？</span></span>
-          <span class="cap c3"><span class="txt">そうだ、star-reviews を使ってみよう！</span></span>
+          <span class="cap c1"><span class="txt">良いお店なのに、声が集まらない…</span></span>
+          <span class="cap c2"><span class="txt">口コミって、どう集めればいいの…？</span></span>
+          <span class="cap c3"><span class="txt">そうだ、star-reviews だ！</span></span>
           <span class="cap c4"><span class="txt">★5の声が、どんどん集まる！</span></span>
         </div>
       </div>
