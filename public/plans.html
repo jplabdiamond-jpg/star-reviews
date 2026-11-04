@@ -87,6 +87,20 @@
   .rcard .nm{font-weight:800;font-size:12.5px;margin:3px 0 2px}
   .rcard .bd{font-size:12px;color:var(--ink-soft);line-height:1.65}
   .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  /* review-page cover + logo */
+  .rpcov{height:46px;border-bottom:2px solid var(--ink)}
+  .rplogo{display:inline-block;background:#fff;border:1.5px solid var(--ink);border-radius:9px;padding:3px 12px;font-weight:800;font-size:11px;margin-top:-30px;position:relative;box-shadow:2px 2px 0 var(--ink)}
+  /* customize controls mock */
+  .swm{display:flex;gap:7px;align-items:center;margin:3px 0 2px}
+  .swm i{width:20px;height:20px;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line-strong)}
+  .swm i.on{box-shadow:0 0 0 2px var(--ink)}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+  .tile{border:1.5px dashed var(--line-strong);border-radius:10px;overflow:hidden;background:#fff}
+  .tile .th{height:50px;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#fff;font-weight:700}
+  .tile .cap2{font-size:9.5px;font-weight:700;color:var(--muted);padding:4px 8px;border-top:1px solid var(--line)}
+  .rp{border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
+  .rp .cov{height:38px}
+  .rp .hd{text-align:center;padding:0 6px 10px}
   .tag{display:inline-block;font-family:var(--disp);font-weight:700;font-size:10px;background:var(--ink);color:#fff;border-radius:5px;padding:1px 7px;letter-spacing:.04em;vertical-align:middle}
   .muted{color:var(--muted)}
   /* inbox mockup */
@@ -200,6 +214,7 @@
         <tr><td class="ft">承認フロー・受信トレイ</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
         <tr><td class="ft">埋め込みウィジェット<small>全スタイル</small></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
         <tr><td class="ft">レビューページ<small>単独URL・SEO対応</small></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">レビューページのカスタマイズ<small>カバー画像・ロゴ・色</small></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
         <tr><td class="ft">掲載できる件数</td><td class="v">5件まで</td><td class="v">無制限</td><td class="v">無制限</td></tr>
         <tr><td class="ft">「star-reviews」表記を非表示</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>
         <tr><td class="ft">レビューページの独自URL</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>
@@ -355,9 +370,11 @@
     <figure class="shot">
       <div class="frame">
         <div class="bar"><i></i><i></i><i></i><span class="u">star-reviews.net/wall/my-shop</span></div>
-        <div class="ui">
+        <div class="rpcov" style="background:linear-gradient(120deg,var(--sun),#1c1a12)"></div>
+        <div class="ui" style="padding-top:12px">
           <div style="text-align:center;margin-bottom:12px">
-            <div style="font-weight:800;font-size:14px">○○カフェ のお客様の声</div>
+            <span class="rplogo">○○カフェ</span>
+            <div style="font-weight:800;font-size:14px;margin-top:7px">お客様の声</div>
             <div class="stars" style="font-size:20px">★★★★★</div>
             <div class="muted" style="font-size:11px;font-weight:700">4.9 ／ 86件のレビュー</div>
           </div>
@@ -367,7 +384,46 @@
           </div>
         </div>
       </div>
-      <figcaption class="cap">レビューページ（公開URL）</figcaption>
+      <figcaption class="cap">レビューページ（公開URL・カバー画像＋ロゴ付き）</figcaption>
+    </figure>
+  </section>
+
+  <!-- レビューページのカスタマイズ -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b free">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>レビューページの見た目カスタマイズ（カバー画像・ロゴ・色）</h3>
+      <p>レビューページは、お店のブランドに合わせて見た目を変えられます。管理画面から、上部のカバー画像・ブランドロゴ・テーマカラーを設定するだけ。テーマカラーは埋め込みウィジェットの★やマーカーにも反映されます。</p>
+      <ul>
+        <li>カバー画像（上部の全幅バナー）をアップロード</li>
+        <li>ブランドロゴを表示</li>
+        <li>テーマカラー（★・マーカー・アバターの色）</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">star-reviews.net/app ・ 見た目をカスタマイズ</span></div>
+        <div class="ui">
+          <div class="muted" style="font-size:10.5px;font-weight:700">テーマカラー</div>
+          <div class="swm">
+            <i style="background:#eaa400"></i><i style="background:#f2721f"></i><i style="background:#e5484d"></i><i class="on" style="background:#2f6feb"></i><i style="background:#1c7d52"></i><i style="background:#7c5cff"></i>
+          </div>
+          <div class="tiles">
+            <div class="tile"><div class="th" style="background:linear-gradient(120deg,#2f6feb,#1c1a12)">カバー画像</div><div class="cap2">カバー画像</div></div>
+            <div class="tile"><div class="th" style="background:#2f6feb">LOGO</div><div class="cap2">ブランドロゴ</div></div>
+          </div>
+          <div style="text-align:center;color:var(--sun-deep);font-weight:800;margin:9px 0 7px;font-size:12px">↓ レビューページに反映</div>
+          <div class="rp">
+            <div class="cov" style="background:linear-gradient(120deg,#2f6feb,#1c1a12)"></div>
+            <div class="hd">
+              <span class="rplogo" style="margin-top:-20px">○○カフェ</span>
+              <div style="font-weight:800;font-size:11.5px;margin-top:5px">お客様の声</div>
+              <div style="color:#2f6feb;font-size:15px;letter-spacing:1px">★★★★★</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">見た目のカスタマイズ（管理画面）→ 反映後のレビューページ</figcaption>
     </figure>
   </section>
 
