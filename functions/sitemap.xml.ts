@@ -1,5 +1,6 @@
-// GET /sitemap.xml  公開ページ（静的ページ＋各店舗のレビューページ）のサイトマップ
+// GET /sitemap.xml  公開ページ（静的ページ＋ブログ＋各店舗のレビューページ）のサイトマップ
 import type { Env } from "../shared/types";
+import { publishedPosts } from "../shared/blog/posts";
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const base = (env.PUBLIC_BASE_URL || new URL(request.url).origin).replace(/\/+$/, "");
@@ -12,12 +13,23 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     { loc: `${base}/`, changefreq: "weekly", priority: "1.0", lastmod: today },
     { loc: `${base}/plans`, changefreq: "weekly", priority: "0.9", lastmod: today },
     { loc: `${base}/guide`, changefreq: "monthly", priority: "0.7", lastmod: today },
+    { loc: `${base}/blog`, changefreq: "weekly", priority: "0.7", lastmod: today },
     { loc: `${base}/tokushoho`, changefreq: "yearly", priority: "0.2" },
     { loc: `${base}/privacy`, changefreq: "yearly", priority: "0.2" },
     { loc: `${base}/terms`, changefreq: "yearly", priority: "0.2" },
   ];
 
   const entries: Entry[] = [...staticPages];
+
+  // ブログ記事（公開中）を追加。
+  for (const p of publishedPosts()) {
+    entries.push({
+      loc: `${base}/blog/${encodeURIComponent(p.slug)}`,
+      changefreq: "monthly",
+      priority: "0.6",
+      lastmod: p.updated || p.date,
+    });
+  }
 
   // 各店舗のレビューページ（ホスト型公開ページ /wall/:token）を動的に追加。
   try {
