@@ -89,6 +89,12 @@
   .copy:hover{background:var(--ink);color:#fff}
   .foot{text-align:center;color:var(--muted);font-size:11px;margin-top:28px;
     letter-spacing:.12em;font-family:var(--disp);font-weight:600}
+  /* 安心チップ（摩擦を下げる約束） */
+  .reassure{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+  .reassure span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink-soft);
+    background:#fffaec;border:1px solid var(--sun);border-radius:999px;padding:5px 12px}
+  .reassure span::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--sun-deep);transform:rotate(-8deg)}
+  .btn{box-shadow:4px 4px 0 var(--sun)}
 </style>
 </head>
 <body>
@@ -99,6 +105,9 @@
   </div>
   <h1 id="title">読み込み中…</h1>
   <p class="intro" id="intro"></p>
+  <div class="reassure" id="reassure" style="display:none">
+    <span>約30秒で完了</span><span>ログイン不要</span><span>匿名でもOK</span>
+  </div>
 
   <form id="form" style="display:none">
     <!-- スパム対策: 人間には見えないおとり項目。botが埋めると送信を無効化する -->
@@ -200,6 +209,7 @@ async function load(){
   BIZ_NAME = f.business_name || "";
   renderLevels(f.levels);
   $("form").style.display = "block";
+  $("reassure").style.display = "flex";
 }
 
 function renderLevels(levels){
@@ -316,6 +326,7 @@ $("form").addEventListener("submit", async (ev) => {
 
 function done(reward){
   $("form").style.display="none";
+  var rea=$("reassure"); if(rea) rea.style.display="none";
   $("done").style.display="block";
   if(reward){
     $("rewardBox").style.display="block";

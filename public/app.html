@@ -98,6 +98,22 @@
   .coach-skip{background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;font-family:var(--jp)}
   .coach-next{background:var(--ink);color:#fff;border:0;border-radius:9px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:13px;font-family:var(--jp)}
   .coach-next:hover{background:#000}
+
+  /* ===== v2 polish（CSS層のみ・機能/IDは不変） ===== */
+  .top{border-bottom:3px solid var(--sun)}
+  .tab.on{border-color:var(--sun-deep)}
+  .tabbar{box-shadow:0 1px 0 var(--line)}
+  /* カード見出しに控えめなブランドアクセント */
+  .card>h2:first-child{position:relative;padding-left:15px}
+  .card>h2:first-child::before{content:"";position:absolute;left:0;top:2px;width:7px;height:17px;border-radius:3px;
+    background:var(--sun);transform:rotate(-6deg)}
+  /* プライマリ操作に黒×黄のエディトリアル質感を少しだけ */
+  .btn:not(.ghost):not(.ok):not(.mut):not(.sm){box-shadow:3px 3px 0 var(--sun-soft)}
+  .btn:not(.ghost):not(.ok):not(.mut):not(.sm):hover{box-shadow:3px 3px 0 var(--sun)}
+  /* 空状態をもう少しブランドらしく */
+  .empty{background:#fffdf3}
+  /* 入力フォーカスの一貫性（既存と同系・保険） */
+  input:focus,textarea:focus,select:focus{border-color:var(--sun-deep)}
 </style>
 </head>
 <body>
