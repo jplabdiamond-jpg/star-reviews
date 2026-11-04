@@ -19,6 +19,12 @@ export interface Env {
   // 任意: LINE通知(Messaging API)。未設定ならLINE通知は無効
   LINE_CHANNEL_ACCESS_TOKEN?: string;
   LINE_CHANNEL_SECRET?: string;
+  // 任意: ソーシャルログイン/登録 — Google OAuth（Messaging APIの通知用とは別チャンネル）
+  GOOGLE_OAUTH_CLIENT_ID?: string;
+  GOOGLE_OAUTH_CLIENT_SECRET?: string;
+  // 任意: ソーシャルログイン/登録 — LINE Login v2.1（通知用の LINE_CHANNEL_* とは別のLINE Loginチャンネル）
+  LINE_LOGIN_CHANNEL_ID?: string;
+  LINE_LOGIN_CHANNEL_SECRET?: string;
   // Workers AI（動画の文字起こし・字幕）。未バインドなら字幕生成は無効
   AI?: Ai;
   PUBLIC_BASE_URL?: string;        // 任意: 本番URL(未設定ならリクエストoriginを使用)
