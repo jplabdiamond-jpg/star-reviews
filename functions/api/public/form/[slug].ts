@@ -42,7 +42,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
     /* 列未適用 */
   }
 
-  // SNSシェア用: 事業者の声の壁ページURL（slug優先）
+  // SNSシェア用: 事業者のレビューページURL（slug優先）
   const wall = await env.DB.prepare("SELECT slug, embed_token FROM walls WHERE business_id = ? ORDER BY created_at LIMIT 1")
     .bind(form.business_id)
     .first<{ slug: string | null; embed_token: string }>();

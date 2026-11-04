@@ -1,5 +1,5 @@
 // POST /api/public/delete-request  { w, email, message }  掲載・個人情報の削除依頼（認証不要）
-// w = 声の壁の slug または embed_token。該当店舗のオーナーに依頼メールを送る。
+// w = レビューページの slug または embed_token。該当店舗のオーナーに依頼メールを送る。
 import { json, badRequest, readJson, escapeHtml } from "../../../shared/util";
 import { sendEmailResend } from "../../../shared/notify";
 import type { Env } from "../../../shared/types";

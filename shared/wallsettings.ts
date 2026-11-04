@@ -1,4 +1,4 @@
-// 声の壁の表示設定（ウィジェットA・ホスト型ページB 共通）
+// レビューページの表示設定（ウィジェットA・ホスト型ページB 共通）
 // walls.theme 列に JSON で保存し、配信時に両方がこの設定を読む。
 export interface WallSettings {
   accent: string;   // アクセント色（★・マーカー・アバター） #rrggbb

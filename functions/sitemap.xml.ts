@@ -1,4 +1,4 @@
-// GET /sitemap.xml  公開ページ（トップ＋各店舗の声の壁）のサイトマップ
+// GET /sitemap.xml  公開ページ（トップ＋各店舗のレビューページ）のサイトマップ
 import type { Env } from "../shared/types";
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {

@@ -1,4 +1,4 @@
-// POST /api/walls/settings  声の壁の表示設定を保存（要ログイン）
+// POST /api/walls/settings  レビューページの表示設定を保存（要ログイン）
 // body: { accent, layout, star, theme, summary, count, autoplay }
 // walls.theme(JSON) に保存し、walls.layout 列も後方互換で同期。ウィジェットA・ホスト型ページB 両方に反映。
 import { json, badRequest, readJson } from "../../../shared/util";

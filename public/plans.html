@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>プランでできること｜star-reviews</title>
+<meta name="description" content="star-reviewsのFree・Starter・Proの各プランに含まれる機能を、実際の画面イメージ付きでくわしく解説。レビューの収集・受信トレイ・埋め込み・レビューページ・通知・Google口コミ取込・アナリティクスまで。" />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#fffdf5;--panel:#fff;--ink:#1c1a12;--ink-soft:#413d30;--muted:#7c7563;
+    --sun:#ffc62b;--sun-deep:#eaa400;--sun-soft:#ffe7a0;--mark:#ffd84d;--line:#ece3cf;--line-strong:#e0d4b6;--ok:#1c7d52;--ok-bg:#e2f3e8;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.8;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  a{color:var(--ink)}
+  /* header */
+  header.top{border-bottom:1px solid var(--line);padding:14px 0;position:sticky;top:0;background:rgba(255,253,245,.9);backdrop-filter:blur(6px);z-index:20}
+  .top .in{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--ink);text-decoration:none}
+  .brand .star{width:17px;height:17px;color:var(--sun-deep)}
+  .brand em{font-style:normal;color:var(--muted);font-weight:500}
+  .top .right{display:flex;align-items:center;gap:16px}
+  .top .back{font-size:13.5px;font-weight:700;color:var(--ink-soft);text-decoration:none}
+  .top .back:hover{color:var(--ink)}
+  .top .cta{font-weight:800;font-size:13.5px;text-decoration:none;background:var(--ink);color:#fff;padding:9px 15px;border-radius:999px;white-space:nowrap}
+  .top .cta:hover{background:#000}
+  /* hero */
+  .hero{padding:52px 0 8px;text-align:center}
+  .eyebrow{font-family:var(--disp);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--sun-deep)}
+  h1{font-size:clamp(28px,6vw,46px);line-height:1.2;margin:.25em 0 .2em;letter-spacing:-.02em;font-weight:800}
+  .mk{background:linear-gradient(transparent 58%,var(--mark) 58% 93%,transparent 93%);padding:0 .06em}
+  .lede{color:var(--ink-soft);font-size:16px;max-width:640px;margin:12px auto 0}
+  /* comparison table */
+  .cmp-sec{padding:38px 0 6px}
+  .cmp{width:100%;border-collapse:separate;border-spacing:0;margin:0 auto;font-size:13.5px;background:var(--panel);border:1.5px solid var(--ink);border-radius:16px;overflow:hidden;box-shadow:6px 6px 0 var(--sun)}
+  .cmp th,.cmp td{padding:12px 12px;text-align:center;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+  .cmp tr td:first-child,.cmp tr th:first-child{text-align:left;border-right:1.5px solid var(--line-strong)}
+  .cmp td:last-child,.cmp th:last-child{border-right:0}
+  .cmp tbody tr:last-child td{border-bottom:0}
+  .cmp thead th{background:#fffef4;font-family:var(--disp);font-weight:700;letter-spacing:.04em;vertical-align:bottom;padding:16px 12px 14px}
+  .cmp thead th .pp{display:block;font-family:var(--jp);font-weight:800;font-size:17px;margin-top:3px;letter-spacing:-.01em}
+  .cmp thead th .pp small{font-size:11px;color:var(--muted);font-weight:600}
+  .cmp thead th.pro{background:var(--ink);color:#fff}
+  .cmp thead th.pro .pp small{color:#cfc8b6}
+  .cmp tbody td:nth-child(4){background:#fffdf2}
+  .cmp .ft{font-weight:700;color:var(--ink-soft)}
+  .cmp .ft small{display:block;font-weight:600;color:var(--muted);font-size:11.5px;line-height:1.5}
+  .cmp .y{color:var(--sun-deep);font-weight:800;font-size:16px}
+  .cmp .n{color:#c9c0ab;font-weight:700}
+  .cmp .v{font-weight:700;font-size:12.5px}
+  @media(max-width:720px){.cmp{font-size:12px}.cmp th,.cmp td{padding:9px 6px}.cmp thead th .pp{font-size:14px}}
+  /* feature section */
+  .group-h{display:flex;align-items:center;gap:12px;margin:44px 0 6px;padding-top:12px}
+  .group-h .lbl{font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .group-h .ln{flex:1;height:2px;background:var(--line-strong);border-radius:2px}
+  .group-h .pill{font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.05em;padding:3px 11px;border-radius:999px;border:1.5px solid var(--ink)}
+  .pill.free{background:#fff;color:var(--ink)}
+  .pill.starter{background:var(--sun);color:var(--ink)}
+  .pill.pro{background:var(--ink);color:#fff}
+  .feat{display:grid;grid-template-columns:1fr 1.05fr;gap:30px;align-items:center;padding:26px 0;border-top:1px solid var(--line)}
+  .feat:nth-child(even) .feat-txt{order:2}
+  .feat-txt .badges{display:flex;gap:6px;margin:0 0 10px}
+  .badges .b{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.05em;padding:2px 9px;border-radius:6px;border:1.5px solid var(--ink)}
+  .b.free{background:#fff}.b.starter{background:var(--sun)}.b.pro{background:var(--ink);color:#fff}
+  .b.off{background:#fff;border-color:var(--line-strong);color:#c2b9a3}
+  .feat-txt h3{font-size:21px;letter-spacing:-.01em;margin:0 0 8px;font-weight:800}
+  .feat-txt p{margin:0 0 10px;font-size:14.5px;color:var(--ink-soft)}
+  .feat-txt ul{list-style:none;padding:0;margin:8px 0 0}
+  .feat-txt li{padding:4px 0 4px 22px;position:relative;font-size:13.5px;color:var(--ink-soft)}
+  .feat-txt li::before{content:"✓";position:absolute;left:0;top:4px;color:var(--sun-deep);font-weight:800}
+  @media(max-width:760px){.feat{grid-template-columns:1fr;gap:16px}.feat:nth-child(even) .feat-txt{order:0}}
+  /* screenshot frame (swappable: replace .ui with <img> of a real screenshot) */
+  .shot .frame{background:var(--panel);border:1.5px solid var(--ink);border-radius:14px;box-shadow:6px 6px 0 var(--ink);overflow:hidden}
+  .shot .bar{display:flex;align-items:center;gap:7px;padding:9px 12px;background:#f4eeda;border-bottom:1px solid var(--line-strong)}
+  .shot .bar i{width:10px;height:10px;border-radius:50%;background:#d9cfb3;display:inline-block}
+  .shot .bar i:nth-child(1){background:#ff5f56}.shot .bar i:nth-child(2){background:#ffbd2e}.shot .bar i:nth-child(3){background:#27c93f}
+  .shot .bar .u{margin-left:8px;flex:1;background:#fff;border:1px solid var(--line-strong);border-radius:7px;font-size:11px;color:var(--muted);padding:3px 10px;font-family:ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shot .ui{padding:16px}
+  .shot cap,.cap{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:10px}
+  /* mockup atoms */
+  .stars{color:var(--sun-deep);letter-spacing:1px;font-size:14px}
+  .rcard{background:#fff;border:1px solid var(--line-strong);border-radius:11px;padding:12px 13px;box-shadow:0 4px 14px rgba(60,46,12,.06)}
+  .rcard .nm{font-weight:800;font-size:12.5px;margin:3px 0 2px}
+  .rcard .bd{font-size:12px;color:var(--ink-soft);line-height:1.65}
+  .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tag{display:inline-block;font-family:var(--disp);font-weight:700;font-size:10px;background:var(--ink);color:#fff;border-radius:5px;padding:1px 7px;letter-spacing:.04em;vertical-align:middle}
+  .muted{color:var(--muted)}
+  /* inbox mockup */
+  .ibx .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .ibx .chip{font-size:11px;font-weight:700;border:1.5px solid var(--line-strong);border-radius:999px;padding:3px 11px;background:#fff;color:var(--ink-soft)}
+  .ibx .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .ibx .search{flex:1;min-width:120px;border:1.5px solid var(--line-strong);border-radius:999px;padding:3px 12px;font-size:11px;color:var(--muted);background:#fff}
+  .irow{display:flex;gap:11px;align-items:flex-start;padding:11px;border:1px solid var(--line-strong);border-radius:11px;margin-bottom:9px;background:#fff}
+  .irow .ck{width:16px;height:16px;border:1.5px solid var(--ink);border-radius:4px;flex:none;margin-top:2px}
+  .irow .ck.on{background:var(--sun)}
+  .irow .mn{flex:1}
+  .irow .act{display:flex;gap:6px;flex:none}
+  .bchip{font-size:10.5px;font-weight:800;border-radius:7px;padding:4px 9px;border:1.5px solid var(--ink);white-space:nowrap}
+  .bchip.on{background:var(--sun)}.bchip.gh{background:#fff}
+  .flag{font-size:9.5px;font-weight:800;color:#9a6a00;background:var(--sun-soft);border:1px solid var(--sun-deep);border-radius:6px;padding:0 6px}
+  /* reward ticket */
+  .ticket{position:relative;background:var(--ink);color:#fff;border-radius:13px;padding:16px 18px;overflow:hidden}
+  .ticket::before,.ticket::after{content:"";position:absolute;width:20px;height:20px;background:var(--panel);border-radius:50%;top:50%;transform:translateY(-50%)}
+  .ticket::before{left:-10px}.ticket::after{right:-10px}
+  .ticket .lb{font-family:var(--disp);font-size:11px;letter-spacing:.14em;color:#ffd84d;text-transform:uppercase;font-weight:700}
+  .ticket .cd{font-family:var(--disp);font-size:26px;font-weight:700;letter-spacing:.14em;margin:5px 0 2px}
+  .ticket .dt{font-size:11.5px;color:#cfc8b6}
+  /* submit mockup */
+  .sel-star{font-size:30px;color:var(--sun);letter-spacing:4px;text-align:center}
+  .field{border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);background:#fff;margin-top:10px}
+  .lv{display:flex;gap:8px;margin-top:12px}
+  .lv div{flex:1;text-align:center;border:1.5px solid var(--line-strong);border-radius:10px;padding:8px 4px;font-size:11px;font-weight:700;color:var(--ink-soft);background:#fff}
+  .lv div.on{border-color:var(--ink);background:var(--sun-soft);box-shadow:3px 3px 0 var(--ink)}
+  .lv div b{display:block;font-size:16px}
+  /* code line */
+  .code{background:var(--ink);color:#ffe9a8;border-radius:10px;padding:11px 13px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;overflow:auto;white-space:pre;margin-top:12px}
+  /* notify toast */
+  .toast-m{display:flex;gap:11px;align-items:flex-start;background:#fff;border:1.5px solid var(--line-strong);border-left:4px solid var(--ok);border-radius:11px;padding:12px 13px;margin-bottom:10px}
+  .toast-m .av{width:30px;height:30px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff}
+  .toast-m .av.line{background:#06c755}.toast-m .av.mail{background:var(--ink)}
+  .toast-m .tx b{font-size:12.5px}.toast-m .tx p{margin:2px 0 0;font-size:11.5px;color:var(--ink-soft)}
+  /* google import */
+  .grow{display:flex;gap:10px;align-items:center;padding:9px 11px;border:1px solid var(--line-strong);border-radius:10px;margin-bottom:8px;background:#fff}
+  .glogo{font-family:var(--disp);font-weight:700;font-size:13px}
+  .glogo .b{color:#4285F4}.glogo .r{color:#EA4335}.glogo .y{color:#FBBC05}.glogo .g{color:#34A853}
+  .gbtn{margin-left:auto;font-size:10.5px;font-weight:800;border:1.5px solid var(--ink);border-radius:7px;padding:4px 10px;background:var(--sun)}
+  /* analytics */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+  .kpi{background:var(--ink);color:#fff;border-radius:11px;padding:11px 12px}
+  .kpi .l{font-size:10px;color:#cfc8b6;font-weight:700;letter-spacing:.03em}
+  .kpi .v{font-family:var(--disp);font-weight:700;font-size:23px;margin-top:2px}
+  .kpi .v small{font-size:11px;color:#cfc8b6;font-family:var(--jp)}
+  .chartbox{border:1px solid var(--line-strong);border-radius:11px;padding:12px;background:#fff}
+  .chartbox .ttl{font-size:11px;font-weight:800;color:var(--ink-soft);margin-bottom:6px}
+  .funnel{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+  .funnel .f{display:flex;align-items:center;gap:8px;font-size:10.5px}
+  .funnel .f .bar{height:16px;background:var(--sun);border:1.5px solid var(--ink);border-radius:5px}
+  .funnel .f .bar.d{background:var(--ink)}
+  .funnel .f .lb{width:84px;color:var(--ink-soft);font-weight:700}
+  /* whitelabel compare */
+  .wl{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .wl .box{border:1px solid var(--line-strong);border-radius:11px;padding:11px;background:#fff;font-size:11px}
+  .wl .box .h{font-weight:800;font-size:10.5px;margin-bottom:7px;color:var(--muted);letter-spacing:.04em}
+  .wl .cred{margin-top:8px;text-align:center;font-size:9.5px;color:#b9b09a}
+  .wl .cred.x{text-decoration:line-through;color:#d9b100}
+  /* note + band */
+  .note{background:#fffef4;border:1px solid var(--line-strong);border-left:4px solid var(--sun);border-radius:11px;padding:14px 16px;margin:30px 0 0;font-size:13.5px;color:var(--ink-soft)}
+  .band{background:var(--ink);color:#fff;border-radius:20px;padding:34px 24px;text-align:center;margin:46px 0 0}
+  .band h2{color:#fff;font-size:24px;margin:0 0 8px;font-weight:800;letter-spacing:-.01em}
+  .band p{color:#d9d2bf;font-size:14.5px;margin:0 0 18px}
+  .band .go{display:inline-block;background:var(--sun);color:var(--ink);font-weight:800;text-decoration:none;padding:13px 26px;border-radius:999px;border:1.5px solid var(--sun)}
+  .band .go:hover{background:#ffd34d}
+  .band .sub{display:block;margin-top:12px}
+  .band .sub a{color:#ffe9a8;font-weight:700;text-decoration:underline;font-size:13px}
+  footer{border-top:1px solid var(--line);padding:26px 0 52px;color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:40px}
+  footer .fnav a{color:var(--muted);text-decoration:none;font-weight:700;margin-left:16px}
+  footer .fnav a:hover{color:var(--ink-soft)}
+  @media(max-width:560px){footer{flex-direction:column}footer .fnav a{margin:0 16px 0 0}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap in">
+  <a class="brand" href="/">
+    <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l2.95 6.3 6.9.86-5.1 4.72 1.36 6.82L12 17.9l-6.06 3.4 1.35-6.82-5.1-4.72 6.9-.86z"/></svg>
+    star<em>·</em>reviews
+  </a>
+  <div class="right">
+    <a class="back" href="/#pricing">← 料金に戻る</a>
+    <a class="cta" href="/#auth">無料ではじめる</a>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow">plans in detail</p>
+    <h1>プランでできること、<br><span class="mk">ぜんぶ見せます。</span></h1>
+    <p class="lede">Free・Starter・Pro の各プランに入っている機能を、実際の画面イメージつきでくわしく解説します。まずは無料で、必要になったらいつでもアップグレードできます。</p>
+  </section>
+
+  <!-- 比較表 -->
+  <section class="cmp-sec">
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th>機能<span class="pp" style="visibility:hidden">x</span></th>
+          <th>FREE<span class="pp">¥0</span></th>
+          <th>STARTER<span class="pp">¥1,980<small>/月</small></span></th>
+          <th class="pro">PRO<span class="pp">¥3,980<small>/月</small></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="ft">レビューの収集<small>匿名・写真・動画</small></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">返礼コードの自動発行</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">承認フロー・受信トレイ</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">埋め込みウィジェット<small>全スタイル</small></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">レビューページ<small>単独URL・SEO対応</small></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">掲載できる件数</td><td class="v">5件まで</td><td class="v">無制限</td><td class="v">無制限</td></tr>
+        <tr><td class="ft">「star-reviews」表記を非表示</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">レビューページの独自URL</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">LINE・メール通知</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td class="ft">Googleの口コミ取り込み</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td class="ft">詳しいアナリティクス</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td class="ft">複数店舗の管理</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td class="ft">優先サポート</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td></tr>
+      </tbody>
+    </table>
+    <p class="cap">価格はすべて税別です。下で、ひとつずつ画面つきで説明します。</p>
+  </section>
+
+  <!-- ============ FREE ============ -->
+  <div class="group-h">
+    <span class="pill free">FREE から</span>
+    <span class="ln"></span>
+    <span class="group-note muted" style="font-size:12px">すべてのプランで使えます</span>
+  </div>
+
+  <!-- 収集 -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b free">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>レビューの収集（匿名・写真・動画）</h3>
+      <p>お客様はスマホから、ログインなしで投稿できます。星の評価・本文に加えて、写真や30〜60秒の動画レビューも集められます。匿名でもOKなので「書いてもらう」ハードルが下がります。</p>
+      <ul>
+        <li>アカウント登録不要・匿名OK</li>
+        <li>テキスト／写真／動画（Lv1〜3）を選んで投稿</li>
+        <li>動画には日本語字幕を自動付与</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">star-reviews.net/submit</span></div>
+        <div class="ui">
+          <div class="muted" style="font-size:11px;font-weight:700;text-align:center">あなたのお店はいかがでしたか？</div>
+          <div class="sel-star">★★★★★</div>
+          <div class="field">本当に買ってよかったです。対応も丁寧で…</div>
+          <div class="lv">
+            <div><b>✍️</b>テキスト</div>
+            <div class="on"><b>📷</b>写真つき</div>
+            <div><b>🎬</b>動画</div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">投稿フォーム（お客様の画面）</figcaption>
+    </figure>
+  </section>
+
+  <!-- 返礼コード -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b free">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>返礼コードの自動発行</h3>
+      <p>投稿のお礼に、クーポンや特典コードを自動で発行。「投稿したら10%OFF」のように特典で集められるのが、star-reviews の差別化の核です。発行数・使用状況も管理できます。</p>
+      <ul>
+        <li>投稿完了と同時に自動発行</li>
+        <li>コードの一覧・使用済み管理</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">投稿完了 → 特典をプレゼント</span></div>
+        <div class="ui">
+          <div class="ticket">
+            <div class="lb">Thank you coupon</div>
+            <div class="cd">SR-7F3K</div>
+            <div class="dt">次回ご来店で 10%OFF ・ 有効期限 30日</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:11px;font-weight:700">
+            <span>発行済み <b style="color:var(--ink)">128</b></span><span>使用済み <b style="color:var(--ink)">41</b></span>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">返礼コード（投稿後にお客様へ表示）</figcaption>
+    </figure>
+  </section>
+
+  <!-- 受信トレイ -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b free">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>承認フロー・受信トレイ</h3>
+      <p>届いた声は受信トレイにたまります。どれを載せる／載せないかは、あなたが選べます。まとめて掲載・評価フィルタ・キーワード検索に対応。AIが気になる投稿に「⚠️要確認」バッジを付けます（ブロックはしません）。</p>
+      <ul>
+        <li>1クリックで掲載／非掲載・まとめて操作</li>
+        <li>★フィルタ・キーワード検索</li>
+        <li>投稿本文は編集不可で、そのまま掲載</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">star-reviews.net/app ・ 受信トレイ</span></div>
+        <div class="ui ibx">
+          <div class="chips"><span class="chip on">すべて</span><span class="chip">★5</span><span class="chip">★4以上</span><span class="search">🔍 キーワード検索</span></div>
+          <div class="irow">
+            <span class="ck on"></span>
+            <div class="mn"><span class="stars">★★★★★</span> <span class="tag">動画</span><div class="rcard" style="border:0;box-shadow:none;padding:4px 0 0"><div class="nm">田中さん</div><div class="bd">スタッフの対応がとても丁寧でした。また来ます！</div></div></div>
+            <div class="act"><span class="bchip on">掲載</span><span class="bchip gh">非掲載</span></div>
+          </div>
+          <div class="irow">
+            <span class="ck"></span>
+            <div class="mn"><span class="stars">★★★★☆</span> <span class="flag">⚠️要確認</span><div class="rcard" style="border:0;box-shadow:none;padding:4px 0 0"><div class="nm">匿名のお客様</div><div class="bd">コスパ良し。立地がもう少し…</div></div></div>
+            <div class="act"><span class="bchip gh">掲載</span><span class="bchip gh">非掲載</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">受信トレイ（管理画面）</figcaption>
+    </figure>
+  </section>
+
+  <!-- 埋め込み -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b free">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>埋め込みウィジェット（全スタイル）</h3>
+      <p>発行されたタグを1行、あなたのサイトやLPに貼るだけ。選んだ声が「レビューページ」として表示されます。レイアウト4種・★スタイル10種・テーマ4種から、サイトのデザインになじむ見た目を選べます。</p>
+      <ul>
+        <li>コピー1行で設置</li>
+        <li>グリッド／カルーセル／リスト／チップス</li>
+        <li>ライブプレビューで即確認</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">あなたのサイトに埋め込み</span></div>
+        <div class="ui">
+          <div class="rgrid">
+            <div class="rcard"><span class="stars">★★★★★</span><div class="nm">佐藤さん</div><div class="bd">想像以上でした。リピート確定です。</div></div>
+            <div class="rcard"><span class="stars">★★★★★</span><div class="nm">鈴木さん</div><div class="bd">丁寧な説明で安心して頼めました。</div></div>
+          </div>
+          <div class="code">&lt;script src="//star-reviews.net/widget.js"
+  data-wall="xxxx" data-layout="grid"&gt;&lt;/script&gt;</div>
+        </div>
+      </div>
+      <figcaption class="cap">埋め込みウィジェット＋設置タグ</figcaption>
+    </figure>
+  </section>
+
+  <!-- レビューページ -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b free">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>レビューページ（単独URL・SEO対応）</h3>
+      <p>サイトを持っていなくてもOK。集めた声は「レビューページ」として単独URLで発行されます。そのURLをInstagram・LINE・名刺・Googleマップに貼るだけで公開できます。Google検索向けの構造化データ（JSON-LD）入りです。</p>
+      <ul>
+        <li>サイト不要・URLを配るだけ</li>
+        <li>★評価のサマリーを自動表示</li>
+        <li>検索エンジンに載る構造化データ</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">star-reviews.net/wall/my-shop</span></div>
+        <div class="ui">
+          <div style="text-align:center;margin-bottom:12px">
+            <div style="font-weight:800;font-size:14px">○○カフェ のお客様の声</div>
+            <div class="stars" style="font-size:20px">★★★★★</div>
+            <div class="muted" style="font-size:11px;font-weight:700">4.9 ／ 86件のレビュー</div>
+          </div>
+          <div class="rgrid">
+            <div class="rcard"><span class="stars">★★★★★</span><div class="bd">居心地がよくて毎週通ってます。</div></div>
+            <div class="rcard"><span class="stars">★★★★★</span><div class="bd">コーヒーが本当においしい！</div></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">レビューページ（公開URL）</figcaption>
+    </figure>
+  </section>
+
+  <div class="note">
+    <b>掲載できる件数：Freeは5件まで。</b> 収集（集めること）は無制限です。6件目以降も声はたまり続け、掲載したい件数が増えたら Starter 以上にアップグレードすると無制限になります。
+  </div>
+
+  <!-- ============ STARTER ============ -->
+  <div class="group-h">
+    <span class="pill starter">STARTER から</span>
+    <span class="ln"></span>
+    <span class="group-note muted" style="font-size:12px">¥1,980 / 月 ・ Free のすべて＋</span>
+  </div>
+
+  <!-- ホワイトラベル -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b off">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>「star-reviews」表記を非表示（ホワイトラベル）</h3>
+      <p>埋め込みウィジェットとレビューページから「star-reviews」のクレジット表記が消え、あなたのお店のページとしてすっきり見せられます。</p>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">クレジット表記の有無</span></div>
+        <div class="ui">
+          <div class="wl">
+            <div class="box"><div class="h">FREE</div><span class="stars">★★★★★</span><div class="bd" style="font-size:11px">また利用します。</div><div class="cred">powered by star-reviews</div></div>
+            <div class="box" style="border-color:var(--ink);box-shadow:3px 3px 0 var(--sun)"><div class="h" style="color:var(--sun-deep)">STARTER 以上</div><span class="stars">★★★★★</span><div class="bd" style="font-size:11px">また利用します。</div><div class="cred x">powered by star-reviews</div></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">ホワイトラベル（右：表記が消えます）</figcaption>
+    </figure>
+  </section>
+
+  <!-- 独自URL -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b off">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>レビューページの独自URL</h3>
+      <p>自動発行のランダムURLから、お店の名前で覚えやすいURLに変更できます。名刺やチラシにも載せやすくなります。</p>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">独自URLの設定</span></div>
+        <div class="ui">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">変更前</div>
+          <div class="field" style="margin-top:0">star-reviews.net/wall/<span style="color:#c2b9a3">a1b2c3d4e5</span></div>
+          <div style="text-align:center;color:var(--sun-deep);font-weight:800;margin:6px 0">↓</div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">変更後</div>
+          <div class="field" style="margin-top:0;border-color:var(--ink);background:var(--sun-soft)">star-reviews.net/wall/<b style="color:var(--ink)">my-shop</b></div>
+        </div>
+      </div>
+      <figcaption class="cap">独自URLの設定（管理画面）</figcaption>
+    </figure>
+  </section>
+
+  <!-- 通知 -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b off">FREE</span><span class="b starter">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>LINE・メール通知</h3>
+      <p>新しい声が届いたら、LINEやメールでその場でお知らせ。配信は「届くたび」か「1日1回まとめて」から選べます。見逃さず、すぐに返信・掲載できます。</p>
+      <ul>
+        <li>LINE公式アカウント／メールに通知</li>
+        <li>都度 or 日次ダイジェスト</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">新着のお知らせ</span></div>
+        <div class="ui">
+          <div class="toast-m"><span class="av line">L</span><div class="tx"><b>⭐️ 新しいレビューが届きました</b><p>★★★★★「対応が丁寧でまた来たいです」</p></div></div>
+          <div class="toast-m"><span class="av mail">✉</span><div class="tx"><b>本日のまとめ：3件の新着</b><p>平均★4.7 ・ 受信トレイで確認できます</p></div></div>
+        </div>
+      </div>
+      <figcaption class="cap">通知（LINE・メール）</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ PRO ============ -->
+  <div class="group-h">
+    <span class="pill pro">PRO</span>
+    <span class="ln"></span>
+    <span class="group-note muted" style="font-size:12px">¥3,980 / 月 ・ Starter のすべて＋</span>
+  </div>
+
+  <!-- Google取込 -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b off">FREE</span><span class="b off">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>Googleの口コミ取り込み</h3>
+      <p>Googleマップにたまっている口コミを取り込んで、サイトやレビューページに一緒に掲載できます。これまで集めた資産をムダにしません。</p>
+      <ul>
+        <li>Googleマップの口コミを読み込み</li>
+        <li>選んでそのまま掲載</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">Google 口コミの取り込み</span></div>
+        <div class="ui">
+          <div style="font-size:11px;font-weight:700;margin-bottom:9px"><span class="glogo"><span class="b">G</span><span class="r">o</span><span class="y">o</span><span class="b">g</span><span class="g">l</span><span class="r">e</span></span> マップの口コミ</div>
+          <div class="grow"><span class="stars">★★★★★</span><span class="bd" style="font-size:11px;flex:1">雰囲気が最高でした</span><span class="gbtn">取込</span></div>
+          <div class="grow"><span class="stars">★★★★★</span><span class="bd" style="font-size:11px;flex:1">スタッフさんが親切</span><span class="gbtn">取込</span></div>
+        </div>
+      </div>
+      <figcaption class="cap">Google口コミ取り込み（管理画面）</figcaption>
+    </figure>
+  </section>
+
+  <!-- アナリティクス -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b off">FREE</span><span class="b off">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>詳しいアナリティクス</h3>
+      <p>投稿数の推移・承認率・平均★、そして「ページ閲覧 → 投稿開始 → 投稿完了 → 掲載」のファネルまで。どこで集まり、どこで離脱しているかが一目でわかります。</p>
+      <ul>
+        <li>投稿推移・平均★・承認率</li>
+        <li>流入〜掲載のファネル分析</li>
+        <li>レベル別・流入元・返礼の内訳</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">star-reviews.net/app ・ アナリティクス</span></div>
+        <div class="ui">
+          <div class="kpis">
+            <div class="kpi"><div class="l">総投稿</div><div class="v">312</div></div>
+            <div class="kpi"><div class="l">承認率</div><div class="v">87<small>%</small></div></div>
+            <div class="kpi"><div class="l">平均★</div><div class="v">4.8</div></div>
+          </div>
+          <div class="chartbox">
+            <div class="ttl">投稿数の推移（30日）</div>
+            <svg viewBox="0 0 280 70" width="100%" height="70" preserveAspectRatio="none" aria-hidden="true">
+              <polyline fill="none" stroke="#eaa400" stroke-width="2.5" points="0,56 40,48 80,52 120,36 160,40 200,22 240,26 280,12"/>
+              <polyline fill="rgba(255,198,43,.18)" stroke="none" points="0,56 40,48 80,52 120,36 160,40 200,22 240,26 280,12 280,70 0,70"/>
+            </svg>
+            <div class="funnel">
+              <div class="f"><span class="lb">ページ閲覧</span><span class="bar" style="width:92%"></span></div>
+              <div class="f"><span class="lb">投稿開始</span><span class="bar" style="width:58%"></span></div>
+              <div class="f"><span class="lb">投稿完了</span><span class="bar" style="width:41%"></span></div>
+              <div class="f"><span class="lb">掲載</span><span class="bar d" style="width:33%"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">アナリティクス（管理画面・Pro）</figcaption>
+    </figure>
+  </section>
+
+  <!-- 複数店舗 + 優先サポート -->
+  <section class="feat">
+    <div class="feat-txt">
+      <div class="badges"><span class="b off">FREE</span><span class="b off">STARTER</span><span class="b pro">PRO</span></div>
+      <h3>複数店舗の管理・優先サポート</h3>
+      <p>1つのアカウントで複数の店舗を切り替えて運用できます（最大5店舗）。プランは全店舗に適用。さらに、困ったときは優先的にサポートします。</p>
+      <ul>
+        <li>トップバーの店舗スイッチャーで即切替</li>
+        <li>店舗の追加・改名・アーカイブ</li>
+        <li>優先サポート</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="u">店舗の切り替え</span></div>
+        <div class="ui">
+          <div class="irow" style="margin-bottom:9px"><div class="mn"><b style="font-size:12.5px">○○カフェ 本店</b><div class="muted" style="font-size:10.5px">現在の店舗</div></div><span class="bchip on">切替中</span></div>
+          <div class="irow" style="margin-bottom:9px"><div class="mn"><b style="font-size:12.5px">○○カフェ 駅前店</b></div><span class="bchip gh">切り替え</span></div>
+          <div class="irow"><div class="mn" style="color:var(--sun-deep);font-weight:800;font-size:12px">＋ 新しい店舗を追加</div></div>
+        </div>
+      </div>
+      <figcaption class="cap">複数店舗スイッチャー（管理画面）</figcaption>
+    </figure>
+  </section>
+
+  <div class="band">
+    <h2>まずは無料で、ぜんぶ試せます。</h2>
+    <p>クレジットカード登録は不要。必要になったら、管理画面からいつでもアップグレードできます。</p>
+    <a class="go" href="/#auth">無料ではじめる</a>
+    <span class="sub"><a href="/#pricing">料金プランをもう一度見る</a></span>
+  </div>
+
+</main>
+
+<footer class="wrap">
+  <span>© 2026 star-reviews</span>
+  <nav class="fnav">
+    <a href="/#pricing">料金</a>
+    <a href="/guide">使い方ガイド</a>
+    <a href="/tokushoho">特定商取引法</a>
+    <a href="/privacy">プライバシー</a>
+    <a href="/terms">利用規約</a>
+  </nav>
+</footer>
+
+</body>
+</html>

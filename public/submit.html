@@ -331,7 +331,7 @@ function done(reward){
     $("gbtn").href = GOOGLE_URL;
     $("googleBox").style.display = "block";
   }
-  // SNSシェア（声の壁ページがあれば表示）
+  // SNSシェア（レビューページがあれば表示）
   if(WALL_URL){
     const text = (BIZ_NAME ? BIZ_NAME + "に" : "") + "口コミを投稿しました！";
     const u = encodeURIComponent(WALL_URL), t = encodeURIComponent(text);

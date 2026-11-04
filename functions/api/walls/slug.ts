@@ -1,4 +1,4 @@
-// POST /api/walls/slug  声の壁ページの独自URL(slug)を設定（要ログイン・Pro特典）
+// POST /api/walls/slug  レビューページの独自URL(slug)を設定（要ログイン・Pro特典）
 // body: { slug }  3〜40字 [a-z0-9-]。重複不可。freeプランは不可(402)。
 // 認証必須: パスが /api/wall/ で始まらない(=/api/walls/)ため _middleware が認証を要求する。
 import { json, badRequest } from "../../../shared/util";

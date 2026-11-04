@@ -461,7 +461,7 @@ async function renderAnalytics(){
   if($("ana_toplan")) $("ana_toplan").onclick=()=>document.querySelector('.tab[data-t="plan"]').click();
 }
 
-/* ---------- ホスト型・声の壁ページ(SEO) + プラン ---------- */
+/* ---------- ホスト型・レビューページ(SEO) + プラン ---------- */
 function wallPageUrl(){
   const id = STATE.wallSlug || STATE.embedToken;
   return id ? STATE.origin + "/wall/" + id : null;
@@ -481,7 +481,7 @@ function renderHostedCard(){
        </div></div>`
     : `<p class="muted" style="margin:10px 0 0;font-size:12px">覚えやすい独自URL（例: /wall/my-shop）は <a style="color:var(--sun-deep);cursor:pointer;text-decoration:underline" id="wp_toplan">Pro</a> で設定できます。</p>`;
   return `<div class="card">
-      <h2>ホスト型・声の壁ページ</h2>
+      <h2>ホスト型・レビューページ</h2>
       <p class="muted" style="margin-top:-8px">サイトを持っていなくてもOK。この公開URLをInstagram・LINE・名刺・Googleマップに貼るだけで「お客様の声ページ」になります。Google検索にも載る構造化データ入りです。</p>
       <label>公開URL</label>
       <div class="code" id="wp_url">${esc(url)}</div>
@@ -515,7 +515,7 @@ function renderPlan(){
   const setupNote = STATE.billingEnabled ? "" :
     `<p class="muted" style="margin:10px 0 0;font-size:12px">※ 現在オンライン決済は準備中です（管理者がStripeを設定すると有効になります）。</p>`;
   const starterFeat=[
-    "ホワイトラベル（声の壁の「star-reviews」表記を非表示）",
+    "ホワイトラベル（レビューページの「star-reviews」表記を非表示）",
     "独自URL（/wall/あなたの店名）",
     "フォーム・収集・掲載・動画レビュー・インポート 無制限",
     "Google検索向けの構造化データ(JSON-LD)",
@@ -880,7 +880,7 @@ function renderTi(t){
   const replyVal = t.reply ? esc(t.reply) : "";
   const replyUI = `<div style="margin-top:10px">
     <details ${t.reply?"open":""}><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--muted);list-style:none">${t.reply?"お店からの返信（編集）":"＋ 返信する"}</summary>
-      <textarea class="tReply" data-id="${t.id}" rows="2" style="margin-top:8px" placeholder="お客様への返信を書く（声の壁・埋め込みに表示されます）">${replyVal}</textarea>
+      <textarea class="tReply" data-id="${t.id}" rows="2" style="margin-top:8px" placeholder="お客様への返信を書く（レビューページ・埋め込みに表示されます）">${replyVal}</textarea>
       <div style="display:flex;gap:8px;margin-top:6px"><button class="btn ghost sm tReplySave" data-id="${t.id}">返信を保存</button>${t.reply?`<button class="btn mut sm tReplyDel" data-id="${t.id}">削除</button>`:""}</div>
     </details></div>`;
   return `<div class="ti">
@@ -937,7 +937,7 @@ async function renderTeam(){
   v.innerHTML=`
     ${d.is_owner?`<div class="card">
       <h2>メンバーを招待</h2>
-      <p class="muted" style="margin-top:-8px">この店舗の管理を一緒に行う人をメールで招待します。参加すると受信トレイ・フォーム・声の壁などを共同で操作できます（プラン変更・チーム管理はオーナーのみ）。</p>
+      <p class="muted" style="margin-top:-8px">この店舗の管理を一緒に行う人をメールで招待します。参加すると受信トレイ・フォーム・レビューページなどを共同で操作できます（プラン変更・チーム管理はオーナーのみ）。</p>
       <div class="row"><div style="flex:1"><label>招待するメールアドレス</label><input type="email" id="tm_email" placeholder="member@example.com"></div></div>
       <div style="margin-top:12px"><button class="btn" id="tm_invite">招待を送る</button></div>
     </div>`:`<div class="card"><h2>チーム</h2><p class="muted" style="margin-top:-8px">この店舗のメンバーです。招待やメンバーの管理はオーナーのみ行えます。</p></div>`}
@@ -1300,7 +1300,7 @@ async function renderEmbed(){
       .emhint{font-size:11.5px;color:var(--muted);margin:6px 0 0}
     </style>
     <div class="card" style="background:var(--ink);color:#fff;border:0">
-      <p style="margin:0;font-size:12.5px;color:#cfc8b6;font-weight:700;letter-spacing:.04em">声の壁の表示回数</p>
+      <p style="margin:0;font-size:12.5px;color:#cfc8b6;font-weight:700;letter-spacing:.04em">レビューページの表示回数</p>
       <p style="margin:4px 0 0;font-size:34px;font-weight:800;font-family:var(--disp)">${(STATE.wallViews||0).toLocaleString()}<span style="font-size:15px;color:#cfc8b6;font-weight:700;font-family:var(--jp)"> 回</span></p>
     </div>
     ${renderHostedCard()}
@@ -1401,7 +1401,7 @@ async function renderEmbed(){
     const btn=$("em_save"); btn.disabled=true;
     const r = await api("/api/walls/settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(opts())});
     btn.disabled=false;
-    if(r.ok){ toast("保存しました（埋め込み・声の壁ページに反映）"); const s=$("em_saved"); s.style.display="inline-block"; setTimeout(()=>s.style.display="none",2200); }
+    if(r.ok){ toast("保存しました（埋め込み・レビューページに反映）"); const s=$("em_saved"); s.style.display="inline-block"; setTimeout(()=>s.style.display="none",2200); }
     else { toast(r.data.error||"保存に失敗しました"); }
   };
   bindHostedCard();

@@ -1,5 +1,5 @@
 // 新規店舗(business)の初期セットアップ共通ロジック。
-// 既定の投稿フォームと声の壁を1つずつ作成し、すぐ使える状態にする。
+// 既定の投稿フォームとレビューページを1つずつ作成し、すぐ使える状態にする。
 import { genId, nowSec, slugify } from "./util";
 import type { Env } from "./types";
 
@@ -22,7 +22,7 @@ export async function createDefaultFormAndWall(env: Env, businessId: string, sto
     await env.DB.prepare(
       "INSERT INTO walls (id, business_id, name, layout, embed_token, created_at) VALUES (?, ?, ?, 'grid', ?, ?)"
     )
-      .bind(genId("wal"), businessId, "声の壁", genId("pub"), now)
+      .bind(genId("wal"), businessId, "レビューページ", genId("pub"), now)
       .run();
   }
 

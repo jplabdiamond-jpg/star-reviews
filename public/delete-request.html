@@ -51,7 +51,7 @@
   $("f").addEventListener("submit", async (ev)=>{
     ev.preventDefault();
     $("err").style.display="none";
-    if(!w){ $("err").textContent="対象の店舗が指定されていません。店舗の「声の壁」ページのリンクからお進みください。"; $("err").style.display="block"; return; }
+    if(!w){ $("err").textContent="対象の店舗が指定されていません。店舗の「レビューページ」のリンクからお進みください。"; $("err").style.display="block"; return; }
     const btn=$("submit"); btn.disabled=true; btn.textContent="送信中…";
     try{
       const res=await fetch("/api/public/delete-request",{method:"POST",headers:{"content-type":"application/json"},

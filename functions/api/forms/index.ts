@@ -1,5 +1,5 @@
 // GET  /api/forms          自分のフォーム一覧
-// POST /api/forms          フォーム作成（同時に声の壁を1つ作成）
+// POST /api/forms          フォーム作成（同時にレビューページを1つ作成）
 import { json, badRequest, readJson, genId, nowSec, slugify } from "../../../shared/util";
 import type { Env, AppData } from "../../../shared/types";
 
@@ -62,7 +62,7 @@ export const onRequestPost: PagesFunction<Env, string, AppData> = async ({ reque
     await env.DB.prepare(
       "INSERT INTO walls (id, business_id, name, layout, embed_token, created_at) VALUES (?, ?, ?, 'grid', ?, ?)"
     )
-      .bind(genId("wal"), businessId, "声の壁", genId("pub"), now)
+      .bind(genId("wal"), businessId, "レビューページ", genId("pub"), now)
       .run();
   }
 

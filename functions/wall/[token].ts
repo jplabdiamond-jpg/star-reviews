@@ -1,4 +1,4 @@
-// GET /wall/:token   ホスト型・声の壁ページ（SSR / SEO資産化）
+// GET /wall/:token   ホスト型・レビューページ（SSR / SEO資産化）
 // token は walls.slug（pro特典の読みやすいURL）または walls.embed_token のどちらでも解決。
 // サーバー側で本文・JSON-LD・OGタグまで描画するので、JSを実行しないクローラでも内容が読める。
 import { bumpMetric, bumpMetricDaily, escapeHtml } from "../../shared/util";
