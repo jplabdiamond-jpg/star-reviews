@@ -39,6 +39,10 @@
   .brand .star{width:17px;height:17px;color:var(--sun-deep)}
   .top .cta{font-weight:800;font-size:13.5px;text-decoration:none;background:var(--ink);color:#fff;padding:9px 15px;border-radius:999px}
   .top .cta:hover{background:#000}
+  .top .hr{display:flex;align-items:center;gap:14px}
+  .top .col{font-size:13.5px;font-weight:700;color:var(--ink-soft);text-decoration:none}
+  .top .col:hover{color:var(--ink)}
+  @media(max-width:600px){.top .col{display:none}}
   /* hero */
   .hero{padding:52px 0 10px;text-align:center}
   .eyebrow{font-family:var(--disp);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--muted)}
@@ -124,7 +128,10 @@ footer span{color:#cfc8b6 !important}
   <a class="brand" href="/">
     <img src="/logo.png" alt="STAR REVIEWS" class="brand-logo">
   </a>
-  <a class="cta" href="/app">管理画面を開く</a>
+  <div class="hr">
+    <a class="col" href="/blog">コラム</a>
+    <a class="cta" href="/app">管理画面を開く</a>
+  </div>
 </div></header>
 
 <main class="wrap">
@@ -258,6 +265,7 @@ footer span{color:#cfc8b6 !important}
   <span>© 2026 star-reviews</span>
   <nav>
     <a href="/">トップ</a>
+    <a href="/blog">コラム</a>
     <a href="/tokushoho">特定商取引法</a>
     <a href="/privacy">プライバシー</a>
     <a href="/terms">利用規約</a>

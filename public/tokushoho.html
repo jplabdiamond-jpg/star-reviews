@@ -31,6 +31,9 @@
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.8}
   .wrap{max-width:760px;margin:0 auto;padding:0 20px}
   header.top{border-bottom:1px solid var(--line);padding:18px 0}
+  .top .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .top .col{font-size:13.5px;font-weight:700;color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+  .top .col:hover{color:var(--ink)}
   .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--ink);text-decoration:none}
   .brand .star{width:17px;height:17px;color:var(--sun-deep)}
   main{padding:40px 0 56px}
@@ -62,10 +65,11 @@ footer span{color:#cfc8b6 !important}
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://star-reviews.net/"},{"@type":"ListItem","position":2,"name":"特定商取引法に基づく表記","item":"https://star-reviews.net/tokushoho"}]}</script>
 </head>
 <body>
-  <header class="top"><div class="wrap">
+  <header class="top"><div class="wrap hdr">
     <a class="brand" href="/">
       <img src="/logo.png" alt="STAR REVIEWS" class="brand-logo">
     </a>
+      <a class="col" href="/blog">コラム</a>
   </div></header>
 
   <main class="wrap">
@@ -100,7 +104,8 @@ footer span{color:#cfc8b6 !important}
   <img src="/logo-white.png" alt="STAR REVIEWS" class="footer-logo">
     <span>© 2026 star-reviews</span>
     <nav>
-      <a href="/privacy">プライバシーポリシー</a>
+      
+      <a href="/blog">コラム</a><a href="/privacy">プライバシーポリシー</a>
       <a href="/terms">利用規約</a>
     </nav>
   </footer>

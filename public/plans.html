@@ -42,6 +42,7 @@
   .top .right{display:flex;align-items:center;gap:16px}
   .top .back{font-size:13.5px;font-weight:700;color:var(--ink-soft);text-decoration:none}
   .top .back:hover{color:var(--ink)}
+  @media(max-width:600px){.top .back{display:none}}
   .top .cta{font-weight:800;font-size:13.5px;text-decoration:none;background:var(--ink);color:#fff;padding:9px 15px;border-radius:999px;white-space:nowrap}
   .top .cta:hover{background:#000}
   /* hero */
@@ -214,6 +215,7 @@ footer span{color:#cfc8b6 !important}
     <img src="/logo.png" alt="STAR REVIEWS" class="brand-logo">
   </a>
   <div class="right">
+    <a class="back" href="/blog">コラム</a>
     <a class="back" href="/#pricing">← 料金に戻る</a>
     <a class="cta" href="/#auth">無料ではじめる</a>
   </div>
@@ -644,6 +646,7 @@ footer span{color:#cfc8b6 !important}
   <span>© 2026 star-reviews</span>
   <nav class="fnav">
     <a href="/#pricing">料金</a>
+    <a href="/blog">コラム</a>
     <a href="/guide">使い方ガイド</a>
     <a href="/tokushoho">特定商取引法</a>
     <a href="/privacy">プライバシー</a>

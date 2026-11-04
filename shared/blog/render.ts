@@ -1,4 +1,4 @@
-// ブログの共通レンダラ（SSR）。黒×黄エディトリアルで、サイト全体のトーンに合わせる。
+// コラムの共通レンダラ（SSR）。黒×黄エディトリアルで、サイト全体のトーンに合わせる。
 // JSを実行しないクローラ・生成AIでも本文・JSON-LDが読めるよう全てサーバー描画する。
 import type { BlogPost } from "./types";
 
@@ -152,7 +152,7 @@ const HEADER = `<header><div class="wrap wide in">
   <a class="brand" href="/"><img src="/logo.png" alt="STAR REVIEWS" class="brand-logo"></a>
   <nav class="nav-links">
     <a href="/">ホーム</a>
-    <a href="/blog">ブログ</a>
+    <a href="/blog">コラム</a>
     <a href="/plans">料金</a>
     <a href="/guide">使い方ガイド</a>
   </nav>
@@ -162,7 +162,7 @@ const HEADER = `<header><div class="wrap wide in">
 const FOOTER = `<footer>
   <a class="brand" href="/"><img src="/logo-white.png" alt="STAR REVIEWS" class="footer-logo"></a>
   <nav>
-    <a href="/">ホーム</a><a href="/blog">ブログ</a><a href="/plans">プランの詳細</a>
+    <a href="/">ホーム</a><a href="/blog">コラム</a><a href="/plans">プランの詳細</a>
     <a href="/guide">使い方ガイド</a><a href="/#faq">よくある質問</a>
     <a href="/tokushoho">特定商取引法</a><a href="/privacy">プライバシー</a><a href="/terms">利用規約</a>
   </nav>
@@ -213,7 +213,7 @@ export function renderArticle(post: BlogPost, all: BlogPost[], base: string): st
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "ホーム", item: `${base}/` },
-        { "@type": "ListItem", position: 2, name: "ブログ", item: `${base}/blog` },
+        { "@type": "ListItem", position: 2, name: "コラム", item: `${base}/blog` },
         { "@type": "ListItem", position: 3, name: post.title, item: canonical },
       ],
     }),
@@ -228,11 +228,11 @@ export function renderArticle(post: BlogPost, all: BlogPost[], base: string): st
     post.updated && post.updated !== post.date ? ` ・ 更新 ${formatDateJa(post.updated)}` : "";
 
   return (
-    head({ title: `${post.title}｜star-reviews ブログ`, desc: post.description, canonical, ogType: "article", image, jsonLd: ld }) +
+    head({ title: `${post.title}｜star-reviews コラム`, desc: post.description, canonical, ogType: "article", image, jsonLd: ld }) +
     HEADER +
     `<main class="wrap">
-      <nav class="crumbs"><a href="/">ホーム</a> › <a href="/blog">ブログ</a> › ${escapeHtml(post.title)}</nav>
-      <p class="eyebrow">blog</p>
+      <nav class="crumbs"><a href="/">ホーム</a> › <a href="/blog">コラム</a> › ${escapeHtml(post.title)}</nav>
+      <p class="eyebrow">column</p>
       <h1 class="post-title">${escapeHtml(post.title)}</h1>
       <div class="post-meta"><time datetime="${post.date}">${formatDateJa(post.date)}${updated}</time><span>${escapeHtml(
         author
@@ -258,7 +258,7 @@ export function renderList(posts: BlogPost[], base: string): string {
       "@context": "https://schema.org",
       "@type": "Blog",
       "@id": `${canonical}#blog`,
-      name: "star-reviews ブログ",
+      name: "star-reviews コラム",
       description: "お客様の声・レビューの集め方、サイトへの掲載・埋め込み、事例づくりの実践記事。",
       url: canonical,
       inLanguage: "ja",
@@ -275,7 +275,7 @@ export function renderList(posts: BlogPost[], base: string): string {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "ホーム", item: `${base}/` },
-        { "@type": "ListItem", position: 2, name: "ブログ", item: canonical },
+        { "@type": "ListItem", position: 2, name: "コラム", item: canonical },
       ],
     }),
   ];
@@ -294,7 +294,7 @@ export function renderList(posts: BlogPost[], base: string): string {
 
   return (
     head({
-      title: "ブログ｜star-reviews",
+      title: "コラム｜star-reviews",
       desc: "お客様の声・レビューの集め方、サイトへの掲載・埋め込み、事例づくりの実践記事をお届けします。",
       canonical,
       ogType: "website",
@@ -303,10 +303,10 @@ export function renderList(posts: BlogPost[], base: string): string {
     }) +
     HEADER +
     `<main class="wrap">
-      <nav class="crumbs"><a href="/">ホーム</a> › ブログ</nav>
+      <nav class="crumbs"><a href="/">ホーム</a> › コラム</nav>
       <div class="list-head">
-        <p class="eyebrow">blog</p>
-        <h1>star-reviews ブログ</h1>
+        <p class="eyebrow">column</p>
+        <h1>star-reviews コラム</h1>
         <p>お客様の声の集め方・見せ方、サイトへの埋め込み、事例づくりを実践目線で。</p>
       </div>
       <div class="cards">${cards}</div>
