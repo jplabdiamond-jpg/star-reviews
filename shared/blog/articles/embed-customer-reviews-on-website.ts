@@ -9,6 +9,7 @@ export const post: BlogPost = {
   date: "2026-11-05",
   tags: ["埋め込み", "お客様の声", "ハウツー"],
   author: "star-reviews 編集部",
+  cover: "/blog/assets/embed-customer-reviews-on-website.png",
   lead: "お客様の声は、レビュー収集ツールが発行する「埋め込みコード（1行）」を、サイトの表示したい場所に貼るだけで載せられます。HTMLの知識は不要で、STUDIO・WordPress・ペライチでも手順は同じです。",
   faq: [
     {

@@ -44,6 +44,18 @@ jobs:
           node -e "const fs=require('fs');const r=fs.existsSync('publish-result.json')?JSON.parse(fs.readFileSync('publish-result.json','utf8')):{};const o=['published='+(r.published?'yes':'no'),'slug='+(r.slug||''),'title='+(r.title||''),'url='+(r.url||''),'reason='+(r.reason||'')];fs.appendFileSync(process.env.GITHUB_OUTPUT,o.join('\n')+'\n');"
           cat publish-result.json || true
 
+      - name: Setup Python (eyecatch)
+        if: steps.res.outputs.published == 'yes'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate eyecatch (title thumbnail)
+        if: steps.res.outputs.published == 'yes'
+        run: |
+          pip install pillow
+          python scripts/gen-eyecatch.py "${{ steps.res.outputs.slug }}" "${{ steps.res.outputs.title }}"
+
       - name: Typecheck (gate)
         if: steps.res.outputs.published == 'yes'
         run: npx tsc --noEmit

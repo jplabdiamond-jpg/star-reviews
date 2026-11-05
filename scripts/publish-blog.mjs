@@ -53,6 +53,15 @@ if (/date\s*:\s*["'`][^"'`]*["'`]/.test(out)) {
   // date が無い場合は title 行の後ろに差し込む（通常は存在する）
   out = out.replace(/(title\s*:\s*["'`][^"'`]*["'`]\s*,)/, `$1\n  date: "${today}",`);
 }
+// cover（アイキャッチ）が未設定なら設定。実画像はワークフローの gen-eyecatch.py が生成する。
+if (!/cover\s*:/.test(out)) {
+  const coverLine = `  cover: "/blog/assets/${pick.slug}.png",`;
+  if (/author\s*:\s*["'`][^"'`]*["'`]\s*,/.test(out)) {
+    out = out.replace(/(author\s*:\s*["'`][^"'`]*["'`]\s*,)/, `$1\n${coverLine}`);
+  } else {
+    out = out.replace(/(date\s*:\s*["'`][^"'`]*["'`]\s*,)/, `$1\n${coverLine}`);
+  }
+}
 
 const url = `${BASE}/blog/${encodeURIComponent(pick.slug)}`;
 if (DRY) {

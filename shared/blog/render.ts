@@ -112,6 +112,7 @@ article.body blockquote{margin:0 0 20px;padding:14px 18px;background:#fff;border
 .cards{display:grid;gap:18px;margin:28px 0 0}
 .card{display:block;text-decoration:none;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 22px;transition:.15s;box-shadow:0 6px 20px rgba(60,46,12,.05)}
 .card:hover{border-color:var(--line-strong);transform:translateY(-2px);box-shadow:0 12px 30px rgba(60,46,12,.09)}
+.card-cover{width:100%;aspect-ratio:1200/630;object-fit:cover;border-radius:11px;border:1px solid var(--line);display:block;margin:0 0 14px;background:var(--ink)}
 .card .date{font-size:12.5px;color:var(--muted)}
 .card h2{font-family:var(--disp);font-size:19px;line-height:1.35;margin:7px 0 8px}
 .card p{font-size:14px;color:var(--ink-soft);margin:0}
@@ -328,6 +329,7 @@ export function renderList(posts: BlogPost[], base: string): string {
         .map(
           (p) =>
             `<a class="card" href="/blog/${encodeURIComponent(p.slug)}">
+          ${p.cover ? `<img class="card-cover" src="${escapeHtml(p.cover)}" alt="${escapeHtml(p.title)}" loading="lazy">` : ""}
           <span class="date">${formatDateJa(p.date)}</span>
           <h2>${escapeHtml(p.title)}</h2>
           <p>${escapeHtml(p.description)}</p>
