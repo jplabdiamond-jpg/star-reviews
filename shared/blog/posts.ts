@@ -2,9 +2,10 @@
 import type { BlogPost } from "./types";
 import { post as senjaAlt } from "./articles/senja-testimonial-to-alternative";
 import { post as embedGuide } from "./articles/embed-customer-reviews-on-website";
+import { post as embedPlatforms } from "./articles/embed-reviews-studio-peraichi-wordpress";
 
 // 登録済みの全記事（公開・非公開を含む生リスト）
-const REGISTERED: BlogPost[] = [senjaAlt, embedGuide];
+const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms];
 
 function isLive(p: BlogPost): boolean {
   if (p.published === false) return false;

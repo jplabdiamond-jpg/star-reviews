@@ -1,0 +1,84 @@
+name: auto-publish-blog
+
+# コラムの自動公開。事前に書いた下書き(published:false)をキュー順に1本ずつ公開する。
+# 公開=記事を published:true＋date=本日 に書き換えて init-mvp に push → Cloudflare が自動デプロイ。
+# 公開後は IndexNow で検索エンジンに通知。Claudeセッション非依存・CIで完結（承認ゲート不要）。
+
+on:
+  schedule:
+    # UTC 12:17 = JST 21:17。火(2)・金(5) の週2本。
+    - cron: '17 12 * * 2,5'
+  workflow_dispatch: {} # 手動実行（今すぐ次の1本を公開＝テスト用）
+
+concurrency:
+  group: auto-publish-blog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (init-mvp)
+        uses: actions/checkout@v4
+        with:
+          ref: init-mvp
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Decide & stage next article
+        run: node scripts/publish-blog.mjs
+
+      - name: Read result
+        id: res
+        run: |
+          node -e "const fs=require('fs');const r=fs.existsSync('publish-result.json')?JSON.parse(fs.readFileSync('publish-result.json','utf8')):{};const o=['published='+(r.published?'yes':'no'),'slug='+(r.slug||''),'title='+(r.title||''),'url='+(r.url||''),'reason='+(r.reason||'')];fs.appendFileSync(process.env.GITHUB_OUTPUT,o.join('\n')+'\n');"
+          cat publish-result.json || true
+
+      - name: Typecheck (gate)
+        if: steps.res.outputs.published == 'yes'
+        run: npx tsc --noEmit
+
+      - name: Commit & push (production deploy)
+        if: steps.res.outputs.published == 'yes'
+        run: |
+          rm -f publish-result.json
+          git config user.name "star-reviews-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -A
+          git commit -m "auto-publish(blog): ${{ steps.res.outputs.slug }}"
+          git pull --rebase --autostash origin init-mvp || true
+          git push origin HEAD:init-mvp
+
+      - name: IndexNow ping
+        if: steps.res.outputs.published == 'yes'
+        env:
+          URL: ${{ steps.res.outputs.url }}
+        run: |
+          node -e '
+          const https=require("https");
+          const key="dc6e7b8d9ccfc2f4d509166402ae115a";
+          const host="star-reviews.net";
+          const urls=[process.env.URL, "https://star-reviews.net/blog", "https://star-reviews.net/sitemap.xml"].filter(Boolean);
+          const body=JSON.stringify({host,key,keyLocation:`https://${host}/${key}.txt`,urlList:urls});
+          const req=https.request("https://api.indexnow.org/indexnow",{method:"POST",headers:{"Content-Type":"application/json; charset=utf-8"}},r=>{console.log("IndexNow status",r.statusCode);r.resume();});
+          req.on("error",e=>console.log("IndexNow error",e.message));
+          req.write(body);req.end();
+          '
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "published=${{ steps.res.outputs.published }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "title=${{ steps.res.outputs.title }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "url=${{ steps.res.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "reason=${{ steps.res.outputs.reason }}" >> "$GITHUB_STEP_SUMMARY"
