@@ -6,8 +6,8 @@ export const post: BlogPost = {
   title: "STUDIO・ペライチ・WordPressに口コミを埋め込む方法",
   description:
     "STUDIO・ペライチ・WordPressそれぞれに、お客様の声（口コミ）を埋め込む手順を解説。どのツールでも「カスタムHTML／コード埋め込み」に1行のコードを貼るだけ。注意点とSEOのポイントも。",
-  date: "2099-01-01", // 自動公開スクリプトが公開日に書き換える（下書き中は未来日で非表示）
-  published: false,
+  date: "2026-11-05", // 自動公開スクリプトが公開日に書き換える（下書き中は未来日で非表示）
+  published: true,
   queueOrder: 1,
   tags: ["埋め込み", "STUDIO", "WordPress", "ペライチ"],
   author: "star-reviews 編集部",
