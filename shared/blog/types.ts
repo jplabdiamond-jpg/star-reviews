@@ -8,6 +8,8 @@ export interface BlogPost {
   updated?: string; // 更新日 'YYYY-MM-DD'（任意）
   tags?: string[]; // 表示用タグ
   cover?: string; // カバー画像の絶対パス（例 /blog/assets/xxx.png）。未指定なら /og.png
+  coverPrompt?: string; // アイキャッチ背景のAI画像プロンプト（英語・題材を具体指定）。未指定ならタイトルから自動
+  emph?: string; // アイキャッチで黄色強調する語（未指定なら【】や「」内を自動強調）
   bodyHtml: string; // 本文（セマンティックHTML。h2/h3/p/ul/table 等）
   lead?: string; // 冒頭の結論ボックス（40〜80字で記事の問いに直接回答。AEO/スニペット用）
   faq?: { q: string; a: string }[]; // よくある質問（可視FAQ＋FAQPage構造化データを自動出力）

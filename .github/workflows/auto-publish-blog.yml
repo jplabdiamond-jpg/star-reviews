@@ -41,7 +41,7 @@ jobs:
       - name: Read result
         id: res
         run: |
-          node -e "const fs=require('fs');const r=fs.existsSync('publish-result.json')?JSON.parse(fs.readFileSync('publish-result.json','utf8')):{};const o=['published='+(r.published?'yes':'no'),'slug='+(r.slug||''),'title='+(r.title||''),'url='+(r.url||''),'reason='+(r.reason||'')];fs.appendFileSync(process.env.GITHUB_OUTPUT,o.join('\n')+'\n');"
+          node -e "const fs=require('fs');const r=fs.existsSync('publish-result.json')?JSON.parse(fs.readFileSync('publish-result.json','utf8')):{};const e=s=>String(s==null?'':s).replace(/\n/g,' ');fs.appendFileSync(process.env.GITHUB_OUTPUT,'published='+(r.published?'yes':'no')+'\nslug='+e(r.slug)+'\ntitle='+e(r.title)+'\nurl='+e(r.url)+'\nreason='+e(r.reason)+'\ncoverPrompt<<EOF\n'+e(r.coverPrompt)+'\nEOF\nemph<<EOF\n'+e(r.emph)+'\nEOF\n');"
           cat publish-result.json || true
 
       - name: Setup Python (eyecatch)
@@ -52,6 +52,9 @@ jobs:
 
       - name: Generate eyecatch (title thumbnail)
         if: steps.res.outputs.published == 'yes'
+        env:
+          EYECATCH_PROMPT: ${{ steps.res.outputs.coverPrompt }}
+          EYECATCH_EMPH: ${{ steps.res.outputs.emph }}
         run: |
           pip install pillow
           python scripts/gen-eyecatch.py "${{ steps.res.outputs.slug }}" "${{ steps.res.outputs.title }}"

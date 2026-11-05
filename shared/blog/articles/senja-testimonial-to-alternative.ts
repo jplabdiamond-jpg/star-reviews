@@ -10,6 +10,8 @@ export const post: BlogPost = {
   tags: ["レビュー収集", "ツール比較", "お客様の声"],
   author: "star-reviews 編集部",
   cover: "/blog/assets/senja-testimonial-to-japanese-alternative.png",
+  coverPrompt: "a laptop on a bright modern desk showing a customer reviews dashboard with gold star ratings",
+  emph: "日本語代替",
   lead: "Senja・Testimonial.toは高機能ですが英語UI・ドル課金が難点。日本語の店舗なら、日本語で匿名・特典収集でき、円建てで使える日本語ツール（例: star-reviews）が代替候補になります。",
   faq: [
     {

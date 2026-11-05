@@ -33,7 +33,9 @@ for (const file of files) {
   const slug = (src.match(/slug\s*:\s*["'`]([^"'`]+)["'`]/) || [])[1] || "";
   const title = (src.match(/title\s*:\s*["'`]([^"'`]+)["'`]/) || [])[1] || slug;
   const order = Number((src.match(/queueOrder\s*:\s*(\d+)/) || [])[1] ?? 9999);
-  drafts.push({ file, src, slug, title, order });
+  const coverPrompt = (src.match(/coverPrompt\s*:\s*["'`]([^"'`]+)["'`]/) || [])[1] || "";
+  const emph = (src.match(/emph\s*:\s*["'`]([^"'`]+)["'`]/) || [])[1] || "";
+  drafts.push({ file, src, slug, title, order, coverPrompt, emph });
 }
 
 if (drafts.length === 0) {
@@ -71,5 +73,13 @@ if (DRY) {
 }
 
 fs.writeFileSync(pick.file, out);
-writeResult({ published: true, slug: pick.slug, title: pick.title, url, date: today });
+writeResult({
+  published: true,
+  slug: pick.slug,
+  title: pick.title,
+  url,
+  date: today,
+  coverPrompt: pick.coverPrompt,
+  emph: pick.emph,
+});
 console.log(`公開: ${pick.title} (${pick.slug}) -> ${url}`);

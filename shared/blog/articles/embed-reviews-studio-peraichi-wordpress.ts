@@ -12,6 +12,8 @@ export const post: BlogPost = {
   tags: ["埋め込み", "STUDIO", "WordPress", "ペライチ"],
   author: "star-reviews 編集部",
   cover: "/blog/assets/embed-reviews-studio-peraichi-wordpress.png",
+  coverPrompt: "a laptop on a bright desk showing a website builder editor with a customer reviews embed block",
+  emph: "埋め込む方法",
   lead: "STUDIO・ペライチ・WordPressのどれでも、口コミの埋め込みは「カスタムHTML／コード埋め込み」のブロックに、ツールが発行した1行のコードを貼るだけ。HTMLを書く必要はありません。",
   faq: [
     {
