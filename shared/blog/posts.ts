@@ -3,9 +3,10 @@ import type { BlogPost } from "./types";
 import { post as senjaAlt } from "./articles/senja-testimonial-to-alternative";
 import { post as embedGuide } from "./articles/embed-customer-reviews-on-website";
 import { post as embedPlatforms } from "./articles/embed-reviews-studio-peraichi-wordpress";
+import { post as displayGoogleReviews } from "./articles/display-google-reviews-on-website";
 
 // 登録済みの全記事（公開・非公開を含む生リスト）
-const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms];
+const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms, displayGoogleReviews];
 
 function isLive(p: BlogPost): boolean {
   if (p.published === false) return false;
