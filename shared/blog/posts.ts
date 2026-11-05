@@ -1,9 +1,10 @@
 // ブログ記事レジストリ。新しい記事は articles/ に1ファイル追加し、ここに import して ALL に並べる。
 import type { BlogPost } from "./types";
 import { post as senjaAlt } from "./articles/senja-testimonial-to-alternative";
+import { post as embedGuide } from "./articles/embed-customer-reviews-on-website";
 
 // 登録済みの全記事（公開・非公開を含む生リスト）
-const REGISTERED: BlogPost[] = [senjaAlt];
+const REGISTERED: BlogPost[] = [senjaAlt, embedGuide];
 
 function isLive(p: BlogPost): boolean {
   if (p.published === false) return false;
