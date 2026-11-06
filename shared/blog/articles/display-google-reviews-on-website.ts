@@ -6,8 +6,8 @@ export const post: BlogPost = {
   title: "Googleの口コミをサイトに掲載する方法と注意点",
   description:
     "Googleの口コミ（Googleビジネスプロフィールのレビュー）を自社サイトに載せる方法を、無料でできるやり方から外部ツールまで整理。利用規約・著作権・ステマ規制の注意点、コピペ掲載がNGな理由も解説します。",
-  date: "2099-01-01", // 自動公開スクリプトが公開日に書き換える（下書き中は未来日で非表示）
-  published: false,
+  date: "2026-11-07", // 自動公開スクリプトが公開日に書き換える（下書き中は未来日で非表示）
+  published: true,
   queueOrder: 2,
   tags: ["Google口コミ", "レビュー掲載", "Googleビジネスプロフィール", "ステマ規制"],
   author: "star-reviews 編集部",
