@@ -153,6 +153,13 @@ async function boot(){
     const q=new URLSearchParams(location.search).get("billing");
     if(q==="success"){ toast("アップグレードが完了しました 🎉"); history.replaceState(null,"","/app"); }
     else if(q==="cancel"){ toast("お手続きはキャンセルされました"); history.replaceState(null,"","/app"); }
+    const bp=new URLSearchParams(location.search).get("bp");
+    if(bp){
+      const msg={connected:"Googleを連携しました 🎉",pick:"Googleを連携しました。取り込む店舗を選んでください。",denied:"Google連携はキャンセルされました",no_refresh:"再連携が必要です。Googleの許可画面で「許可」を選んでください。",token_error:"連携に失敗しました（トークン取得エラー）",db:"連携用のデータベース更新が未適用です（0015）。",expired:"連携の有効期限が切れました。もう一度お試しください。",mismatch:"セッション不一致のため中断しました。"}[bp]||"";
+      if(msg) toast(msg);
+      history.replaceState(null,"","/app");
+      if(bp==="connected"||bp==="pick"){ STATE._openImport=true; }
+    }
   }catch(e){}
   $("logout").onclick = async()=>{ await api("/api/auth/logout",{method:"POST"}); location.href="/"; };
   $("help").onclick = ()=>coach();
@@ -162,7 +169,8 @@ async function boot(){
   });
   await loadStores();
   await loadForms();
-  render("forms");
+  if(STATE._openImport){ const it=document.querySelector('.tab[data-t="import"]'); if(it){ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); it.classList.add("on"); } render("import"); }
+  else render("forms");
   // 初回のみチュートリアル
   let seen=false; try{ seen=!!localStorage.getItem("sr_tut_v1"); }catch(e){}
   if(!seen) setTimeout(()=>coach(), 450);
@@ -1047,7 +1055,13 @@ async function renderImport(){
         <div><label>取り込み先フォーム</label><select id="g_form">${gForms}</select></div>
       </div>
       <button class="btn sm" id="g_import">取り込む</button>
-      <p class="muted" id="g_note" style="margin-top:8px">※ Google Places APIの仕様で取り込めるのは最も関連する最大5件です。全件取り込みは今後のGoogleビジネスプロフィール連携で対応予定。</p>
+      <p class="muted" id="g_note" style="margin-top:8px">※ Google Places APIの仕様で取り込めるのは最も関連する最大5件です。<b>全件取り込み＋自動同期</b>は下の「Googleオーナー連携」をご利用ください。</p>
+    </div>` : "";
+  const bpCard = STATE.forms.length ? `
+    <div class="card" id="bpCard">
+      <h2>Googleオーナー連携（全件取り込み・Pro）</h2>
+      <p class="muted" id="bp_note" style="margin-top:-8px">読み込み中…</p>
+      <div id="bp_body"></div>
     </div>` : "";
   const csvCard = STATE.forms.length ? `
     <div class="card">
@@ -1063,7 +1077,7 @@ async function renderImport(){
       </div>
       <p class="muted" id="csv_note" style="margin-top:8px">※ 1行目が見出し（名前,評価,…）の場合は自動でスキップします。最大1000件。</p>
     </div>` : "";
-  $("view").innerHTML = googleCard + csvCard + `
+  $("view").innerHTML = bpCard + googleCard + csvCard + `
     <div class="card">
       <h2>レビューを選んで掲載</h2>
       <p class="muted" style="margin-top:-8px">集まったお客様の声を並び替えて、サイトに載せたいものを選びます。<b>本文は編集できません</b>（いただいた声をそのまま掲載します）。</p>
@@ -1134,6 +1148,74 @@ async function renderImport(){
       await loadForms(); load();
     };
   }
+  if($("bpCard")) loadBpStatus();
+}
+
+async function loadBpStatus(){
+  const note=$("bp_note"), body=$("bp_body");
+  if(!note||!body) return;
+  const r = await api("/api/google/bp/status");
+  if(!r.ok){ note.textContent = "状態の取得に失敗しました。"; body.innerHTML=""; return; }
+  const s = r.data;
+  if(s.setup_required){
+    note.innerHTML = "⚙️ 未設定です。Google CloudでBusiness Profile系APIを有効化し、OAuth同意画面に <code>business.manage</code> スコープを追加、承認済みリダイレクトURIに <code>/api/google/bp/callback</code> を登録してください（レビュー取得には v4 API のアクセス承認も必要）。";
+    body.innerHTML=""; return;
+  }
+  if(!s.pro){
+    note.innerHTML = "店舗オーナーのGoogleアカウントを連携すると、Googleの口コミを<b>全件取り込み＋自動同期</b>できます。<b>Pro プラン限定</b>です。";
+    body.innerHTML = `<button class="btn sm" onclick="document.querySelector('.tab[data-t=&quot;plan&quot;]').click()">Proにアップグレード</button>`; return;
+  }
+  if(!s.connected){
+    note.innerHTML = "店舗オーナーのGoogleアカウントで連携すると、あなたのお店のGoogle口コミを<b>全件</b>取り込めます（あなた自身のデータなので規約内です）。";
+    body.innerHTML = `<a class="btn sm" href="/api/google/bp/start">Googleアカウントを連携する</a>`; return;
+  }
+  // 連携済み
+  const sync = s.last_sync_at ? new Date(s.last_sync_at*1000).toLocaleString('ja-JP') : "未実行";
+  if(!s.location_selected){
+    note.innerHTML = "連携済みです。取り込む店舗を選んでください。";
+    body.innerHTML = `<button class="btn sm" id="bp_pick">店舗を選ぶ</button> <button class="btn mut sm" id="bp_disc">連携を解除</button><div id="bp_locs" style="margin-top:10px"></div>`;
+  } else {
+    note.innerHTML = `連携店舗: <b>${esc(s.location_title||"")}</b>（最終同期: ${sync}）`;
+    body.innerHTML = `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn sm" id="bp_import">今すぐ全件取り込む</button>
+        <label style="display:flex;gap:6px;align-items:center;font-size:14px"><input type="checkbox" id="bp_auto" ${s.autosync?"checked":""}> 自動同期（定期的に新着を取り込む）</label>
+        <button class="btn mut sm" id="bp_pick">店舗を変更</button>
+        <button class="btn mut sm" id="bp_disc">連携を解除</button>
+      </div>
+      <p class="muted" id="bp_imp" style="margin-top:8px"></p>
+      <div id="bp_locs" style="margin-top:10px"></div>`;
+  }
+  bindBp();
+}
+function bindBp(){
+  if($("bp_disc")) $("bp_disc").onclick = async ()=>{
+    if(!confirm("Google連携を解除しますか？（取り込み済みの声は残ります）")) return;
+    await api("/api/google/bp/disconnect",{method:"POST"}); loadBpStatus();
+  };
+  if($("bp_pick")) $("bp_pick").onclick = async ()=>{
+    const el=$("bp_locs"); el.innerHTML="店舗を取得中…";
+    const r = await api("/api/google/bp/locations");
+    if(!r.ok){ el.textContent = r.data.error||"取得に失敗しました"; return; }
+    if(!r.data.locations.length){ el.textContent="このアカウントに店舗が見つかりませんでした。"; return; }
+    el.innerHTML = r.data.locations.map(l=>`<button class="btn mut sm bp_loc" data-a="${esc(l.account)}" data-n="${esc(l.name)}" data-t="${esc(l.title)}" style="margin:4px 4px 0 0">${esc(l.title)}</button>`).join("");
+    el.querySelectorAll(".bp_loc").forEach(b=>b.onclick=async()=>{
+      await api("/api/google/bp/select",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({account:b.dataset.a,name:b.dataset.n,title:b.dataset.t})});
+      toast("店舗を設定しました"); loadBpStatus();
+    });
+  };
+  if($("bp_auto")) $("bp_auto").onchange = async (e)=>{
+    await api("/api/google/bp/sync",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({autosync:e.target.checked})});
+    toast(e.target.checked?"自動同期をONにしました":"自動同期をOFFにしました");
+  };
+  if($("bp_import")) $("bp_import").onclick = async ()=>{
+    $("bp_import").disabled=true; $("bp_imp").textContent="取り込み中…（件数により数十秒かかります）";
+    const r = await api("/api/google/bp/import",{method:"POST"});
+    $("bp_import").disabled=false;
+    if(!r.ok){ $("bp_imp").textContent = r.data.error||"取り込みに失敗しました"; return; }
+    $("bp_imp").textContent = `${r.data.imported||0}件を新たに取り込みました（Google上の総数: ${r.data.total||0}件）。`;
+    toast(`${r.data.imported||0}件を取り込みました`); await loadForms();
+  };
 }
 function renderPick(t){
   const on = t.status==="approved";
