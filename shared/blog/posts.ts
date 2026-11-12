@@ -5,9 +5,10 @@ import { post as embedGuide } from "./articles/embed-customer-reviews-on-website
 import { post as embedPlatforms } from "./articles/embed-reviews-studio-peraichi-wordpress";
 import { post as displayGoogleReviews } from "./articles/display-google-reviews-on-website";
 import { post as freeToolsComparison } from "./articles/free-testimonial-tools-comparison-2026";
+import { post as collectAnonymousReviews } from "./articles/collect-anonymous-reviews";
 
 // 登録済みの全記事（公開・非公開を含む生リスト）
-const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms, displayGoogleReviews, freeToolsComparison];
+const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms, displayGoogleReviews, freeToolsComparison, collectAnonymousReviews];
 
 function isLive(p: BlogPost): boolean {
   if (p.published === false) return false;
