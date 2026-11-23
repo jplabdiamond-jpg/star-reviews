@@ -8,9 +8,10 @@ import { post as freeToolsComparison } from "./articles/free-testimonial-tools-c
 import { post as collectAnonymousReviews } from "./articles/collect-anonymous-reviews";
 import { post as collectTestimonialsGuide } from "./articles/how-to-collect-customer-testimonials-guide";
 import { post as testimonialTemplates } from "./articles/customer-testimonial-templates-questions";
+import { post as videoReviewsUgc } from "./articles/collect-video-reviews-ugc";
 
 // 登録済みの全記事（公開・非公開を含む生リスト）
-const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms, displayGoogleReviews, freeToolsComparison, collectAnonymousReviews, collectTestimonialsGuide, testimonialTemplates];
+const REGISTERED: BlogPost[] = [senjaAlt, embedGuide, embedPlatforms, displayGoogleReviews, freeToolsComparison, collectAnonymousReviews, collectTestimonialsGuide, testimonialTemplates, videoReviewsUgc];
 
 function isLive(p: BlogPost): boolean {
   if (p.published === false) return false;
